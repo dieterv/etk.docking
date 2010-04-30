@@ -1,7 +1,9 @@
 .project
 .pydevproject
 .settings
-doc/reference/build/*
-lib/*.egg-info
+*.pyc
+*.pyo
 build
 dist
+doc/reference/build/*
+lib/*.egg-info
