@@ -27,9 +27,16 @@ __docformat__ = 'restructuredtext'
 
 
 ############################################################################
-# Register some custom icons into the default icontheme
+# Initialize intl
 ############################################################################
-import os, gtk
+import os, gtk, elib.intl
+_ = elib.intl.install_module('etk.docking', os.path.abspath(os.path.join(
+                                                os.path.dirname(__file__),
+                                                '..', '..', 'share', 'locale')))
+
+############################################################################
+# Register some custom icons into the default icon theme
+############################################################################
 path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'icons', '16x16'))
 gtk.icon_theme_add_builtin_icon('compact-close', 16, gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-close.png')))
 gtk.icon_theme_add_builtin_icon('compact-close-prelight', 16, gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-close-prelight.png')))
@@ -37,7 +44,7 @@ gtk.icon_theme_add_builtin_icon('compact-list', 16, gtk.gdk.pixbuf_new_from_file
 gtk.icon_theme_add_builtin_icon('compact-minimize', 16, gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-minimize.png')))
 gtk.icon_theme_add_builtin_icon('compact-maximize', 16, gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-maximize.png')))
 gtk.icon_theme_add_builtin_icon('compact-restore', 16, gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-restore.png')))
-del os, gtk, path
+del os, gtk,elib.intl, path
 
 ############################################################################
 # GtkBuilder and Glade create GObject instances (and thus GTK+ widgets) using

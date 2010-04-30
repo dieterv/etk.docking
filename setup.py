@@ -52,7 +52,8 @@ setup(namespace_packages=['etk'],
            'Programming Language :: Python',
            'Topic :: Software Development :: Libraries :: Python Modules'],
 
-      install_requires = ['setuptools'],
+      install_requires = ['setuptools',
+                          'elib.intl'],
       zip_safe = False,
       include_package_data = True,
 
