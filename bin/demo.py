@@ -75,22 +75,19 @@ class MainWindow(gtk.Window):
         hbox = gtk.HBox()
         hbox.set_spacing(4)
         vbox.pack_start(hbox, False, False)
-
         adddgbutton = gtk.Button('Add DockGroup')
         adddgbutton.connect('clicked', self._on_add_dg_button_clicked)
         hbox.pack_start(adddgbutton, True, True)
-
         removedgbutton = gtk.Button('Remove DockGroup')
         removedgbutton.connect('clicked', self._on_remove_dg_button_clicked)
         hbox.pack_start(removedgbutton, True, True)
+        showbutton = gtk.Button('Show Hidden DockGroups')
+        showbutton.connect('clicked', self._on_show_button_clicked)
+        hbox.pack_start(showbutton, True, True)
 
         adddibutton = gtk.Button('Create DockItems')
         adddibutton.connect('clicked', self._on_add_di_button_clicked)
         vbox.pack_start(adddibutton, False, False)
-
-        showbutton = gtk.Button('Show Hidden DockGroups')
-        showbutton.connect('clicked', self._on_show_button_clicked)
-        vbox.pack_start(showbutton, False, False)
 
         orientationbutton = gtk.Button('Switch Orientation')
         orientationbutton.connect('clicked', self._on_orientation_button_clicked)
@@ -112,14 +109,14 @@ class MainWindow(gtk.Window):
         else:
             self.dockpaned.remove(dg)
 
-    def _on_add_di_button_clicked(self, button):
-        for dg in self.dockpaned:
-            self._add_dockitems(dg)
-
     def _on_show_button_clicked(self, button):
         for dg in self.dockpaned:
             if not dg.props.visible:
                 dg.props.visible = True
+
+    def _on_add_di_button_clicked(self, button):
+        for dg in self.dockpaned:
+            self._add_dockitems(dg)
 
     def _on_orientation_button_clicked(self, button):
         if self.dockpaned.get_orientation() == gtk.ORIENTATION_HORIZONTAL:
