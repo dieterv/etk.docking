@@ -197,7 +197,7 @@ class DockPaned(gtk.Container):
 
                 child.area.x = cx
                 child.area.y = cy
-                child.area.width = max(child.item.size_request()[0], size)
+                child.area.width = size
                 child.area.height = allocation.height
                 cx += child.area.width
 
@@ -264,7 +264,10 @@ class DockPaned(gtk.Container):
                 ri = self._drag_handle.right
                 li = self._drag_handle.left
 
-                if ri.area.width - width_delta >= ri.item.size_request()[0] and li.area.width + width_delta >= li.item.size_request()[0]:
+                if width_delta < 0 and ri.area.width - width_delta >= ri.item.size_request()[0]:
+                    li.size += size_delta
+                    ri.size -= size_delta
+                elif width_delta > 0 and li.area.width + width_delta >= li.item.size_request()[0]:
                     li.size += size_delta
                     ri.size -= size_delta
 
