@@ -29,6 +29,7 @@ import gobject
 import gtk
 import gtk.gdk as gdk
 
+from . import _
 from .compactbutton import CompactButton
 from .dockitem import DockItem
 from .util import _rect_contains
@@ -36,11 +37,6 @@ from .util import _rect_contains
 
 #DRAG_TARGET_GROUP = 0
 #DRAG_TARGET_ITEM = 1
-
-
-#TODO: use elib.intl instead of this hack!
-def _(string):
-    return string
 
 
 class _DockGroupTab(object):
