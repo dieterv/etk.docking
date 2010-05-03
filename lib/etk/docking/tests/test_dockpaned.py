@@ -20,6 +20,8 @@
 
 import unittest
 
+import gtk
+
 from etk.docking import DockPaned
 
 
@@ -68,22 +70,22 @@ class TestDockPaned(unittest.TestCase):
         dockpaned.connect('notify::orientation', _on_notify)
 
         notify_called = False
-        dockpaned.set_orientation(1)
-        self.assertEquals(dockpaned.get_orientation(), 1,
+        dockpaned.set_orientation(gtk.ORIENTATION_VERTICAL)
+        self.assertEquals(dockpaned.get_orientation(), gtk.ORIENTATION_VERTICAL,
                           msg='get_orientation method did not return expected value')
         self.assertTrue(notify_called,
                         msg='orientation property change notification failed when using set_orientation method')
 
         notify_called = False
-        dockpaned.set_property('orientation', 2)
-        self.assertEquals(dockpaned.get_property('orientation'), 2,
+        dockpaned.set_property('orientation', gtk.ORIENTATION_HORIZONTAL)
+        self.assertEquals(dockpaned.get_property('orientation'), gtk.ORIENTATION_HORIZONTAL,
                           msg='get_property method did not return expected value')
         self.assertTrue(notify_called,
                         msg='orientation property change notification failed when using set_property method')
 
         notify_called = False
-        dockpaned.props.orientation = 3
-        self.assertEquals(dockpaned.props.orientation, 3,
+        dockpaned.props.orientation = gtk.ORIENTATION_VERTICAL
+        self.assertEquals(dockpaned.props.orientation, gtk.ORIENTATION_VERTICAL,
                           msg='.props attribute did not return expected value')
         self.assertTrue(notify_called,
                         msg='orientation property change notification failed when using .props attribute')
