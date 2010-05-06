@@ -184,6 +184,7 @@ class DockGroup(gtk.Container):
         self._max_button.set_parent_window(self.window)
 
     def do_unrealize(self):
+        self.window.set_user_data(None)
         self.window.destroy()
         gtk.Container.do_unrealize(self)
 
@@ -619,37 +620,79 @@ class DockGroup(gtk.Container):
             callback(tab.item, data)
 
     def do_add(self, widget):
-        if not isinstance(widget, DockItem):
+        self.append_item(widget)
+
+    def do_remove(self, widget):
+        self.remove_item(self.item_num(widget))
+
+    ############################################################################
+    # EtkDockGroup
+    ############################################################################
+    def append_item(self, item):
+        '''
+        :param item: a DockItem
+        :returns: the index number of the item tab in the DockGroup
+
+        The append_item() method appends a DockItem to the DockGroup using the
+        DockItem specified by item.
+        '''
+        return self.insert_item(item)
+
+    def prepend_item(self, item):
+        '''
+        :param item: a DockItem
+        :returns: the index number of the item tab in the DockGroup
+
+        The prepend_item() method prepends a DockItem to the DockGroup using the
+        DockItem specified by item.
+        '''
+        return self.insert_item(item, position=0)
+
+    def insert_item(self, item, position=None):
+        '''
+        :param item: a DockItem
+        :param position: the index (starting at 0) at which to insert the item,
+                         or None to append the item after all other item tabs.
+        :returns: the index number of the item tab in the DockGroup
+
+        The insert_item() method inserts a DockItem into the DockGroup at the
+        location specified by position (0 is the first item). item is the
+        DockItem to use. If position is None the item is appended to the DockGrup.
+        '''
+        if not isinstance(item, DockItem):
             #TODO: raise something specific
             raise
+
+        if position is None:
+            position = self.get_n_items()
 
         # Create composite children for tab
         gtk.widget_push_composite_child()
         tab = _DockGroupTab()
-        tab.image = gtk.image_new_from_icon_name(widget.get_icon_name(), gtk.ICON_SIZE_MENU)
+        tab.image = gtk.image_new_from_icon_name(item.get_icon_name(), gtk.ICON_SIZE_MENU)
         tab.label = gtk.Label()
         tab.button = CompactButton(has_frame=False)
         tab.menu_item = gtk.ImageMenuItem()
         gtk.widget_pop_composite_child()
 
         # Configure child widgets for tab
-        tab.item = widget
+        tab.item = item
         tab.item.set_parent(self)
         tab.image.set_parent(self)
-        tab.label.set_text(widget.get_title())
+        tab.label.set_text(item.get_title())
         tab.label.set_parent(self)
         tab.button.set_icon_name_normal('compact-close')
         tab.button.set_icon_name_prelight('compact-close-prelight')
         tab.button.set_parent(self)
-        tab.button.connect('clicked', self._on_tab_button_clicked, widget)
-        tab.menu_item.set_image(gtk.image_new_from_icon_name(widget.get_icon_name(), gtk.ICON_SIZE_MENU))
-        tab.menu_item.set_label(widget.get_title())
+        tab.button.connect('clicked', self._on_tab_button_clicked, item)
+        tab.menu_item.set_image(gtk.image_new_from_icon_name(item.get_icon_name(), gtk.ICON_SIZE_MENU))
+        tab.menu_item.set_label(item.get_title())
         tab.menu_item.connect('activate', self._on_list_menu_item_activated, tab)
         self._list_menu.append(tab.menu_item)
         tab.state = gtk.STATE_NORMAL
         tab.area = gdk.Rectangle()
 
-        self._tabs.append(tab)
+        self._tabs.insert(position, tab)
 
         if self.flags() & gtk.REALIZED:
             tab.item.set_parent_window(self.window)
@@ -657,88 +700,57 @@ class DockGroup(gtk.Container):
             tab.label.set_parent_window(self.window)
             tab.button.set_parent_window(self.window)
 
-        self.set_current_item(self.item_num(widget))
+        item_num = self.item_num(item)
+        self.set_current_item(item_num)
 
-    def do_remove(self, widget):
-        if isinstance(widget, DockItem):
-            if self._tabs:
-                index = self.item_num(widget)
-                tab = self._tabs[index]
-
-                # Remove from self._visible_tabs list
-                if tab in self._visible_tabs:
-                    self._visible_tabs.remove(tab)
-
-                # Remove tab item
-                tab.item.unparent()
-                tab.item.destroy()
-
-                # Remove child widgets
-                tab.image.unparent()
-                tab.image.destroy()
-                tab.label.unparent()
-                tab.label.destroy()
-                tab.button.unparent()
-                tab.button.destroy()
-                self._list_menu.remove(tab.menu_item)
-                tab.menu_item.destroy()
-                self._tabs.remove(tab)
-
-                # Refresh ourselves
-                if index < self._current_index:
-                    index = self._current_index - 1
-
-                self.set_current_item(index)
-
-    ############################################################################
-    # EtkDockGroup
-    ############################################################################
-    def append_item(self, item):
-        '''
-        Appends an item to the dockgroup using the widget specified by item.
-        '''
-        self.add(item)
-
-    #TODO: def prepend_item(item, tab_label=None)
-    #TODO: def insert_item(item, tab_label=None, position=-1)
+        return item_num
 
     def remove_item(self, item_num):
         '''
+        :param item_num: the index of an item tab, starting from 0. If None,
+                         the last item will be removed.
+
         The remove_item() method removes the item at the location specified by
         index. The value of index starts from 0.
         '''
-        self.remove(self._tabs[item_num])
-
-    def get_current_item(self):
-        '''
-        The get_current_item() method returns the item index of the current item
-        numbered from 0, or None if there are no items.
-        '''
-        if self._current_item:
-            return self._current_index
+        if item_num is None:
+            tab = self._tabs[-1]
         else:
-            return None
+            tab = self._tabs[item_num]
 
-    def get_nth_item(self, item_num):
-        '''
-        The get_nth_item() method returns the item contained in the item
-        with the index specified by item_num. If item_num is out of bounds for
-        the item range of the dockgroup this method returns None.
-        '''
-        if item_num >= 0 and item_num <= len(self._tabs) - 1:
-            return self._tabs[item_num].item
-        else:
-            return None
+        # Remove from self._visible_tabs list
+        if tab in self._visible_tabs:
+            self._visible_tabs.remove(tab)
 
-    def get_n_items(self):
-        '''
-        The get_n_items() method returns the number of items in the dockgroup.
-        '''
-        return len(self._tabs)
+        # Remove tab item
+        tab.item.unparent()
+        tab.item.destroy()
+
+        # Remove child widgets
+        tab.image.unparent()
+        tab.image.destroy()
+        tab.label.unparent()
+        tab.label.destroy()
+        tab.button.unparent()
+        tab.button.destroy()
+        self._list_menu.remove(tab.menu_item)
+        tab.menu_item.destroy()
+        self._tabs.remove(tab)
+
+        # Refresh ourselves
+        if item_num < self._current_index:
+            item_num = self._current_index - 1
+
+        self.set_current_item(item_num)
 
     def item_num(self, item):
         '''
-        Returns the index of the specified item or None if no such item exists.
+        :param item: a DockItem
+        :returns: the index of the item tab specified by item, or None if item
+                  is not in the DockGroup
+
+        The item_num() method returns the index of the item tab which contains
+        the DockItem specified by item or None if no item tab contains item.
         '''
         for tab in self._tabs:
             if tab.item == item:
@@ -746,11 +758,52 @@ class DockGroup(gtk.Container):
         else:
             return None
 
+    def get_n_items(self):
+        '''
+        :returns: the number of item tabs in the DockGroup.
+
+        The get_n_items() method returns the number of item tabs in the DockGroup.
+        '''
+        return len(self._tabs)
+
+    def get_nth_item(self, item_num):
+        '''
+        :param item_num: the index of an item tab in the DockGroup.
+        :returns: a DockItem, or None if item_num is out of bounds
+
+        The get_nth_item() method returns the DockItem contained in the item tab
+        with the index specified by item_num. If item_num is out of bounds for
+        the item range of the DockGroup this method returns None.
+        '''
+        if item_num >= 0 and item_num <= len(self._tabs) - 1:
+            return self._tabs[item_num].item
+        else:
+            return None
+
+    def get_current_item(self):
+        '''
+        :returns: the index (starting from 0) of the current item tab in the
+                  DockGroup. If the DockGroup has no item tabs, then None will
+                  be returned.
+
+        The get_current_item() method returns the index of the current item tab
+        numbered from 0, or None if there are no item tabs.
+        '''
+        if self._current_item:
+            return self._current_index
+        else:
+            return None
+
     def set_current_item(self, item_num):
         '''
+        :param item_num: the index of the item tab to switch to, starting from
+                         0. If negative, the first item tab will be used. If
+                         greater than the number of item tabs in the DockGroup,
+                         the last item tab will be used.
+
         Switches to the item number specified by item_num. If item_num is
         negative the first item is selected. If greater than the number of
-        items in the dockgroup, the last item is selected.
+        items in the DockGroup, the last item is selected.
         '''
         if self._tabs:
             if item_num < 0:
@@ -768,9 +821,44 @@ class DockGroup(gtk.Container):
         # Refresh ourselves
         self.queue_resize()
 
-    #TODO: def next_item()
-    #TODO: def prev_item()
-    #TODO: def reorder_item(item, position)
+    def next_item(self):
+        '''
+        The next_item() method switches to the next item. Nothing happens if
+        the current item is the last item.
+        '''
+        ci = self.get_current_item()
+
+        if not ci == self.get_n_items() - 1:
+            self.set_current_item(ci + 1)
+
+    def prev_item(self):
+        '''
+        The prev_item() method switches to the previous item. Nothing happens
+        if the current item is the first item.
+        '''
+        ci = self.get_current_item()
+
+        if not ci == 0:
+            self.set_current_item(ci - 1)
+
+    def reorder_item(self, item, position):
+        '''
+        :param item: the DockItem widget to move
+        :param position: the index of the item tab that item is to move to
+
+        The reorder_item() method reorders the DockGroup items so that item
+        appears in the location specified by position. If position is greater
+        than or equal to the number of children in the list, item will be moved
+        to the end of the list. If position is negative, item will be moved
+        to the beginning of the list.
+        '''
+        if position < 0:
+            position = 0
+        elif position > self.get_n_items() - 1:
+            position = self.get_n_items()
+
+        self._tabs.remove(item)
+        self._tabs.insert(position, item)
 
     ############################################################################
     # Decoration area signal handlers
@@ -794,7 +882,11 @@ class DockGroup(gtk.Container):
         self.set_current_item(self._tabs.index(tab))
 
     def _on_min_button_clicked(self, button):
-        self.hide()
+        #TODO: Hiding the dockgroup is not a good idea, as it wil be 'minimized'
+        # into a toolbar, managed by DockLayout. We'll probably want to emit
+        # a signal instead...
+        #self.hide()
+        pass
 
     def _on_max_button_clicked(self, button):
         if button.get_icon_name_normal() == 'compact-maximize':
