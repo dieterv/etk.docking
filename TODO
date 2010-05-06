@@ -1,14 +1,14 @@
-- don't really like the fact there's way too many loops in
-  do_size_request/do_size_allocate/do_expose_event methods for container
-  widgets (DockGroup, CompactPaned, ...).
+- do_size_request/do_size_allocate/do_expose_event methods
+  for DockGroup are not efficient... Revisit when basic
+  functionality is implemented
+
+- keyboard navigation
 
 - translations
 
 - handle RTL
 
 - accessibility
-
-- keyboard navigation
 
 - investigate gtk theming to render tabs, make the eclipse based
   rendering optional.

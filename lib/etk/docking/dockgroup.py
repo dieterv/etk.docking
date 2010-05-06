@@ -215,13 +215,13 @@ class DockGroup(gtk.Container):
             (bw, bh) = tab.button.size_request()
 
             tab.area.width = (self._frame_width + self._spacing + iw +
-                             self._spacing+ lw + self._spacing + bw +
+                             self._spacing + lw + self._spacing + bw +
                              self._spacing + self._frame_width)
             tab.area.height = (self._frame_width + self._spacing + max(ih, lh, bh) +
                                self._spacing + self._frame_width)
 
             if index == self._current_index:
-                dw = tab.area.width
+                dw = tab.area.width - lw
             dh = max(dh, tab.area.height)
 
         # Add decoration button sizes to the decoration area
@@ -319,6 +319,24 @@ class DockGroup(gtk.Container):
                 else:
                     break
 
+            # If the current item's tab is the only visible tab,
+            # we need to recalculate its tab.area.width
+            if len(self._visible_tabs) == 1:
+                tab = self._tabs[self._current_index]
+                (iw, ih) = tab.image.get_child_requisition()
+                (lw, lh) = tab.label.get_child_requisition()
+                (bh, bw) = tab.button.get_child_requisition()
+
+                normal = (self._frame_width + self._spacing + iw +
+                          self._spacing + lw + self._spacing + bw +
+                          self._spacing + self._frame_width)
+
+                width = (allocation.width - self._frame_width - self._spacing -
+                         max_w - min_w - list_w - self._spacing)
+
+                if width <= normal:
+                    tab.area.width = width
+
             # Update visibility on dockitems and composite children used
             # by tabs.
             for tab in self._tabs:
@@ -364,16 +382,22 @@ class DockGroup(gtk.Container):
             tab.area.y = cy
 
             (iw, ih) = tab.image.get_child_requisition()
+            (lw, lh) = tab.label.get_child_requisition()
+            (bh, bw) = tab.button.get_child_requisition()
+
             ix = cx + self._frame_width + self._spacing
             iy = (tab.area.height - ih) / 2 + 1
             tab.image.size_allocate(gdk.Rectangle(ix, iy, iw, ih))
 
-            (lw, lh) = tab.label.get_child_requisition()
+            if len(self._visible_tabs) == 1:
+                lw = tab.area.width - (self._frame_width + self._spacing + iw +
+                                       self._spacing + self._spacing + bw +
+                                       self._spacing + self._frame_width)
+
             lx = cx + self._frame_width + self._spacing + iw + self._spacing
             ly = (tab.area.height - lh) / 2 + 1
             tab.label.size_allocate(gdk.Rectangle(lx, ly, lw, lh))
 
-            (bh, bw) = tab.button.get_child_requisition()
             bx = (cx + self._frame_width + self._spacing + iw +
                   self._spacing + lw + self._spacing)
             by = (tab.area.height - bh) / 2 + 1
