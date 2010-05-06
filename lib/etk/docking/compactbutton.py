@@ -49,7 +49,8 @@ class CompactButton(gtk.Widget):
                        'size': (gobject.TYPE_INT,
                                 'size',
                                 'size',
-                                -maxint - 1, maxint,
+                                0,
+                                maxint,
                                 16,
                                 gobject.PARAM_READWRITE
                                 ),
