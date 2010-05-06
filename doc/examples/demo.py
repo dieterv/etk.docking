@@ -81,9 +81,6 @@ class MainWindow(gtk.Window):
         removedgbutton = gtk.Button('Remove DockGroup')
         removedgbutton.connect('clicked', self._on_remove_dg_button_clicked)
         hbox.pack_start(removedgbutton, True, True)
-        showbutton = gtk.Button('Show Hidden DockGroups')
-        showbutton.connect('clicked', self._on_show_button_clicked)
-        hbox.pack_start(showbutton, True, True)
 
         adddibutton = gtk.Button('Create DockItems')
         adddibutton.connect('clicked', self._on_add_di_button_clicked)
@@ -108,11 +105,6 @@ class MainWindow(gtk.Window):
             pass
         else:
             self.dockpaned.remove(dg)
-
-    def _on_show_button_clicked(self, button):
-        for dg in self.dockpaned:
-            if not dg.props.visible:
-                dg.props.visible = True
 
     def _on_add_di_button_clicked(self, button):
         for dg in self.dockpaned:
