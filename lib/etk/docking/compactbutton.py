@@ -19,7 +19,6 @@
 
 
 from __future__ import absolute_import
-from sys import maxint
 from logging import getLogger
 
 import gobject
@@ -50,7 +49,7 @@ class CompactButton(gtk.Widget):
                                 'size',
                                 'size',
                                 0,
-                                maxint,
+                                gobject.G_MAXINT,
                                 16,
                                 gobject.PARAM_READWRITE
                                 ),

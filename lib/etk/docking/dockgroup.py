@@ -19,7 +19,6 @@
 
 
 from __future__ import absolute_import
-from sys import maxint
 from math import pi
 from logging import getLogger
 
@@ -68,7 +67,7 @@ class DockGroup(gtk.Container):
                                     'group id',
                                     'group id',
                                     0,
-                                    maxint,
+                                    gobject.G_MAXINT,
                                     0,
                                     gobject.PARAM_READWRITE)}
 

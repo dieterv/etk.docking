@@ -19,7 +19,6 @@
 
 
 from __future__ import absolute_import, division
-from sys import maxint
 from logging import getLogger
 from math import floor
 
@@ -59,7 +58,7 @@ class DockPaned(gtk.Container):
                                        'handle size',
                                        'handle size',
                                        0,
-                                       maxint,
+                                       gobject.G_MAXINT,
                                        4,
                                        gobject.PARAM_READWRITE),
                        'orientation': (gobject.TYPE_UINT,
