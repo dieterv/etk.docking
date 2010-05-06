@@ -33,7 +33,7 @@ try:
 except ImportError:
     # The lib directory is most likely not on PYTHONPATH, so add it here.
     import os, sys
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'lib')))
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'lib')))
     from etk.docking import DockLayout, DockPaned, DockGroup, DockItem
     del os, sys
 
