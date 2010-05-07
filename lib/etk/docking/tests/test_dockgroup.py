@@ -20,7 +20,7 @@
 
 import unittest
 
-from etk.docking import DockGroup
+from etk.docking import DockItem, DockGroup
 
 
 class TestDockGroup(unittest.TestCase):
@@ -54,3 +54,220 @@ class TestDockGroup(unittest.TestCase):
                           msg='.props attribute did not return expected value')
         self.assertTrue(notify_called,
                         msg='group-id property change notification failed when using .props attribute')
+
+    def test_add(self):
+        dockitem = DockItem()
+        dockgroup = DockGroup()
+        dockgroup.add(dockitem)
+
+        self.assertTrue(dockitem in dockgroup)
+
+        dockitem.destroy()
+        dockgroup.destroy()
+
+    def test_remove(self):
+        dockitem = DockItem()
+        dockgroup = DockGroup()
+        dockgroup.add(dockitem)
+        dockgroup.remove(dockitem)
+
+        self.assertTrue(dockitem not in dockgroup)
+
+        dockitem.destroy()
+        dockgroup.destroy()
+
+    def test_append_item(self):
+        dockitem = DockItem()
+        dockgroup = DockGroup()
+        index = dockgroup.append_item(dockitem)
+
+        self.assertTrue(index == 0)
+        self.assertTrue(dockgroup.get_nth_item(0) is dockitem)
+
+        dockitem.destroy()
+        dockgroup.destroy()
+
+    def test_prepend_item(self):
+        dockitem1 = DockItem()
+        dockitem2 = DockItem()
+        dockgroup = DockGroup()
+        index1 = dockgroup.append_item(dockitem1)
+        index2 = dockgroup.prepend_item(dockitem2)
+
+        self.assertTrue(index1 == 0)
+        self.assertTrue(index2 == 0)
+        self.assertTrue(dockgroup.get_nth_item(0) is dockitem2)
+        self.assertTrue(dockgroup.get_nth_item(1) is dockitem1)
+
+        dockitem1.destroy()
+        dockitem2.destroy()
+        dockgroup.destroy()
+
+    def test_insert_item(self):
+        dockitem1 = DockItem()
+        dockitem2 = DockItem()
+        dockitem3 = DockItem()
+        dockgroup = DockGroup()
+        dockgroup.insert_item(dockitem1, None)
+        dockgroup.insert_item(dockitem2, 0)
+        dockgroup.insert_item(dockitem3, 1)
+
+        self.assertTrue(dockgroup.get_nth_item(0) is dockitem2)
+        self.assertTrue(dockgroup.get_nth_item(1) is dockitem3)
+        self.assertTrue(dockgroup.get_nth_item(2) is dockitem1)
+
+        dockitem1.destroy()
+        dockitem2.destroy()
+        dockitem3.destroy()
+        dockgroup.destroy()
+
+    def test_remove_item(self):
+        dockitem1 = DockItem()
+        dockitem2 = DockItem()
+        dockgroup = DockGroup()
+        dockgroup.add(dockitem1)
+        dockgroup.add(dockitem2)
+        dockgroup.remove_item(0)
+        dockgroup.remove_item(None)
+
+        self.assertTrue(dockitem1 not in dockgroup)
+        self.assertTrue(dockitem2 not in dockgroup)
+
+        dockitem1.destroy()
+        dockitem2.destroy()
+        dockgroup.destroy()
+
+    def test_item_num(self):
+        dockitem1 = DockItem()
+        dockitem2 = DockItem()
+        dockgroup = DockGroup()
+        dockgroup.add(dockitem1)
+
+        self.assertTrue(dockgroup.item_num(dockitem1) == 0)
+        self.assertTrue(dockgroup.item_num(dockitem2) is None)
+
+        dockitem1.destroy()
+        dockgroup.destroy()
+
+    def test_get_n_items(self):
+        dockgroup = DockGroup()
+        self.assertTrue(dockgroup.get_n_items() == 0)
+
+        dockitem = DockItem()
+        dockgroup.add(dockitem)
+        self.assertTrue(dockgroup.get_n_items() == 1)
+
+        dockitem.destroy()
+        dockgroup.destroy()
+
+    def test_get_nth_item(self):
+        dockitem1 = DockItem()
+        dockitem2 = DockItem()
+        dockgroup = DockGroup()
+        dockgroup.add(dockitem1)
+        dockgroup.add(dockitem2)
+
+        self.assertTrue(dockgroup.get_nth_item(0) is dockitem1)
+        self.assertTrue(dockgroup.get_nth_item(1) is dockitem2)
+        self.assertTrue(dockgroup.get_nth_item(2) is None)
+        self.assertTrue(dockgroup.get_nth_item(-1) is None)
+
+        dockitem1.destroy()
+        dockitem2.destroy()
+        dockgroup.destroy()
+
+    def test_get_current_item(self):
+        dockitem = DockItem()
+        dockgroup = DockGroup()
+        self.assertTrue(dockgroup.get_current_item() is None)
+
+        index = dockgroup.append_item(dockitem)
+        self.assertTrue(dockgroup.get_current_item() == index)
+
+        dockgroup.remove(dockitem)
+        self.assertTrue(dockgroup.get_current_item() is None)
+
+        dockitem.destroy()
+        dockgroup.destroy()
+
+    def test_set_current_item(self):
+        dockitem1 = DockItem()
+        dockitem2 = DockItem()
+        dockgroup = DockGroup()
+        self.assertTrue(dockgroup.get_current_item() is None)
+
+        index = dockgroup.append_item(dockitem1)
+        self.assertTrue(dockgroup.get_current_item() == index)
+
+        index = dockgroup.append_item(dockitem2)
+        self.assertTrue(dockgroup.get_current_item() == index)
+
+        dockgroup.set_current_item(0)
+        self.assertTrue(dockgroup.get_current_item() == 0)
+
+        dockgroup.set_current_item(dockgroup.get_n_items() + 10)
+        self.assertTrue(dockgroup.get_current_item() == dockgroup.get_n_items() - 1)
+
+        dockgroup.set_current_item(-1)
+        self.assertTrue(dockgroup.get_current_item() == 0)
+
+        dockitem1.destroy()
+        dockitem2.destroy()
+        dockgroup.destroy()
+
+    def test_next_item(self):
+        dockitem1 = DockItem()
+        dockitem2 = DockItem()
+        dockgroup = DockGroup()
+        dockgroup.add(dockitem1)
+        dockgroup.add(dockitem2)
+        dockgroup.set_current_item(0)
+        self.assertTrue(dockgroup.get_current_item() == 0)
+
+        dockgroup.next_item()
+        self.assertTrue(dockgroup.get_current_item() == 1)
+
+        dockgroup.next_item()
+        self.assertTrue(dockgroup.get_current_item() == 1)
+
+        dockitem1.destroy()
+        dockitem2.destroy()
+        dockgroup.destroy()
+
+    def test_prev_item(self):
+        dockitem1 = DockItem()
+        dockitem2 = DockItem()
+        dockgroup = DockGroup()
+        dockgroup.add(dockitem1)
+        dockgroup.add(dockitem2)
+        self.assertTrue(dockgroup.get_current_item() == 1)
+
+        dockgroup.prev_item()
+        self.assertTrue(dockgroup.get_current_item() == 0)
+
+        dockgroup.prev_item()
+        self.assertTrue(dockgroup.get_current_item() == 0)
+
+        dockitem1.destroy()
+        dockitem2.destroy()
+        dockgroup.destroy()
+
+    def test_reorder_item(self):
+        dockitem1 = DockItem()
+        dockitem2 = DockItem()
+        dockitem3 = DockItem()
+        dockgroup = DockGroup()
+        dockgroup.add(dockitem1)
+        dockgroup.add(dockitem2)
+        dockgroup.add(dockitem3)
+        dockgroup.reorder_item(dockitem3, 0)
+        dockgroup.reorder_item(dockitem1, 2)
+
+        self.assertTrue(dockgroup.item_num(dockitem1) == 2)
+        self.assertTrue(dockgroup.item_num(dockitem2) == 1)
+        self.assertTrue(dockgroup.item_num(dockitem3) == 0)
+
+        dockitem1.destroy()
+        dockitem2.destroy()
+        dockitem3.destroy()
+        dockgroup.destroy()

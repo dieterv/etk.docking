@@ -620,7 +620,7 @@ class DockGroup(gtk.Container):
             callback(tab.item, data)
 
     def do_add(self, widget):
-        self.append_item(widget)
+        self.insert_item(widget)
 
     def do_remove(self, widget):
         self.remove_item(self.item_num(widget))
@@ -753,7 +753,7 @@ class DockGroup(gtk.Container):
         the DockItem specified by item or None if no item tab contains item.
         '''
         for tab in self._tabs:
-            if tab.item == item:
+            if tab.item is item:
                 return self._tabs.index(tab)
         else:
             return None
@@ -857,8 +857,9 @@ class DockGroup(gtk.Container):
         elif position > self.get_n_items() - 1:
             position = self.get_n_items()
 
-        self._tabs.remove(item)
-        self._tabs.insert(position, item)
+        tab = self._tabs[self.item_num(item)]
+        self._tabs.remove(tab)
+        self._tabs.insert(position, tab)
 
     ############################################################################
     # Decoration area signal handlers
@@ -882,7 +883,7 @@ class DockGroup(gtk.Container):
         self.set_current_item(self._tabs.index(tab))
 
     def _on_min_button_clicked(self, button):
-        #TODO: Hiding the dockgroup is not a good idea, as it wil be 'minimized'
+        #TODO: Hiding the dockgroup is not a good idea, as it will be 'minimized'
         # into a toolbar, managed by DockLayout. We'll probably want to emit
         # a signal instead...
         #self.hide()
