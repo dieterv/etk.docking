@@ -1,10 +1,13 @@
-Table Of Contents
-=================
+:mod:`etk.docking` - PyGTK Docking Widgets
+==========================================
 
 .. toctree::
     :maxdepth: 2
 
-    docking
+    dockitem
+    dockgroup
+    dockpaned
+    docklayout
 
 Indices and tables
 ==================
