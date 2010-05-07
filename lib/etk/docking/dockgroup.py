@@ -43,13 +43,15 @@ class _DockGroupTab(object):
     '''
     Convenience class storing information about a tab.
     '''
-    __slots__ = ['item',        # DockItem associated with this tab
-                 'image',       # icon (gtk.Image)
-                 'label',       # title (gtk.Label)
-                 'button',      # close button (etk.docking.CompactButton)
-                 'menu_item',   # menu item (gtk.ImageMenuItem)
-                 'state',       # state (one of the GTK State Type Constants)
-                 'area']        # area, used for hit testing (gdk.Rectangle)
+    __slots__ = ['item',                # DockItem associated with this tab
+                 'item_title_handler',
+                 'item_title_tooltip_text_handler',
+                 'image',               # icon (gtk.Image)
+                 'label',               # title (gtk.Label)
+                 'button',              # close button (etk.docking.CompactButton)
+                 'menu_item',           # menu item (gtk.ImageMenuItem)
+                 'state',               # state (one of the GTK State Type Constants)
+                 'area']                # area, used for hit testing (gdk.Rectangle)
 
 
 class DockGroup(gtk.Container):
@@ -81,6 +83,7 @@ class DockGroup(gtk.Container):
         self._group_id = 0
         self._frame_width = 1
         self._spacing = 3
+        self._current_tab = None
 
         # Decoration area
         self._decoration_area = gdk.Rectangle()
@@ -105,10 +108,6 @@ class DockGroup(gtk.Container):
         self._max_button.connect('clicked', self._on_max_button_clicked)
         self._max_button.set_parent(self)
         gtk.widget_pop_composite_child()
-
-        # Docked items
-        self._current_index = None
-        self._current_item = None
 
 #        # Configure drag/drop
 #        self.drag_source_set(gdk.BUTTON1_MASK,
@@ -210,7 +209,7 @@ class DockGroup(gtk.Container):
         # current item tab size to the decoration area requisition as
         # the other tabs can be hidden when we don't get enough room
         # in the allocation fase.
-        for index, tab in enumerate(self._tabs):
+        for tab in self._tabs:
             (iw, ih) = tab.image.size_request()
             (lw, lh) = tab.label.size_request()
             (bw, bh) = tab.button.size_request()
@@ -221,8 +220,9 @@ class DockGroup(gtk.Container):
             tab.area.height = (self._frame_width + self._spacing + max(ih, lh, bh) +
                                self._spacing + self._frame_width)
 
-            if index == self._current_index:
+            if tab == self._current_tab:
                 dw = tab.area.width - lw
+
             dh = max(dh, tab.area.height)
 
         # Add decoration button sizes to the decoration area
@@ -241,8 +241,8 @@ class DockGroup(gtk.Container):
         self._decoration_area.height = dh
 
         # Current item
-        if self._current_item:
-            (iw, ih) = self._current_item.size_request()
+        if self._current_tab:
+            (iw, ih) = self._current_tab.item.size_request()
         else:
             iw = ih = 0
 
@@ -270,12 +270,14 @@ class DockGroup(gtk.Container):
         # Tabs on the far right of the current item tab get hidden first,
         # then tabs on the far left.
         if self._tabs:
+            current_tab_index = self._tabs.index(self._current_tab)
+
             # We'll try to keep the current item's tab in the same location to
             # prevent tabs from jumping around. To do this we need to store the
             # current item's tab position before we reset self._visible_tabs.
             max_tabs_before_current = len(self._tabs)
-            if self._visible_tabs and self._tabs[self._current_index] in self._visible_tabs:
-                max_tabs_before_current = self._visible_tabs.index(self._tabs[self._current_index])
+            if self._visible_tabs and self._current_tab in self._visible_tabs:
+                max_tabs_before_current = self._visible_tabs.index(self._current_tab)
 
             # Reset visible tabs
             self._visible_tabs = []
@@ -283,12 +285,12 @@ class DockGroup(gtk.Container):
             # Calculate available tab area width
             available_width = (allocation.width - self._frame_width - self._spacing -
                                max_w - min_w - list_w - self._spacing -
-                               self._tabs[self._current_index].area.width)
+                               self._current_tab.area.width)
 
             # Show tabs to the left of the current item's tab, but don't make
             # the current item's tab jump position.
             count = 0
-            for tab in reversed(self._tabs[:self._current_index]):
+            for tab in reversed(self._tabs[:current_tab_index]):
                 if available_width - tab.area.width >= 0:
                     if count < max_tabs_before_current:
                         count += 1
@@ -300,10 +302,10 @@ class DockGroup(gtk.Container):
                     break
 
             # Current item's tab is always visible
-            self._visible_tabs.append(self._tabs[self._current_index])
+            self._visible_tabs.append(self._current_tab)
 
             # Show tabs to the right of the current item's tab
-            for tab in self._tabs[self._current_index + 1:]:
+            for tab in self._tabs[current_tab_index + 1:]:
                 if available_width - tab.area.width >= 0:
                     available_width -= tab.area.width
                     self._visible_tabs.append(tab)
@@ -313,7 +315,7 @@ class DockGroup(gtk.Container):
             # Check if we can add extra tabs to the left of the current
             # item's tab. Only add tabs that have been skipped above while
             # preventing the current item's tab from jumping position
-            for tab in reversed(self._tabs[:self._current_index - count]):
+            for tab in reversed(self._tabs[:current_tab_index - count]):
                 if available_width - tab.area.width >= 0:
                     available_width -= tab.area.width
                     self._visible_tabs.insert(0, tab)
@@ -323,10 +325,9 @@ class DockGroup(gtk.Container):
             # If the current item's tab is the only visible tab,
             # we need to recalculate its tab.area.width
             if len(self._visible_tabs) == 1:
-                tab = self._tabs[self._current_index]
-                (iw, ih) = tab.image.get_child_requisition()
-                (lw, lh) = tab.label.get_child_requisition()
-                (bh, bw) = tab.button.get_child_requisition()
+                (iw, ih) = self._current_tab.image.get_child_requisition()
+                (lw, lh) = self._current_tab.label.get_child_requisition()
+                (bh, bw) = self._current_tab.button.get_child_requisition()
 
                 normal = (self._frame_width + self._spacing + iw +
                           self._spacing + lw + self._spacing + bw +
@@ -336,21 +337,16 @@ class DockGroup(gtk.Container):
                          max_w - min_w - list_w - self._spacing)
 
                 if width <= normal:
-                    tab.area.width = width
+                    self._current_tab.area.width = width
 
             # Update visibility on dockitems and composite children used
             # by tabs.
             for tab in self._tabs:
-                index = self._tabs.index(tab)
-                tab.menu_item.set_tooltip_text(tab.item.get_title_tooltip_text())
-
-                if index == self._current_index:
+                if tab is self._current_tab:
                     tab.item.show()
                     tab.image.show()
                     tab.label.show()
                     tab.button.show()
-                    tab.menu_item.child.set_use_markup(True)
-                    tab.menu_item.child.set_markup('<b>%s</b>' % tab.item.get_title())
                 elif tab in self._visible_tabs:
                     tab.item.hide()
                     tab.image.show()
@@ -359,15 +355,11 @@ class DockGroup(gtk.Container):
                     else:
                         tab.button.hide()
                     tab.label.show()
-                    tab.menu_item.child.set_use_markup(False)
-                    tab.menu_item.child.set_markup(tab.item.get_title())
                 else:
                     tab.item.hide()
                     tab.image.hide()
                     tab.button.hide()
                     tab.label.hide()
-                    tab.menu_item.child.set_use_markup(False)
-                    tab.menu_item.child.set_markup(tab.item.get_title())
 
         # Only show the list button when needed
         if len(self._tabs) > len(self._visible_tabs):
@@ -407,12 +399,12 @@ class DockGroup(gtk.Container):
             cx += tab.area.width
 
         # Allocate space for the current item
-        if self._current_item:
+        if self._current_tab:
             ix = self._frame_width + self.border_width
             iy = self._decoration_area.height + self.border_width
             iw = max(allocation.width - (2 * self._frame_width) - (2 * self.border_width), 0)
             ih = max(allocation.height - (2 * self._frame_width) - (2 * self.border_width) - 23, 0)
-            self._current_item.size_allocate(gdk.Rectangle(ix, iy, iw, ih))
+            self._current_tab.item.size_allocate(gdk.Rectangle(ix, iy, iw, ih))
 
         if self.flags() & gtk.REALIZED:
             self.window.move_resize(*allocation)
@@ -457,67 +449,69 @@ class DockGroup(gtk.Container):
         c.stroke()
 
         # Draw tabs
-        visible_index = 0
-        for index, tab in enumerate(self._tabs):
-            if tab in self._visible_tabs:
-                tx = tab.area.x
-                ty = tab.area.y
-                tw = tab.area.width
-                th = tab.area.height
+        if self._tabs:
+            current_tab_index = self._tabs.index(self._current_tab)
+            visible_index = 0
+            for index, tab in enumerate(self._tabs):
+                if tab in self._visible_tabs:
+                    tx = tab.area.x
+                    ty = tab.area.y
+                    tw = tab.area.width
+                    th = tab.area.height
 
-                if index < self._current_index and visible_index != 0:
-                    c.move_to(tx + 0.5, ty + th)
-                    c.line_to(tx + 0.5, ty + 8.5)
-                    c.arc(tx + 8.5, 8.5, 8, 180 * (pi / 180), 270 * (pi / 180))
-                    c.set_source_rgb(*dark)
-                    c.stroke()
-                elif index > self._current_index:
-                    c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
-                    c.line_to(tx + tw - 0.5, ty + th)
-                    c.set_source_rgb(*dark)
-                    c.stroke()
-                elif index == self._current_index:
-                    if visible_index == 0:
-                        c.move_to(tx + 0.5, ty + th)
-                        c.line_to(tx + 0.5, ty + 0.5)
-                        c.line_to(tx + tw - 8.5, ty + 0.5)
-                        c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
-                        c.line_to(tx + tw - 0.5, ty + th)
-                        linear = cairo.LinearGradient(0.5, 0.5, 0.5, th)
-                        linear.add_color_stop_rgb(0, 0.87843137254901960784313725490196, 0.91764705882352941176470588235294, 0.98431372549019607843137254901961)
-                        linear.add_color_stop_rgb(1, 0.6, 0.72941176470588235294117647058824, 0.95294117647058823529411764705882)
-                        c.set_source(linear)
-                        c.fill_preserve()
-                        c.set_source_rgb(*dark)
-                        c.stroke()
-                    else:
+                    if index < current_tab_index and visible_index != 0:
                         c.move_to(tx + 0.5, ty + th)
                         c.line_to(tx + 0.5, ty + 8.5)
                         c.arc(tx + 8.5, 8.5, 8, 180 * (pi / 180), 270 * (pi / 180))
-                        c.line_to(tx + tw - 8.5, ty + 0.5)
-                        c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
-                        c.line_to(tx + tw - 0.5, ty + th)
-                        linear = cairo.LinearGradient(0.5, 0.5, 0.5, th)
-                        linear.add_color_stop_rgb(0, 0.87843137254901960784313725490196, 0.91764705882352941176470588235294, 0.98431372549019607843137254901961)
-                        linear.add_color_stop_rgb(1, 0.6, 0.72941176470588235294117647058824, 0.95294117647058823529411764705882)
-                        c.set_source(linear)
-                        c.fill_preserve()
                         c.set_source_rgb(*dark)
                         c.stroke()
+                    elif index > current_tab_index:
+                        c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
+                        c.line_to(tx + tw - 0.5, ty + th)
+                        c.set_source_rgb(*dark)
+                        c.stroke()
+                    elif index == current_tab_index:
+                        if visible_index == 0:
+                            c.move_to(tx + 0.5, ty + th)
+                            c.line_to(tx + 0.5, ty + 0.5)
+                            c.line_to(tx + tw - 8.5, ty + 0.5)
+                            c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
+                            c.line_to(tx + tw - 0.5, ty + th)
+                            linear = cairo.LinearGradient(0.5, 0.5, 0.5, th)
+                            linear.add_color_stop_rgb(0, 0.87843137254901960784313725490196, 0.91764705882352941176470588235294, 0.98431372549019607843137254901961)
+                            linear.add_color_stop_rgb(1, 0.6, 0.72941176470588235294117647058824, 0.95294117647058823529411764705882)
+                            c.set_source(linear)
+                            c.fill_preserve()
+                            c.set_source_rgb(*dark)
+                            c.stroke()
+                        else:
+                            c.move_to(tx + 0.5, ty + th)
+                            c.line_to(tx + 0.5, ty + 8.5)
+                            c.arc(tx + 8.5, 8.5, 8, 180 * (pi / 180), 270 * (pi / 180))
+                            c.line_to(tx + tw - 8.5, ty + 0.5)
+                            c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
+                            c.line_to(tx + tw - 0.5, ty + th)
+                            linear = cairo.LinearGradient(0.5, 0.5, 0.5, th)
+                            linear.add_color_stop_rgb(0, 0.87843137254901960784313725490196, 0.91764705882352941176470588235294, 0.98431372549019607843137254901961)
+                            linear.add_color_stop_rgb(1, 0.6, 0.72941176470588235294117647058824, 0.95294117647058823529411764705882)
+                            c.set_source(linear)
+                            c.fill_preserve()
+                            c.set_source_rgb(*dark)
+                            c.stroke()
 
-                self.propagate_expose(tab.image, event)
-                self.propagate_expose(tab.label, event)
-                self.propagate_expose(tab.button, event)
+                    self.propagate_expose(tab.image, event)
+                    self.propagate_expose(tab.label, event)
+                    self.propagate_expose(tab.button, event)
 
-                # Keep track of visible tabs
-                visible_index  += 1
+                    # Keep track of visible tabs
+                    visible_index  += 1
 
         self.propagate_expose(self._list_button, event)
         self.propagate_expose(self._min_button, event)
         self.propagate_expose(self._max_button, event)
 
         # Draw DockItem border
-        if self._current_item:
+        if self._current_tab:
             c.rectangle(self._frame_width, dh, self.allocation.width - 2*self._frame_width, self.allocation.height - dh - self._frame_width)
             c.set_source_rgb(0.6, 0.72941176470588235294117647058824, 0.95294117647058823529411764705882)
             c.fill()
@@ -678,6 +672,8 @@ class DockGroup(gtk.Container):
         # Configure child widgets for tab
         tab.item = item
         tab.item.set_parent(self)
+        tab.item_title_handler = tab.item.connect('notify::title', self._on_item_title_changed, tab)
+        tab.item_title_tooltip_text_handler = tab.item.connect('notify::title-tooltip-text', self._on_item_title_tooltip_text_changed, tab)
         tab.image.set_parent(self)
         tab.label.set_text(item.get_title())
         tab.label.set_parent(self)
@@ -718,11 +714,16 @@ class DockGroup(gtk.Container):
         else:
             tab = self._tabs[item_num]
 
+        # We need this to reset the current item below
+        old_tab_index = self._tabs.index(self._current_tab)
+
         # Remove from self._visible_tabs list
         if tab in self._visible_tabs:
             self._visible_tabs.remove(tab)
 
         # Remove tab item
+        tab.item.disconnect(tab.item_title_handler)
+        tab.item.disconnect(tab.item_title_tooltip_text_handler)
         tab.item.unparent()
         tab.item.destroy()
 
@@ -738,8 +739,10 @@ class DockGroup(gtk.Container):
         self._tabs.remove(tab)
 
         # Refresh ourselves
-        if item_num < self._current_index:
-            item_num = self._current_index - 1
+        current_tab_index = old_tab_index
+
+        if item_num < current_tab_index:
+            item_num = current_tab_index - 1
 
         self.set_current_item(item_num)
 
@@ -789,8 +792,8 @@ class DockGroup(gtk.Container):
         The get_current_item() method returns the index of the current item tab
         numbered from 0, or None if there are no item tabs.
         '''
-        if self._current_item:
-            return self._current_index
+        if self._current_tab:
+            return self._tabs.index(self._current_tab)
         else:
             return None
 
@@ -805,18 +808,32 @@ class DockGroup(gtk.Container):
         negative the first item is selected. If greater than the number of
         items in the DockGroup, the last item is selected.
         '''
+        # Store a reference to the old current tab
+        if self._current_tab and self._current_tab in self._tabs:
+            old_tab = self._current_tab
+        else:
+            old_tab = None
+
+        # Switch to the new current tab
         if self._tabs:
             if item_num < 0:
-                self._current_index = 0
+                current_tab_index = 0
             elif item_num > len(self._tabs) - 1:
-                self._current_index = len(self._tabs) - 1
+                current_tab_index = len(self._tabs) - 1
             else:
-                self._current_index = item_num
+                current_tab_index = item_num
 
-            self._current_item = self._tabs[self._current_index].item
+            self._current_tab = self._tabs[current_tab_index]
+            # Update properties on new current tab
+            self._on_item_title_changed(self._current_tab)
+            self._on_item_title_tooltip_text_changed(self._current_tab)
         else:
-            self._current_index = None
-            self._current_item = None
+            self._current_tab = None
+
+        # Update properties on old current tab
+        if old_tab:
+            self._on_item_title_changed(old_tab)
+            self._on_item_title_tooltip_text_changed(old_tab)
 
         # Refresh ourselves
         self.queue_resize()
@@ -860,6 +877,20 @@ class DockGroup(gtk.Container):
         tab = self._tabs[self.item_num(item)]
         self._tabs.remove(tab)
         self._tabs.insert(position, tab)
+
+    ############################################################################
+    # Property notification signal handlers
+    ############################################################################
+    def _on_item_title_changed(self, tab):
+        if tab is self._current_tab:
+            tab.menu_item.child.set_use_markup(True)
+            tab.menu_item.child.set_markup('<b>%s</b>' % tab.item.get_title())
+        else:
+            tab.menu_item.child.set_use_markup(False)
+            tab.menu_item.child.set_markup(tab.item.get_title())
+
+    def _on_item_title_tooltip_text_changed(self, tab):
+        tab.menu_item.set_tooltip_text(tab.item.get_title_tooltip_text())
 
     ############################################################################
     # Decoration area signal handlers
