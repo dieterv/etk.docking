@@ -24,6 +24,9 @@ from etk.docking import DockItem, DockGroup
 
 
 class TestDockGroup(unittest.TestCase):
+    ############################################################################
+    # Test properties
+    ############################################################################
     def test_prop_group_id(self):
         global notify_called
 
@@ -55,6 +58,9 @@ class TestDockGroup(unittest.TestCase):
         self.assertTrue(notify_called,
                         msg='group-id property change notification failed when using .props attribute')
 
+    ############################################################################
+    # Test public api
+    ############################################################################
     def test_add(self):
         dockitem = DockItem()
         dockgroup = DockGroup()

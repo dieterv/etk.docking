@@ -26,6 +26,9 @@ from etk.docking import DockPaned
 
 
 class TestDockPaned(unittest.TestCase):
+    ############################################################################
+    # Test properties
+    ############################################################################
     def test_prop_handle_size(self):
         global notify_called
 
@@ -91,3 +94,7 @@ class TestDockPaned(unittest.TestCase):
                         msg='orientation property change notification failed when using .props attribute')
 
         dockpaned.destroy()
+
+    ############################################################################
+    # Test public api
+    ############################################################################

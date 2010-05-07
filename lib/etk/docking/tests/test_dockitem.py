@@ -18,16 +18,17 @@
 # along with etk.docking. If not, see <http://www.gnu.org/licenses/>.
 
 
-import os
 import unittest
 
 import gtk
-import gtk.gdk as gdk
 
-from etk.docking import DockGroup, DockItem
+from etk.docking import DockItem
 
 
 class TestDockItem(unittest.TestCase):
+    ############################################################################
+    # Test properties
+    ############################################################################
     def test_prop_icon_name(self):
         global notify_called
 
@@ -121,6 +122,33 @@ class TestDockItem(unittest.TestCase):
         self.assertTrue(notify_called,
                         msg='title-tooltip-text property change notification failed when using .props attribute')
 
+    ############################################################################
+    # Test public api
+    ############################################################################
+    def test_add(self):
+        button = gtk.Button()
+        dockitem = DockItem()
+        dockitem.add(button)
+
+        self.assertTrue(dockitem.child is button)
+
+        button.destroy()
+        dockitem.destroy()
+
+    def test_remove(self):
+        button = gtk.Button()
+        dockitem = DockItem()
+        dockitem.add(button)
+        dockitem.remove(button)
+
+        self.assertTrue(dockitem.child is None)
+
+        button.destroy()
+        dockitem.destroy()
+
+    ############################################################################
+    # Test appearance
+    ############################################################################
 #    def test_appearance(self):
 #        frame = gtk.Frame()
 #        frame.set_shadow_type(gtk.SHADOW_NONE)
