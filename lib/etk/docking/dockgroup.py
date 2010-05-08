@@ -355,10 +355,11 @@ class DockGroup(gtk.Container):
                         tab.button.hide()
                     tab.label.show()
                 else:
-                    tab.item.hide()
-                    tab.image.hide()
-                    tab.button.hide()
-                    tab.label.hide()
+                    if tab.item.flags() & gtk.VISIBLE:
+                        tab.item.hide()
+                        tab.image.hide()
+                        tab.button.hide()
+                        tab.label.hide()
 
         # Only show the list button when needed
         if len(self._tabs) > len(self._visible_tabs):
