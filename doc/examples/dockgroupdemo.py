@@ -41,6 +41,7 @@ except ImportError:
 class MainWindow(gtk.Window):
     def __init__(self):
         gtk.Window.__init__(self)
+        self.set_size_request(150, 150)
 
         self.set_title('DockGroup Demo')
         self.set_border_width(4)
@@ -49,6 +50,7 @@ class MainWindow(gtk.Window):
         vbox = gtk.VBox()
         vbox.set_spacing(4)
         self.add(vbox)
+
 
         ########################################################################
         # DockLayout
@@ -67,6 +69,7 @@ class MainWindow(gtk.Window):
         vbox.pack_start(adddibutton, False, False)
 
         self.show_all()
+	self._add_dockitems(self.dg)
 
     def _on_add_di_button_clicked(self, button):
         self._add_dockitems(self.dg)
