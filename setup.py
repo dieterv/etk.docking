@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright © 2010 Dieter Verfaillie <dieterv@optionexplicit.be>
+# Copyright © 2010 etk.docking Contributors
 #
 # This file is part of etk.docking.
 #
@@ -39,8 +39,7 @@ setup(namespace_packages=['etk'],
       version = version(),
       description = 'PyGTK Docking Widgets',
       long_description = read('README'),
-      author = 'Dieter Verfaillie',
-      author_email = 'dieterv@optionexplicit.be',
+      author = 'etk.Docking Contributors',
       url = 'http://github.com/dieterv/etk.docking/',
       #mailinglist = '',
       license = 'GNU Lesser General Public License',
