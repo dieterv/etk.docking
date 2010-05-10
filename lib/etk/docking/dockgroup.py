@@ -30,7 +30,7 @@ import gtk.gdk as gdk
 from . import _
 from .compactbutton import CompactButton
 from .dockitem import DockItem
-from .util import _rect_contains
+from .util import rect_contains
 
 
 #DRAG_TARGET_GROUP = 0
@@ -525,7 +525,7 @@ class DockGroup(gtk.Container):
         self.set_tooltip_text(None)
 
         for tab in self._visible_tabs:
-            if _rect_contains(tab.area, event.x, event.y):
+            if rect_contains(tab.area, event.x, event.y):
                 # Update tooltip for tab under the cursor
                 self.set_tooltip_text(tab.item.get_title_tooltip_text())
 
@@ -539,7 +539,7 @@ class DockGroup(gtk.Container):
 
     def do_button_release_event(self, event):
         for tab in self._visible_tabs:
-            if _rect_contains(tab.area, event.x, event.y):
+            if rect_contains(tab.area, event.x, event.y):
                 if event.button == 1:
                     self.set_current_item(self._tabs.index(tab))
                 elif event.button == 3:
@@ -579,9 +579,9 @@ class DockGroup(gtk.Container):
 #        self.log.debug('%s, %s, %s' % (context, x, y))
 #
 #        # Insert the dragged tab before the tab under (x, y)
-#        if _rect_contains(self._decoration_area, x, y):
+#        if rect_contains(self._decoration_area, x, y):
 #            for tab in self._tabs:
-#                if _rect_contains(tab.area, x, y):
+#                if rect_contains(tab.area, x, y):
 #                    self.log.info('insert dragged tab before %s' % tab)
 #                    return
 #

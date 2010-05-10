@@ -56,31 +56,32 @@ class MainWindow(gtk.Window):
         #self.docklayout = DockLayout()
         #vbox.pack_start(self.docklayout)
 
-        self.dockpaned = DockPaned()
-        self.dockpaned.set_orientation(gtk.ORIENTATION_HORIZONTAL)
-        vbox.pack_start(self.dockpaned)
+        self.dp1 = DockPaned()
+        self.dp1.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+        vbox.pack_start(self.dp1)
 
         self.dg1 = DockGroup()
-        self.dockpaned.add(self.dg1)
+        self.dp1.add(self.dg1)
+
+        self.dp2 = DockPaned()
+        self.dp2.set_orientation(gtk.ORIENTATION_VERTICAL)
+        self.dp1.add(self.dp2)
 
         self.dg2 = DockGroup()
-        self.dockpaned.add(self.dg2)
+        self.dp2.add(self.dg2)
 
         self.dg3 = DockGroup()
-        self.dockpaned.add(self.dg3)
+        self.dp2.add(self.dg3)
+
+        self.dg4 = DockGroup()
+        self.dp1.add(self.dg4)
 
         ########################################################################
         # Testing Tools
         ########################################################################
-        hbox = gtk.HBox()
-        hbox.set_spacing(4)
-        vbox.pack_start(hbox, False, False)
         adddgbutton = gtk.Button('Add DockGroup')
         adddgbutton.connect('clicked', self._on_add_dg_button_clicked)
-        hbox.pack_start(adddgbutton, True, True)
-        removedgbutton = gtk.Button('Remove DockGroup')
-        removedgbutton.connect('clicked', self._on_remove_dg_button_clicked)
-        hbox.pack_start(removedgbutton, True, True)
+        vbox.pack_start(adddgbutton, False, False)
 
         adddibutton = gtk.Button('Create DockItems')
         adddibutton.connect('clicked', self._on_add_di_button_clicked)
@@ -95,26 +96,27 @@ class MainWindow(gtk.Window):
     def _on_add_dg_button_clicked(self, button):
         dg = DockGroup()
         dg.show()
-        self.dockpaned.add(dg)
+        self.dp1.add(dg)
 
-    def _on_remove_dg_button_clicked(self, button):
-        items = self.dockpaned.get_children()
-        try:
-            dg = items[len(items) - 1]
-        except IndexError:
-            pass
-        else:
-            self.dockpaned.remove(dg)
+        dg = DockGroup()
+        dg.show()
+        self.dp2.add(dg)
 
     def _on_add_di_button_clicked(self, button):
-        for dg in self.dockpaned:
-            self._add_dockitems(dg)
+        for child in self.dp1:
+            if isinstance(child, DockGroup):
+                self._add_dockitems(child)
+            elif isinstance(child, DockPaned):
+                for child in child:
+                    self._add_dockitems(child)
 
     def _on_orientation_button_clicked(self, button):
-        if self.dockpaned.get_orientation() == gtk.ORIENTATION_HORIZONTAL:
-            self.dockpaned.set_orientation(gtk.ORIENTATION_VERTICAL)
+        if self.dp1.get_orientation() == gtk.ORIENTATION_HORIZONTAL:
+            self.dp1.set_orientation(gtk.ORIENTATION_VERTICAL)
+            self.dp2.set_orientation(gtk.ORIENTATION_HORIZONTAL)
         else:
-            self.dockpaned.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+            self.dp1.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+            self.dp2.set_orientation(gtk.ORIENTATION_VERTICAL)
 
     def _add_dockitems(self, dockgroup):
         examples = [('calc', 'calculator', '#!/usr/bin/env python\n\nprint \'Hello!\''),

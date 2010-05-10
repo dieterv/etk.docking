@@ -18,9 +18,9 @@
 # along with etk.docking. If not, see <http://www.gnu.org/licenses/>.
 
 
-def _rect_contains(rect, x, y):
+def rect_contains(rect, x, y):
     '''
-    The _rect_contains method checks if a point, defined by x and y falls
+    The rect_contains method checks if a point, defined by x and y falls
     within the gdk.Rectangle defined by rect.
     '''
     if x > rect.x and x < rect.x + rect.width and y > rect.y and y < rect.y + rect.height:
@@ -28,9 +28,9 @@ def _rect_contains(rect, x, y):
     else:
         return False
 
-def _rect_overlaps(rect, x, y):
+def rect_overlaps(rect, x, y):
     '''
-    The _rect_overlaps method checks if a point, defined by x and y overlaps
+    The rect_overlaps method checks if a point, defined by x and y overlaps
     the gdk.Rectangle defined by rect.
     '''
     if x >= rect.x and x <= rect.x + rect.width and y >= rect.y and y <= rect.y + rect.height:
