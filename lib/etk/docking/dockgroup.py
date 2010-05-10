@@ -337,6 +337,8 @@ class DockGroup(gtk.Container):
 
                 if width <= normal:
                     self._current_tab.area.width = width
+                else:
+                    self._current_tab.area.width = normal
 
             # Update visibility on dockitems and composite children used
             # by tabs.
