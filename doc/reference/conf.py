@@ -49,7 +49,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'etk.docking'
-copyright = u'2010 Dieter Verfaillie <dieterv@optionexplicit.be>'
+copyright = u'2010 etk.docking Contributors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

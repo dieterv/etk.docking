@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright © 2010 Dieter Verfaillie <dieterv@optionexplicit.be>
+# Copyright © 2010 etk.docking Contributors
 #
 # This file is part of etk.docking.
 #

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright © 2010 Dieter Verfaillie <dieterv@optionexplicit.be>
+# Copyright © 2010 etk.docking Contributors
 #
 # This file is part of etk.docking.
 #
@@ -69,7 +69,7 @@ class MainWindow(gtk.Window):
         vbox.pack_start(adddibutton, False, False)
 
         self.show_all()
-	self._add_dockitems(self.dg)
+    self._add_dockitems(self.dg)
 
     def _on_add_di_button_clicked(self, button):
         self._add_dockitems(self.dg)
