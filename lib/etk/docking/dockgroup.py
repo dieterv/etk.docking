@@ -388,6 +388,7 @@ class DockGroup(gtk.Container):
                 lw = tab.area.width - (self._frame_width + self._spacing + iw +
                                        self._spacing + self._spacing + bw +
                                        self._spacing + self._frame_width)
+                lw = max(lw, 0) # Prevent negative width
 
             lx = cx + self._frame_width + self._spacing + iw + self._spacing
             ly = (tab.area.height - lh) / 2 + 1
