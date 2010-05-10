@@ -23,7 +23,6 @@ from math import pi
 from logging import getLogger
 
 import cairo
-import pangocairo
 import gobject
 import gtk
 import gtk.gdk as gdk
@@ -420,7 +419,7 @@ class DockGroup(gtk.Container):
         dark = (dark.red_float, dark.green_float, dark.blue_float)
 
         # Create cairo context
-        c = pangocairo.CairoContext(event.window.cairo_create())
+        c = self.window.cairo_create()
         c.set_line_width(self._frame_width)
         # Restrict context to the exposed area, avoid extra work
         c.rectangle(event.area.x, event.area.y, event.area.width, event.area.height)
