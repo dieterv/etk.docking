@@ -122,6 +122,13 @@ class TestDockItem(unittest.TestCase):
         self.assertTrue(notify_called,
                         msg='title-tooltip-text property change notification failed when using .props attribute')
 
+    def test_name(self):
+        dockitem = DockItem(title='test')
+        self.assertEquals(dockitem.get_name(), 'test')
+        dockitem.set_title('anothertest')
+        self.assertEquals(dockitem.get_name(), 'anothertest')
+        dockitem.destroy()
+
     ############################################################################
     # Test public api
     ############################################################################

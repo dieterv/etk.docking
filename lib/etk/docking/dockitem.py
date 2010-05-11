@@ -54,6 +54,7 @@ class DockItem(gtk.Bin):
         # Internal housekeeping
         self._icon_name = icon_name
         self._title = title
+        self.set_name(title)
         self._title_tooltip_text = title_tooltip_text
 
     ############################################################################
@@ -87,6 +88,7 @@ class DockItem(gtk.Bin):
 
     def set_title(self, value):
         self._title = value
+        self.set_name(value)
         self.notify('title')
 
     def get_title_tooltip_text(self):
