@@ -80,7 +80,7 @@ class TestDockItem(unittest.TestCase):
         notify_called = False
         dockitem.set_property('title', 'anothertitle')
         self.assertEquals(dockitem.get_property('title'), 'anothertitle',
-                          msg='get_title method did not return expected value')
+                          msg='get_property method did not return expected value')
         self.assertTrue(notify_called,
                         msg='title property change notification failed when using set_property method')
 
@@ -111,7 +111,7 @@ class TestDockItem(unittest.TestCase):
         notify_called = False
         dockitem.set_property('title-tooltip-text', 'anothertext')
         self.assertEquals(dockitem.get_property('title-tooltip-text'), 'anothertext',
-                          msg='get_title_tooltip_text method did not return expected value')
+                          msg='get_property method did not return expected value')
         self.assertTrue(notify_called,
                         msg='title-tooltip-text property change notification failed when using set_title_tooltip_text method')
 
