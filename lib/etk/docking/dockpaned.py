@@ -26,7 +26,7 @@ import gobject
 import gtk
 import gtk.gdk as gdk
 
-from .util import rect_contains, rect_overlaps
+from .util import rect_overlaps
 
 
 class _DockPanedHandle(object):
