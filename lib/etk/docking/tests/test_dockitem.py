@@ -60,6 +60,8 @@ class TestDockItem(unittest.TestCase):
         self.assertTrue(notify_called,
                         msg='icon-name property change notification failed when using .props attribute')
 
+        dockitem.destroy()
+
     def test_prop_title(self):
         global notify_called
 
@@ -91,6 +93,8 @@ class TestDockItem(unittest.TestCase):
         self.assertTrue(notify_called,
                         msg='title property change notification failed when using .props attribute')
 
+        dockitem.destroy()
+
     def test_prop_title_tooltip_text(self):
         global notify_called
 
@@ -121,6 +125,8 @@ class TestDockItem(unittest.TestCase):
                           msg='.props attribute did not return expected value')
         self.assertTrue(notify_called,
                         msg='title-tooltip-text property change notification failed when using .props attribute')
+
+        dockitem.destroy()
 
     def test_name(self):
         dockitem = DockItem(title='test')

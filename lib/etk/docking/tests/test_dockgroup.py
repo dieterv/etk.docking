@@ -58,6 +58,8 @@ class TestDockGroup(unittest.TestCase):
         self.assertTrue(notify_called,
                         msg='group-id property change notification failed when using .props attribute')
 
+        dockgroup.destroy()
+
     ############################################################################
     # Test public api
     ############################################################################
