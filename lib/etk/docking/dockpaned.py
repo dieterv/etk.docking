@@ -42,7 +42,7 @@ class _DockPanedItem(object):
     '''
     Convenience class storing information about a child.
     '''
-    __slots__ = ['item',                # child widget
+    __slots__ = ['child',               # child widget
                  'area',                # area, used to calculate allocation (gdk.Rectangle)
                  'size']                # percentual size used by this item (float)
 
@@ -75,7 +75,7 @@ class DockPaned(gtk.Container):
         self.log = getLogger('<%s object at %s>' % (self.__gtype_name__, hex(id(self))))
 
         # Internal housekeeping
-        self._children = []
+        self._items = []
         self._handles = []
         self._handle_size = 4
         self._orientation = gtk.ORIENTATION_HORIZONTAL
@@ -112,20 +112,20 @@ class DockPaned(gtk.Container):
     def set_orientation(self, value):
         self._orientation = value
 
-        # Reset item sizes
-        n_items = self.get_n_items()
-
-        if n_items == 1:
-            self._children[0].size = 1.0
-        elif n_items > 1:
-            for child in self._children:
-                child.size = 1.0 / n_items
+#        # Reset item sizes
+#        n_items = self.get_n_items()
+#
+#        if n_items == 1:
+#            self._items[0].size = 1.0
+#        elif n_items > 1:
+#            for item in self._items:
+#                items.size = 1.0 / n_items
 
         # Queue resize event
         self._first_allocation = True
 
-        for child in self._children:
-            child.item.queue_resize()
+        for item in self._items:
+            item.child.queue_resize()
 
         self.queue_resize()
         self.notify('orientation')
@@ -152,8 +152,8 @@ class DockPaned(gtk.Container):
         self.style.set_background(self.window, gtk.STATE_NORMAL)
 
         # Set parent window on all child widgets
-        for child in self._children:
-            child.item.set_parent_window(self.window)
+        for item in self._items:
+            item.child.set_parent_window(self.window)
 
     def do_unrealize(self):
         self.window.destroy()
@@ -172,15 +172,15 @@ class DockPaned(gtk.Container):
         width = height = 0
 
         if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-            for child in self._children:
-                w, h = child.item.size_request()
+            for item in self._items:
+                w, h = item.item.size_request()
                 width += w
                 height = max(height, h)
 
             width += (self.get_n_items() - 1) * self._handle_size
         elif self._orientation == gtk.ORIENTATION_VERTICAL:
-            for child in self._children:
-                w, h = child.item.size_request()
+            for item in self._items:
+                w, h = item.item.size_request()
                 width = max(width, w)
                 height += h
 
@@ -192,9 +192,9 @@ class DockPaned(gtk.Container):
     def do_size_allocate(self, allocation):
 #        if self._orientation == gtk.ORIENTATION_HORIZONTAL:
 #            counter = 0.0
-#            for child in self._children:
-#                print child.size,
-#                counter += child.size
+#            for item in self._items:
+#                print item.size,
+#                counter += item.size
 #            print
 #            print counter
 #            print
@@ -217,29 +217,29 @@ class DockPaned(gtk.Container):
             if delta_w < 0:
                 delta_w = abs(delta_w)
 
-                for child in reversed(self._children):
-                    if child.item.allocation.width > child.item.get_child_requisition()[0]:
+                for item in reversed(self._items):
+                    if item.child.allocation.width > item.child.get_child_requisition()[0]:
                         if delta_w > 0:
-                            shrinkable_width = child.item.allocation.width - child.item.get_child_requisition()[0]
+                            shrinkable_width = item.child.allocation.width - item.child.get_child_requisition()[0]
                             if shrinkable_width >= delta_w:
                                 shrinkable_width = delta_w
-                                child.size -= shrinkable_width / (allocation.width - len(self._handles) * self._handle_size)
+                                item.size -= shrinkable_width / (allocation.width - len(self._handles) * self._handle_size)
                                 delta_w -= shrinkable_width
                     else:
-                        child.size = child.item.get_child_requisition()[0] / (allocation.width - len(self._handles) * self._handle_size)
+                        item.size = item.child.get_child_requisition()[0] / (allocation.width - len(self._handles) * self._handle_size)
 
             # Allocate size and create handles
             cx = cy = 0
 
-            for child in self._children:
-                child.area.x = cx
-                child.area.y = cy
-                child.area.width = floor((allocation.width - len(self._handles) * self._handle_size) * child.size)
-                child.area.height = allocation.height
-                cx += child.area.width
+            for item in self._items:
+                item.area.x = cx
+                item.area.y = cy
+                item.area.width = floor((allocation.width - len(self._handles) * self._handle_size) * item.size)
+                item.area.height = allocation.height
+                cx += item.area.width
 
-                if child is self._children[-1:][0]:
-                    child.area.width = allocation.width - child.area.x
+                if item is self._items[-1:][0]:
+                    item.area.width = allocation.width - item.area.x
                 else:
                     handle = _DockPanedHandle()
                     handle.area = gdk.Rectangle()
@@ -250,41 +250,41 @@ class DockPaned(gtk.Container):
                     self._handles.append(handle)
                     cx += self._handle_size
 
-                child.item.size_allocate(child.area)
+                item.child.size_allocate(item.area)
 
             # Attach items to handles
             for index, handle in enumerate(self._handles):
-                handle.item_before = self._children[index]
-                handle.item_after = self._children[index + 1]
+                handle.item_before = self._items[index]
+                handle.item_after = self._items[index + 1]
         elif self._orientation == gtk.ORIENTATION_VERTICAL:
             # Don't shrink our children's allocated height below their requested height
             if delta_h < 0:
                 delta_h = abs(delta_h)
 
                 # List children we can shrink
-                for child in reversed(self._children):
-                    if child.item.allocation.height > child.item.get_child_requisition()[1]:
+                for item in reversed(self._items):
+                    if item.child.allocation.height > item.child.get_child_requisition()[1]:
                         if delta_h > 0:
-                            shrinkable_height = child.item.allocation.height - child.item.get_child_requisition()[1]
+                            shrinkable_height = item.child.allocation.height - item.child.get_child_requisition()[1]
                             if shrinkable_height >= delta_h:
                                 shrinkable_height = delta_h
-                                child.size -= shrinkable_height / (allocation.height - len(self._handles) * self._handle_size)
+                                item.size -= shrinkable_height / (allocation.height - len(self._handles) * self._handle_size)
                                 delta_h -= shrinkable_height
                     else:
-                        child.size = child.item.get_child_requisition()[1] / (allocation.height - len(self._handles) * self._handle_size)
+                        item.size = item.child.item.get_child_requisition()[1] / (allocation.height - len(self._handles) * self._handle_size)
 
             # Allocate size and create handles
             cx = cy = 0
 
-            for child in self._children:
-                child.area.x = cx
-                child.area.y = cy
-                child.area.width = allocation.width
-                child.area.height = floor((allocation.height - len(self._handles) * self._handle_size) * child.size)
-                cy += child.area.height
+            for item in self._items:
+                item.area.x = cx
+                item.area.y = cy
+                item.area.width = allocation.width
+                item.area.height = floor((allocation.height - len(self._handles) * self._handle_size) * item.size)
+                cy += item.area.height
 
-                if child is self._children[-1:][0]:
-                    child.area.height = allocation.height - child.area.y
+                if item is self._items[-1:][0]:
+                    item.area.height = allocation.height - item.area.y
                 else:
                     handle = _DockPanedHandle()
                     handle.area = gdk.Rectangle()
@@ -295,19 +295,19 @@ class DockPaned(gtk.Container):
                     self._handles.append(handle)
                     cy += self._handle_size
 
-                child.item.size_allocate(child.area)
+                item.child.size_allocate(item.area)
 
             # Attach items to handles
             for index, handle in enumerate(self._handles):
-                handle.item_before = self._children[index]
-                handle.item_after = self._children[index + 1]
+                handle.item_before = self._items[index]
+                handle.item_after = self._items[index + 1]
 
         if self.flags() & gtk.REALIZED:
             self.window.move_resize(*allocation)
 
     def do_expose_event(self, event):
-        for child in self._children:
-            self.propagate_expose(child.item, event)
+        for item in self._items:
+            self.propagate_expose(item.child, event)
 
         return False
 
@@ -340,28 +340,28 @@ class DockPaned(gtk.Container):
                     # Enlarge the item after and shrink the items before the handle
                     delta_w = abs(delta_w)
                     enlarge = self._drag_handle.item_after
-                    shrink = reversed(self._children[:self._children.index(enlarge)])
+                    shrink = reversed(self._items[:self._items.index(enlarge)])
                 elif delta_w > 0:
                     # Enlarge the item before and shrink the items after the handle
                     enlarge = self._drag_handle.item_before
-                    shrink = self._children[self._children.index(enlarge) + 1:]
+                    shrink = self._items[self._items.index(enlarge) + 1:]
                 elif delta_w == 0:
                     return
 
                 # Distribute delta_w amongst the children marked as shrinkable
-                for child in shrink:
-                    if child.item.allocation.width > child.item.get_child_requisition()[0]:
+                for item in shrink:
+                    if item.child.allocation.width > item.child.get_child_requisition()[0]:
                         if delta_w > 0:
-                            shrinkable_width = child.item.allocation.width - child.item.get_child_requisition()[0]
+                            shrinkable_width = item.child.allocation.width - item.child.get_child_requisition()[0]
 
                             if shrinkable_width >= delta_w:
                                 shrinkable_width = delta_w
 
                                 enlarge.size += shrinkable_width / (self.allocation.width - len(self._handles) * self._handle_size)
-                                child.size -= shrinkable_width / (self.allocation.width - len(self._handles) * self._handle_size)
+                                item.size -= shrinkable_width / (self.allocation.width - len(self._handles) * self._handle_size)
                                 delta_w -= shrinkable_width
                     else:
-                        child.size = child.item.get_child_requisition()[0] / (self.allocation.width - len(self._handles) * self._handle_size)
+                        item.size = item.child.get_child_requisition()[0] / (self.allocation.width - len(self._handles) * self._handle_size)
 #            elif self._orientation == gtk.ORIENTATION_VERTICAL:
 #                delta_h = self.get_pointer()[1] - self._drag_pos[1]
 #
@@ -370,7 +370,7 @@ class DockPaned(gtk.Container):
 #                    delta_w = abs(delta_w)
 #                    ia = self._drag_handle.item_after
 #
-#                    for child in reversed(self._children[:self._children.index(ia)]):
+#                    for child in reversed(self._items[:self._items.index(ia)]):
 #                        if child.item.allocation.width > child.item.get_child_requisition()[0]:
 #                            if delta_w > 0:
 #                                shrinkable_width = child.item.allocation.width - child.item.get_child_requisition()[0]
@@ -383,7 +383,7 @@ class DockPaned(gtk.Container):
 #                            child.size = child.item.get_child_requisition()[0] / (self.allocation.width - len(self._handles) * self._handle_size)
 #
 ##                    ia = self._drag_handle.item_after
-##                    items = reversed(self._children[:self._children.index(self._drag_handle.item_after)])
+##                    items = reversed(self._items[:self._items.index(self._drag_handle.item_after)])
 ##
 ##                    for item in items:
 ##                        if ia.area.height - delta_h >= ia.item.get_child_requisition()[1] and item.area.height + delta_h >= item.item.get_child_requisition()[1]:
@@ -392,7 +392,7 @@ class DockPaned(gtk.Container):
 ##                            break
 #                elif delta_h > 0:
 #                    ib = self._drag_handle.item_before
-#                    items = self._children[self._children.index(self._drag_handle.item_before) + 1:]
+#                    items = self._items[self._items.index(self._drag_handle.item_before) + 1:]
 #
 #                    for item in items:
 #                        if ib.area.height + delta_h >= ib.item.get_child_requisition()[1] and item.area.height - delta_h >= item.item.get_child_requisition()[1]:
@@ -425,64 +425,64 @@ class DockPaned(gtk.Container):
     # GtkContainer
     ############################################################################
     def do_forall(self, internals, callback, data):
-        for child in self._children:
-            callback(child.item, data)
+        for item in self._items:
+            callback(item.child, data)
 
     def do_add(self, widget):
         # _DockPanedItem
-        child = _DockPanedItem()
-        child.item = widget
-        child.item.set_parent(self)
-        child.area = gdk.Rectangle()
-        child.size = None
-        self._children.append(child)
+        item = _DockPanedItem()
+        item.child = widget
+        item.child.set_parent(self)
+        item.area = gdk.Rectangle()
+        item.size = None
+        self._items.append(item)
 
         if self.flags() & gtk.REALIZED:
-            child.item.set_parent_window(self.window)
+            item.child.set_parent_window(self.window)
 
         # Recalculate sizes for all children
         n_items = self.get_n_items()
         size_ok = []
         size_nok = []
 
-        for child in self._children:
-            if child.size is None:
-                size_nok.append(child)
+        for item in self._items:
+            if item.size is None:
+                size_nok.append(item)
             else:
-                size_ok.append(child)
+                size_ok.append(item)
 
-        for child in size_nok:
+        for item in size_nok:
             if n_items > 1:
                 # Set a default size
-                child.size = 1.0 / n_items
-                delta = child.size / (n_items - 1)
+                item.size = 1.0 / n_items
+                delta = item.size / (n_items - 1)
 
                 # And the rest has to shrink...
-                for child in size_ok:
-                    child.size -= delta
+                for item in size_ok:
+                    item.size -= delta
             else:
-                child.size = 1.0
+                item.size = 1.0
 
         self.queue_resize()
 
     def do_remove(self, widget):
         # Get the _DockPanedItem associated with widget
-        for child in self._children:
-            if child.item is widget:
+        for item in self._items:
+            if item.child is widget:
                 # Remove child from the list
-                child.item.unparent()
-                self._children.remove(child)
+                item.child.unparent()
+                self._items.remove(item)
 
                 # Distribute the freed size over the other children
                 n_items = self.get_n_items()
 
                 if n_items > 1:
-                    delta = child.size / n_items
+                    delta = item.size / n_items
 
-                    for child in self._children:
-                        child.size += delta
+                    for item in self._items:
+                        item.size += delta
                 elif n_items == 1:
-                    self._children[0].size = 1.0
+                    self._items[0].size = 1.0
 
                 break
 
@@ -502,7 +502,7 @@ class DockPaned(gtk.Container):
         '''
         The get_n_items() method returns the number of items in the DockPaned.
         '''
-        return len(self._children)
+        return len(self._items)
 
     #TODO: def item_num(self, item):
     #TODO: def set_current_item(self, item_num):
