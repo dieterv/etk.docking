@@ -524,18 +524,19 @@ class DockGroup(gtk.Container):
         # Reset tooltip text
         self.set_tooltip_text(None)
 
-        for tab in self._visible_tabs:
-            if rect_contains(tab.area, event.x, event.y):
-                # Update tooltip for tab under the cursor
-                self.set_tooltip_text(tab.item.get_title_tooltip_text())
+        if event.window is self.window:
+            for tab in self._visible_tabs:
+                if rect_contains(tab.area, event.x, event.y):
+                    # Update tooltip for tab under the cursor
+                    self.set_tooltip_text(tab.item.get_title_tooltip_text())
 
-                if tab.state == gtk.STATE_NORMAL:
-                    tab.state = gtk.STATE_PRELIGHT
-                    self.queue_resize()
-            else:
-                if tab.state == gtk.STATE_PRELIGHT:
-                    tab.state = gtk.STATE_NORMAL
-                    self.queue_resize()
+                    if tab.state == gtk.STATE_NORMAL:
+                        tab.state = gtk.STATE_PRELIGHT
+                        self.queue_resize()
+                else:
+                    if tab.state == gtk.STATE_PRELIGHT:
+                        tab.state = gtk.STATE_NORMAL
+                        self.queue_resize()
 
     def do_button_release_event(self, event):
         for tab in self._visible_tabs:
