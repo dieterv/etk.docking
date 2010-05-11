@@ -45,11 +45,11 @@ class CompactButton(gtk.Widget):
                                             'icon name active',
                                             '',
                                             gobject.PARAM_READWRITE),
-                       'size': (gobject.TYPE_INT,
+                       'size': (gobject.TYPE_UINT,
                                 'size',
                                 'size',
                                 0,
-                                gobject.G_MAXINT,
+                                gobject.G_MAXUINT,
                                 16,
                                 gobject.PARAM_READWRITE
                                 ),

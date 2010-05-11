@@ -76,7 +76,7 @@ class DockGroup(gtk.Container):
                                     'group id',
                                     'group id',
                                     0,
-                                    gobject.G_MAXINT,
+                                    gobject.G_MAXUINT,
                                     0,
                                     gobject.PARAM_READWRITE)}
 
