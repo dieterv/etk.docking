@@ -33,8 +33,11 @@ from .dockitem import DockItem
 from .util import rect_contains
 
 
-#DRAG_TARGET_GROUP = 0
-#DRAG_TARGET_ITEM = 1
+DRAG_TARGET_GROUP = ('x-etk-docking/group', gtk.TARGET_SAME_APP, 0)
+DRAG_TARGET_ITEM = ('x-etk-docking/item', gtk.TARGET_SAME_APP, 1)
+
+
+DRAG_TARGETS = [ DRAG_TARGET_GROUP, DRAG_TARGET_ITEM ]
 
 
 class _DockGroupTab(object):
@@ -50,6 +53,13 @@ class _DockGroupTab(object):
                  'menu_item',           # menu item (gtk.ImageMenuItem)
                  'state',               # state (one of the GTK State Type Constants)
                  'area']                # area, used for hit testing (gdk.Rectangle)
+
+    def __contains__(self, pos):
+        global rect_contains
+        return rect_contains(self.area, pos[0], pos[1])
+
+    def __str__(self):
+        return "<%s object at 0x%x with label '%s' on %s>" % (self.__class__.__name__, id(self), self.label.get_text(), self.area)
 
 
 class DockGroup(gtk.Container):
@@ -107,13 +117,22 @@ class DockGroup(gtk.Container):
         self._max_button.set_parent(self)
         gtk.widget_pop_composite_child()
 
-#        # Configure drag/drop
-#        self.drag_source_set(gdk.BUTTON1_MASK,
-#                             [('application/x-rootwin-drop', gtk.TARGET_SAME_APP, DRAG_TARGET_GROUP)],
-#                             gdk.ACTION_PRIVATE)
-#        self.drag_dest_set(gtk.DEST_DEFAULT_ALL,
-#                           [('application/x-rootwin-drop', gtk.TARGET_SAME_APP, DRAG_TARGET_GROUP)],
-#                           gdk.ACTION_PRIVATE)
+        # Docked items
+        self._current_index = None
+        self._current_item = None
+
+        # Configure drag/drop
+        #self.drag_source_set(gdk.BUTTON1_MASK,
+        #                     DRAG_TARGETS,
+        #                     gdk.ACTION_MOVE)
+
+        self.drag_dest_set(gtk.DEST_DEFAULT_ALL,
+                           DRAG_TARGETS,
+                           gdk.ACTION_MOVE)
+
+        self._dragged_tab = None
+        self._drop_tab_index = None
+
 
     ############################################################################
     # GObject
@@ -524,23 +543,32 @@ class DockGroup(gtk.Container):
         # Reset tooltip text
         self.set_tooltip_text(None)
 
-        if event.window is self.window:
-            for tab in self._visible_tabs:
-                if rect_contains(tab.area, event.x, event.y):
-                    # Update tooltip for tab under the cursor
-                    self.set_tooltip_text(tab.item.get_title_tooltip_text())
+        if event.state & gdk.BUTTON1_MASK:
+            tab = self.find_tab(event.x, event.y)
+            if tab:
+                drag_source = [DRAG_TARGET_ITEM]
+                self._dragged_tab = tab
+            else:
+                drag_source = [DRAG_TARGET_GROUP]
+                self._dragged_tab = None
+            self.drag_begin(drag_source, gdk.ACTION_MOVE, 1, event)
 
-                    if tab.state == gtk.STATE_NORMAL:
-                        tab.state = gtk.STATE_PRELIGHT
-                        self.queue_resize()
-                else:
-                    if tab.state == gtk.STATE_PRELIGHT:
-                        tab.state = gtk.STATE_NORMAL
-                        self.queue_resize()
+        for tab in self._visible_tabs:
+            if (event.x, event.y) in tab:
+                # Update tooltip for tab under the cursor
+                self.set_tooltip_text(tab.item.get_title_tooltip_text())
+
+                if tab.state == gtk.STATE_NORMAL:
+                    tab.state = gtk.STATE_PRELIGHT
+                    self.queue_resize()
+                elif tab.state == gtk.STATE_PRELIGHT:
+                    tab.state = gtk.STATE_NORMAL
+                    self.queue_resize()
+
 
     def do_button_release_event(self, event):
         for tab in self._visible_tabs:
-            if rect_contains(tab.area, event.x, event.y):
+            if (event.x, event.y) in tab:
                 if event.button == 1:
                     self.set_current_item(self._tabs.index(tab))
                 elif event.button == 3:
@@ -559,43 +587,111 @@ class DockGroup(gtk.Container):
 
         return True
 
-#    # drag/drop source
-#    def do_drag_begin(self, context):
-#        self.log.debug('%s' % context)
-#
-#    def do_drag_data_get(self, context, selection_data, info, timestamp):
-#        self.log.debug('%s, %s, %s' % (context, selection_data, info))
-#
+    def find_tab(self, x, y):
+        """
+        Returns the tab (x,y) is in, otherwise returns None.
+        """
+        rc = rect_contains
+        for tab in self._visible_tabs:
+            if rc(tab.area, x, y):
+                return tab
+
+
+    # drag source
+    def do_drag_begin(self, context):
+        #super(DockGroup, self).do_drag_begin(context)
+        # TODO: Set drag icon
+        tab = self._dragged_tab
+        #self._visible_tabs.remove(tab)
+        self.remove_item(self._tabs.index(tab), retain_item=True)
+
+        #tab.item.unparent()
+
+        #dnd_window = gtk.Window(gtk.WINDOW_POPUP)
+        #dnd_window.set_screen(self.get_screen())
+        #dnd_window.add(tab.item)
+        #dnd_window.set_size_request(tab.item.allocation.width,
+        #                            tab.item.allocation.height)
+        #dnd_window.show_all()
+        #context.set_icon_widget(dnd_window, -2, -2)
+        #context.set_icon_pixmap(tab.image.get_pixmap(), -2, -2)
+
+
+    def do_drag_data_get(self, context, selection_data, info, timestamp):
+        # TODO: Fill selection_data with the right data (set() or set_text())
+        self.log.debug('Drag data get: %s, %s, %s' % (context, selection_data, info))
+        if selection_data.target == gdk.atom_intern(DRAG_TARGET_ITEM[0]):
+            selection_data.set(selection_data.target, 8, 'Dummy item')
+        elif selection_data.target == gdk.atom_intern(DRAG_TARGET_GROUP[0]):
+            selection_data.set(selection_data.target, 0, 'Dummy group')
+
+
 #    def do_drag_data_delete(self, context):
-#        self.log.debug('%s' % context)
-#
-#    def do_drag_end(self, context):
-#        self.log.debug('%s', context)
-#
-#    def do_drag_failed(self, context, result):
-#        self.log.debug('%s, %s' % [context, result])
-#
-#    # drag/drop destination
-#    def do_drag_motion(self, context, x, y, timestamp):
-#        self.log.debug('%s, %s, %s' % (context, x, y))
-#
-#        # Insert the dragged tab before the tab under (x, y)
-#        if rect_contains(self._decoration_area, x, y):
-#            for tab in self._tabs:
-#                if rect_contains(tab.area, x, y):
-#                    self.log.info('insert dragged tab before %s' % tab)
-#                    return
-#
-#        self.log.info('append dragged tab')
-#
+#        self.log.debug('Drag delete: %s' % context)
+
+
+    def do_drag_end(self, context):
+        self._dragged_tab = None
+        self.log.debug('Drag end: %s', context)
+
+
+    def do_drag_failed(self, context, result):
+        self.log.debug('Drag failed: %s, %s' % [context, result])
+
+
+    # drop destination
+    def do_drag_motion(self, context, x, y, timestamp):
+#        #self.log.debug('%s, %s, %s' % (context, x, y))
+#        # TODO: Insert the dragged tab before the tab under (x, y)
+        drop_tab = self.find_tab(x, y)
+        if drop_tab:
+            self._drop_tab_index = self._tabs.index(drop_tab)
+        else:
+            self._drop_tab_index = self._current_index
+        self.log.info('move over tab %s', self._drop_tab_index)
+
+
 #    def do_drag_leave(self, context, timestamp):
+#        Can do something here like stopping an animation for creating some space between
+#        tabs where the dragged tan can be dropped
 #        self.log.debug('%s, %s' % (context, timestamp))
-#
+
+
 #    def do_drag_drop(self, context, x, y, timestamp):
-#        self.log.debug('%s, %s, %s' % (context, x, y))
-#
-#    def do_drag_data_received(self, context, x, y, selection_data, info, timestamp):
-#        self.log.debug('%s, %s, %s, %s, %s' % (context, x, y, selection_data, info))
+#        """
+#        Can we accept the drop? If correct, do_drag_data_get() will be called on the source
+#        and a resulting do_drag_data_received will be handled on the destination side.
+#        """
+#        self.log.debug('Drop on %s, %s' % (x, y))
+#        target = self.drag_dest_find_target(context, DRAG_TARGETS)
+#        # TODO: check if target is x-etk-docking/item|group
+#        item_target = gdk.atom_intern(DRAG_TARGET_ITEM[0])
+#        group_target = gdk.atom_intern(DRAG_TARGET_GROUP[0])
+#        if target == item_target or target == group_target:
+#            # Register location where to drop
+#            self.log.debug('Dropping item/group at index %s with target %s' % (self._drop_tab_index, target))
+#            self.drag_get_data(context, target, timestamp)
+#            return True
+#        return False
+
+
+    def do_drag_data_received(self, context, x, y, selection_data, info, timestamp):
+        source = context.get_source_widget()
+        assert source
+
+        #print 'Got a nice:', selection_data.get_data()
+        if selection_data.target == gdk.atom_intern(DRAG_TARGET_ITEM[0]):
+            self.insert_item(source._dragged_tab.item, self._drop_tab_index)
+            self.log.debug('Recieving item %s' % source._dragged_tab)
+        if selection_data.target == gdk.atom_intern(DRAG_TARGET_GROUP[0]):
+            self.log.debug('Recieving group from %s' % source)
+            # TODO: take all tabs from the group and add them here   
+        
+        context.finish(True, False, timestamp) # success, delete, time
+        source._drop_tab_index = None
+        source._dragged_tab = None
+        self.log.debug('******* Done with drag/drop action')
+
 
     ############################################################################
     # GtkContainer
@@ -657,8 +753,7 @@ class DockGroup(gtk.Container):
         DockItem to use. If position is None the item is appended to the DockGrup.
         '''
         if not isinstance(item, DockItem):
-            #TODO: raise something specific
-            raise
+            raise TypeError('Inserted item should be of type DockItem (was: %s)' % (item,))
 
         if position is None:
             position = self.get_n_items()
@@ -704,7 +799,7 @@ class DockGroup(gtk.Container):
 
         return item_num
 
-    def remove_item(self, item_num):
+    def remove_item(self, item_num, retain_item=False):
         '''
         :param item_num: the index of an item tab, starting from 0. If None,
                          the last item will be removed.
@@ -728,7 +823,8 @@ class DockGroup(gtk.Container):
         tab.item.disconnect(tab.item_title_handler)
         tab.item.disconnect(tab.item_title_tooltip_text_handler)
         tab.item.unparent()
-        tab.item.destroy()
+        if not retain_item:
+            tab.item.destroy()
 
         # Remove child widgets
         tab.image.unparent()

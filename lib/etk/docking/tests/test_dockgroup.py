@@ -20,6 +20,7 @@
 
 import unittest
 
+import gtk
 from etk.docking import DockItem, DockGroup
 
 
@@ -279,3 +280,20 @@ class TestDockGroup(unittest.TestCase):
         dockitem2.destroy()
         dockitem3.destroy()
         dockgroup.destroy()
+
+    def test_drag_begin(self):
+        dockitem1 = DockItem()
+        dockitem2 = DockItem()
+        dockitem3 = DockItem()
+        dockgroup = DockGroup()
+        dockgroup.add(dockitem1)
+        dockgroup.add(dockitem2)
+        dockgroup.add(dockitem3)
+
+        window = gtk.Window()
+        window.add(dockgroup)
+        window.set_size_request(200, 200)
+
+        self.assertEquals(dockitem3, dockgroup._current_tab.item)
+
+
