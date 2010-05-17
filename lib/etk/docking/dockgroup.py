@@ -126,6 +126,7 @@ class DockGroup(gtk.Container):
         self.drag_dest_set(gtk.DEST_DEFAULT_ALL,
                            DRAG_TARGETS,
                            gdk.ACTION_MOVE)
+        self.connect('drag-failed', DockGroup.on_drag_failed)
 
         self._dragged_tab = None
         self._drop_tab_index = None
@@ -603,8 +604,12 @@ class DockGroup(gtk.Container):
         # TODO: Set drag icon
         tab = self._dragged_tab
         #self._visible_tabs.remove(tab)
-        self.remove_item(self._tabs.index(tab), retain_item=True)
-
+        if tab:
+            self._dragged_tab_index = self._tabs.index(tab)
+            self.remove_item(self._dragged_tab_index, retain_item=True)
+        else:
+            self._dragged_tab_index = None
+            # remove self (group) from parent
         #tab.item.unparent()
 
         #dnd_window = gtk.Window(gtk.WINDOW_POPUP)
@@ -629,21 +634,29 @@ class DockGroup(gtk.Container):
 
     def do_drag_end(self, context):
         self._dragged_tab = None
-        self.log.debug('Drag end: %s', context)
+        self._drop_tab_index = None
+        self.log.debug('Drag end: %s - %s', context, context.drag_drop_succeeded())
 
-    def do_drag_failed(self, context, result):
-        self.log.debug('Drag failed: %s, %s' % [context, result])
+#    def do_drag_failed(self, context, result):
+#        self.log.debug('Drag failed: %s, %s' % [context, result])
+
+    # Looks like the default callback is not working here...
+    def on_drag_failed(self, context, result):
+        self.log.debug('Drag failed event: %s, %s' % (context, result))
+        if self._dragged_tab:
+            self.insert_item(self._dragged_tab.item, self._dragged_tab_index)
+
 
     # drop destination
     def do_drag_motion(self, context, x, y, timestamp):
 #        #self.log.debug('%s, %s, %s' % (context, x, y))
-#        # TODO: Insert the dragged tab before the tab under (x, y)
+        # Insert the dragged tab before the tab under (x, y)
         drop_tab = self.find_tab(x, y)
         if drop_tab:
             self._drop_tab_index = self._tabs.index(drop_tab)
         else:
-            self._drop_tab_index = self._current_index
-        self.log.info('move over tab %s', self._drop_tab_index)
+            self._drop_tab_index = self._current_index or 0
+        self.log.info('%d move over tab %s (%s)', timestamp, self._drop_tab_index, self._current_index)
 
 #    def do_drag_leave(self, context, timestamp):
 #        Can do something here like stopping an animation for creating some space between
@@ -663,7 +676,7 @@ class DockGroup(gtk.Container):
 #        if target == item_target or target == group_target:
 #            # Register location where to drop
 #            self.log.debug('Dropping item/group at index %s with target %s' % (self._drop_tab_index, target))
-#            self.drag_get_data(context, target, timestamp)
+#            #self.drag_get_data(context, target, timestamp)
 #            return True
 #        return False
 
@@ -671,17 +684,19 @@ class DockGroup(gtk.Container):
         source = context.get_source_widget()
         assert source
 
-        #print 'Got a nice:', selection_data.get_data()
         if selection_data.target == gdk.atom_intern(DRAG_TARGET_ITEM[0]):
-            self.insert_item(source._dragged_tab.item, self._drop_tab_index)
             self.log.debug('Recieving item %s' % source._dragged_tab)
+            self.insert_item(source._dragged_tab.item, self._drop_tab_index)
         if selection_data.target == gdk.atom_intern(DRAG_TARGET_GROUP[0]):
             self.log.debug('Recieving group from %s' % source)
-            # TODO: take all tabs from the group and add them here
-
-        context.finish(True, False, timestamp) # success, delete, time
-        source._drop_tab_index = None
+            self.merge_group(source, self._drop_tab_index)
+        else:
+            print 'Unable to handle target data: %s' % selection_data.target
+            context.finish(False, False, timestamp) # success, delete, time
+            return
+        
         source._dragged_tab = None
+        context.finish(True, False, timestamp) # success, delete, time
         self.log.debug('******* Done with drag/drop action')
 
     ############################################################################
@@ -966,6 +981,21 @@ class DockGroup(gtk.Container):
         tab = self._tabs[self.item_num(item)]
         self._tabs.remove(tab)
         self._tabs.insert(position, tab)
+
+
+    def merge_group(self, group, position=0, retain_group=False):
+        """
+        Merge the items in group with the current item
+        """
+        while group._tabs:
+            tab = group._tabs[0]
+            group.remove_item(0, retain_item=True)
+            self.insert_item(tab.item, position)
+            position += 1
+        #group.unparent()
+        if not retain_group:
+            group.destroy()
+
 
     ############################################################################
     # Property notification signal handlers
