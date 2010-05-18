@@ -173,14 +173,14 @@ class DockPaned(gtk.Container):
 
         if self._orientation == gtk.ORIENTATION_HORIZONTAL:
             for item in self._items:
-                w, h = item.item.size_request()
+                w, h = item.child.size_request()
                 width += w
                 height = max(height, h)
 
             width += (self.get_n_items() - 1) * self._handle_size
         elif self._orientation == gtk.ORIENTATION_VERTICAL:
             for item in self._items:
-                w, h = item.item.size_request()
+                w, h = item.child.size_request()
                 width = max(width, w)
                 height += h
 
