@@ -115,8 +115,8 @@ class DockGroup(gtk.Container):
         gtk.widget_pop_composite_child()
 
         # Docked items
-        self._current_index = None
-        self._current_item = None
+        #self._current_index = None
+        #self._current_item = None
 
         # Configure drag/drop
         #self.drag_source_set(gdk.BUTTON1_MASK,
@@ -655,8 +655,10 @@ class DockGroup(gtk.Container):
         if drop_tab:
             self._drop_tab_index = self._tabs.index(drop_tab)
         else:
-            self._drop_tab_index = self._current_index or 0
-        self.log.info('%d move over tab %s (%s)', timestamp, self._drop_tab_index, self._current_index)
+            self._drop_tab_index = self._tabs.index(self._current_tab)
+        self.log.info('%d move over tab %s', timestamp, self._drop_tab_index)
+        return True
+
 
 #    def do_drag_leave(self, context, timestamp):
 #        Can do something here like stopping an animation for creating some space between
