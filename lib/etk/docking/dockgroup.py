@@ -608,9 +608,11 @@ class DockGroup(gtk.Container):
             self._dragged_tab_index = self._tabs.index(tab)
             self.remove_item(self._dragged_tab_index, retain_item=True)
         else:
+            # Drag the group itself:
             self._dragged_tab_index = None
-            # remove self (group) from parent
-        #tab.item.unparent()
+            # Can not unparent the group, as that will prevent the drag events from coming in
+            self.hide()
+            # TODO: resize
 
         #dnd_window = gtk.Window(gtk.WINDOW_POPUP)
         #dnd_window.set_screen(self.get_screen())
@@ -642,10 +644,14 @@ class DockGroup(gtk.Container):
 
     # Looks like the default callback is not working here...
     def on_drag_failed(self, context, result):
-        self.log.debug('Drag failed event: %s, %s' % (context, result))
-        if self._dragged_tab:
-            self.insert_item(self._dragged_tab.item, self._dragged_tab_index)
-
+        self.log.debug('Drag failed event: %s, %s, %s' % (context, result, context.target))
+        if result == gtk.DRAG_RESULT_NO_TARGET:
+            if self._dragged_tab:
+                # TODO: Create new window with paned and group. Then add item to group
+                self.insert_item(self._dragged_tab.item, self._dragged_tab_index)
+            else:
+                # TODO: create new window with paned, Then add group (or merge items)
+                pass
 
     # drop destination
     def do_drag_motion(self, context, x, y, timestamp):
@@ -654,7 +660,7 @@ class DockGroup(gtk.Container):
         drop_tab = self.find_tab(x, y)
         if drop_tab:
             self._drop_tab_index = self._tabs.index(drop_tab)
-        else:
+        elif self._tabs:
             self._drop_tab_index = self._tabs.index(self._current_tab)
         self.log.info('%d move over tab %s', timestamp, self._drop_tab_index)
         return True
@@ -693,13 +699,11 @@ class DockGroup(gtk.Container):
             self.log.debug('Recieving group from %s' % source)
             self.merge_group(source, self._drop_tab_index)
         else:
-            print 'Unable to handle target data: %s' % selection_data.target
             context.finish(False, False, timestamp) # success, delete, time
             return
         
         source._dragged_tab = None
         context.finish(True, False, timestamp) # success, delete, time
-        self.log.debug('******* Done with drag/drop action')
 
     ############################################################################
     # GtkContainer
