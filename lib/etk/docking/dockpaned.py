@@ -443,18 +443,12 @@ class DockPaned(gtk.Container):
             callback(item.child, data)
 
     def do_add(self, widget):
-        # _DockPanedItem
-        item = _DockPanedItem()
-        item.child = widget
-        item.child.set_parent(self)
-        item.area = gdk.Rectangle()
-        item.size = None
-        self._items.append(item)
+        self.insert_child(widget)
 
-        if self.flags() & gtk.REALIZED:
-            item.child.set_parent_window(self.window)
-
-        # Recalculate sizes for all children
+    def _recalculate_sizes(self):
+        """
+        Recalculate sizes (%) for all children.
+        """
         n_items = self.get_n_items()
         size_ok = []
         size_nok = []
@@ -536,6 +530,23 @@ class DockPaned(gtk.Container):
             handle.item_before = before
             handle.item_after = after
             self._handles.append(handle)
+
+
+    def insert_child(self, widget, position=-1):
+        item = _DockPanedItem()
+        item.child = widget
+        item.child.set_parent(self)
+        item.area = gdk.Rectangle()
+        item.size = None
+        if position == -1:
+            self._items.append(item)
+        else:
+            self._items.insert(position, item)
+
+        if self.flags() & gtk.REALIZED:
+            item.child.set_parent_window(self.window)
+
+        self._recalculate_sizes()
 
 
     #TODO: def append_item(self, item):
