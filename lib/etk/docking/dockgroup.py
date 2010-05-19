@@ -114,22 +114,16 @@ class DockGroup(gtk.Container):
         self._max_button.set_parent(self)
         gtk.widget_pop_composite_child()
 
-        # Docked items
-        #self._current_index = None
-        #self._current_item = None
-
         # Configure drag/drop
-        #self.drag_source_set(gdk.BUTTON1_MASK,
-        #                     DRAG_TARGETS,
-        #                     gdk.ACTION_MOVE)
-
-        self.drag_dest_set(gtk.DEST_DEFAULT_ALL,
+        self.drag_dest_set(gtk.DEST_DEFAULT_MOTION | gtk.DEST_DEFAULT_HIGHLIGHT,
                            DRAG_TARGETS,
                            gdk.ACTION_MOVE)
         self.connect('drag-failed', DockGroup.on_drag_failed)
 
+        self._drag_target = None 
         self._dragged_tab = None
         self._drop_tab_index = None
+        self._drag_drop_failed = False
 
 
     ############################################################################
@@ -603,16 +597,18 @@ class DockGroup(gtk.Container):
         #super(DockGroup, self).do_drag_begin(context)
         # TODO: Set drag icon
         tab = self._dragged_tab
-        #self._visible_tabs.remove(tab)
+        self._drag_drop_failed = False
         if tab:
             self._dragged_tab_index = self._tabs.index(tab)
-            self.remove_item(self._dragged_tab_index, retain_item=True)
+            #self.remove_item(self._dragged_tab_index, retain_item=True)
+            self._drag_target = DRAG_TARGET_ITEM
         else:
             # Drag the group itself:
             self._dragged_tab_index = None
             # Can not unparent the group, as that will prevent the drag events from coming in
-            self.hide()
-            # TODO: resize
+            self._drag_target = DRAG_TARGET_GROUP
+            #self.hide()
+            #self.queue_resize()
 
         #dnd_window = gtk.Window(gtk.WINDOW_POPUP)
         #dnd_window.set_screen(self.get_screen())
@@ -626,10 +622,10 @@ class DockGroup(gtk.Container):
     def do_drag_data_get(self, context, selection_data, info, timestamp):
         # TODO: Fill selection_data with the right data (set() or set_text())
         self.log.debug('Drag data get: %s, %s, %s' % (context, selection_data, info))
-        if selection_data.target == gdk.atom_intern(DRAG_TARGET_ITEM[0]):
-            selection_data.set(selection_data.target, 8, 'Dummy item')
-        elif selection_data.target == gdk.atom_intern(DRAG_TARGET_GROUP[0]):
-            selection_data.set(selection_data.target, 0, 'Dummy group')
+        if self._drag_target is DRAG_TARGET_ITEM:
+            selection_data.set(gdk.atom_intern(DRAG_TARGET_ITEM[0]), 8, 'Dummy item')
+        elif self._drag_target is DRAG_TARGET_GROUP:
+            selection_data.set(gdk.atom_intern(DRAG_TARGET_GROUP[0]), 8, 'Dummy group')
 
 #    def do_drag_data_delete(self, context):
 #        self.log.debug('Drag delete: %s' % context)
@@ -638,20 +634,28 @@ class DockGroup(gtk.Container):
         self._dragged_tab = None
         self._drop_tab_index = None
         self.log.debug('Drag end: %s - %s', context, context.drag_drop_succeeded())
+        if not self._drag_drop_failed:
+            if self._drag_target is DRAG_TARGET_ITEM:
+                pass
+            elif self._drag_target is DRAG_TARGET_GROUP:
+                #self.get_parent().queue_resize()
+                self.destroy()
+        else:
+            if self._drag_target is DRAG_TARGET_ITEM:
+                # TODO: Create new window with paned and group. Then add item to group
+                pass
+            elif self._drag_target is DRAG_TARGET_GROUP:
+                # TODO: create new window with paned, Then add group (or merge items)
+                pass
 
 #    def do_drag_failed(self, context, result):
 #        self.log.debug('Drag failed: %s, %s' % [context, result])
 
     # Looks like the default callback is not working here...
     def on_drag_failed(self, context, result):
-        self.log.debug('Drag failed event: %s, %s, %s' % (context, result, context.target))
-        if result == gtk.DRAG_RESULT_NO_TARGET:
-            if self._dragged_tab:
-                # TODO: Create new window with paned and group. Then add item to group
-                self.insert_item(self._dragged_tab.item, self._dragged_tab_index)
-            else:
-                # TODO: create new window with paned, Then add group (or merge items)
-                pass
+        self.log.debug('Drag failed event: %s, %s, %s' % (context, result, context))
+        self._drag_drop_failed = True
+        #context.drop_finish(False, 0)
 
     # drop destination
     def do_drag_motion(self, context, x, y, timestamp):
@@ -662,7 +666,8 @@ class DockGroup(gtk.Container):
             self._drop_tab_index = self._tabs.index(drop_tab)
         elif self._tabs:
             self._drop_tab_index = self._tabs.index(self._current_tab)
-        self.log.info('%d move over tab %s', timestamp, self._drop_tab_index)
+        target = self.drag_dest_find_target(context, ());
+        self.log.info('%d move over tab %s, target = %s', timestamp, self._drop_tab_index, target)
         return True
 
 
@@ -671,22 +676,22 @@ class DockGroup(gtk.Container):
 #        tabs where the dragged tan can be dropped
 #        self.log.debug('%s, %s' % (context, timestamp))
 
-#    def do_drag_drop(self, context, x, y, timestamp):
-#        """
-#        Can we accept the drop? If correct, do_drag_data_get() will be called on the source
-#        and a resulting do_drag_data_received will be handled on the destination side.
-#        """
-#        self.log.debug('Drop on %s, %s' % (x, y))
-#        target = self.drag_dest_find_target(context, DRAG_TARGETS)
-#        # TODO: check if target is x-etk-docking/item|group
-#        item_target = gdk.atom_intern(DRAG_TARGET_ITEM[0])
-#        group_target = gdk.atom_intern(DRAG_TARGET_GROUP[0])
-#        if target == item_target or target == group_target:
-#            # Register location where to drop
-#            self.log.debug('Dropping item/group at index %s with target %s' % (self._drop_tab_index, target))
-#            #self.drag_get_data(context, target, timestamp)
-#            return True
-#        return False
+    def do_drag_drop(self, context, x, y, timestamp):
+        """
+        Can we accept the drop? If correct, do_drag_data_get() will be called on the source
+        and a resulting do_drag_data_received will be handled on the destination side.
+        """
+        self.log.debug('Drop on %s, %s' % (x, y))
+        target = self.drag_dest_find_target(context, DRAG_TARGETS)
+        # TODO: check if target is x-etk-docking/item|group
+        item_target = gdk.atom_intern(DRAG_TARGET_ITEM[0])
+        group_target = gdk.atom_intern(DRAG_TARGET_GROUP[0])
+        if target == item_target or target == group_target:
+            # Register location where to drop
+            self.log.debug('Dropping item/group at index %s with target %s' % (self._drop_tab_index, target))
+            self.drag_get_data(context, target, timestamp)
+            return True
+        return False
 
     def do_drag_data_received(self, context, x, y, selection_data, info, timestamp):
         source = context.get_source_widget()
@@ -694,15 +699,16 @@ class DockGroup(gtk.Container):
 
         if selection_data.target == gdk.atom_intern(DRAG_TARGET_ITEM[0]):
             self.log.debug('Recieving item %s' % source._dragged_tab)
+            source.remove_item(source._dragged_tab_index, retain_item=True)
             self.insert_item(source._dragged_tab.item, self._drop_tab_index)
         if selection_data.target == gdk.atom_intern(DRAG_TARGET_GROUP[0]):
             self.log.debug('Recieving group from %s' % source)
-            self.merge_group(source, self._drop_tab_index)
+            self.merge_items_from_group(source, self._drop_tab_index)
         else:
             context.finish(False, False, timestamp) # success, delete, time
             return
         
-        source._dragged_tab = None
+        #source._dragged_tab = None
         context.finish(True, False, timestamp) # success, delete, time
 
     ############################################################################
@@ -989,7 +995,7 @@ class DockGroup(gtk.Container):
         self._tabs.insert(position, tab)
 
 
-    def merge_group(self, group, position=0, retain_group=False):
+    def merge_items_from_group(self, group, position=0, retain_group=False):
         """
         Merge the items in group with the current item
         """
@@ -998,9 +1004,6 @@ class DockGroup(gtk.Container):
             group.remove_item(0, retain_item=True)
             self.insert_item(tab.item, position)
             position += 1
-        #group.unparent()
-        if not retain_group:
-            group.destroy()
 
 
     ############################################################################
