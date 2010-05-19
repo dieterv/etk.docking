@@ -305,21 +305,19 @@ class DockGroup(gtk.Container):
 
             # Show tabs to the right of the current item's tab
             for tab in self._tabs[current_tab_index + 1:]:
-                if available_width - tab.area.width >= 0:
-                    available_width -= tab.area.width
-                    self._visible_tabs.append(tab)
-                else:
+                available_width -= tab.area.width
+                if available_width < 0:
                     break
+                self._visible_tabs.append(tab)
 
             # Check if we can add extra tabs to the left of the current
             # item's tab. Only add tabs that have been skipped above while
             # preventing the current item's tab from jumping position
             for tab in reversed(self._tabs[:current_tab_index - count]):
-                if available_width - tab.area.width >= 0:
-                    available_width -= tab.area.width
-                    self._visible_tabs.insert(0, tab)
-                else:
+                available_width -= tab.area.width
+                if available_width < 0:
                     break
+                self._visible_tabs.insert(0, tab)
 
             # If the current item's tab is the only visible tab,
             # we need to recalculate its tab.area.width
