@@ -21,6 +21,8 @@
 from __future__ import absolute_import
 from math import pi
 from logging import getLogger
+from operator import attrgetter
+from time import time
 
 import cairo
 import gobject
@@ -50,7 +52,8 @@ class _DockGroupTab(object):
                  'button',              # close button (etk.docking.CompactButton)
                  'menu_item',           # menu item (gtk.ImageMenuItem)
                  'state',               # state (one of the GTK State Type Constants)
-                 'area']                # area, used for hit testing (gdk.Rectangle)
+                 'area',                # area, used for hit testing (gdk.Rectangle)
+                 'last_focused']        # timestamp set last time a tab was focused
 
     def __contains__(self, pos):
         return rect_contains(self.area, *pos)
@@ -223,6 +226,7 @@ class DockGroup(gtk.Container):
                 dw = tab.area.width - lw
 
             dh = max(dh, tab.area.height)
+            print tab.label, tab.area
 
         # Add decoration button sizes to the decoration area
         (list_w, list_h) = self._list_button.size_request()
@@ -279,46 +283,36 @@ class DockGroup(gtk.Container):
                 max_tabs_before_current = self._visible_tabs.index(self._current_tab)
 
             # Reset visible tabs
-            self._visible_tabs = []
+            #self._visible_tabs = []
 
             # Calculate available tab area width
             available_width = (allocation.width - self._frame_width - self._spacing -
                                max_w - min_w - list_w - self._spacing -
                                self._current_tab.area.width)
 
-            # Show tabs to the left of the current item's tab, but don't make
-            # the current item's tab jump position.
-            count = 0
-            for tab in reversed(self._tabs[:current_tab_index]):
-                if available_width - tab.area.width >= 0:
-                    if count < max_tabs_before_current:
-                        count += 1
-                        available_width -= tab.area.width
-                        self._visible_tabs.insert(0, tab)
-                    else:
-                        break
-                else:
-                    break
+            # TODO: get previous tab position, use that to insert _current_tab
+            if self._current_tab and self._current_tab not in self._visible_tabs:
+                self._visible_tabs.append(self._current_tab)
 
-            # Current item's tab is always visible
-            self._visible_tabs.append(self._current_tab)
+            calculated_width = 0
+            for tab in self._visible_tabs:
+                calculated_width += tab.area.width
 
-            # Show tabs to the right of the current item's tab
-            for tab in self._tabs[current_tab_index + 1:]:
-                available_width -= tab.area.width
-                if available_width < 0:
-                    break
-                self._visible_tabs.append(tab)
-
-            # Check if we can add extra tabs to the left of the current
-            # item's tab. Only add tabs that have been skipped above while
-            # preventing the current item's tab from jumping position
-            for tab in reversed(self._tabs[:current_tab_index - count]):
-                available_width -= tab.area.width
-                if available_width < 0:
-                    break
-                self._visible_tabs.insert(0, tab)
-
+            if calculated_width > available_width:
+                tab_age = sorted(self._visible_tabs, key=attrgetter('last_focused'))
+                while len(tab_age) > 1 and calculated_width > available_width + tab_age[0].area.width:
+                    calculated_width -= tab_age[0].area.width
+                    self._visible_tabs.remove(tab_age[0])
+                    del tab_age[0]
+            elif calculated_width < available_width \
+                    and len(self._visible_tabs) < len(self._tabs):
+                tab_age = sorted(self._tabs, key=attrgetter('last_focused'), reverse=True)
+                while tab_age and calculated_width < available_width + tab_age[0].area.width:
+                    if tab_age[0] not in self._visible_tabs:
+                        calculated_width += tab_age[0].area.width
+                        self._visible_tabs.append(tab_age[0])
+                    del tab_age[0]
+                    
             # If the current item's tab is the only visible tab,
             # we need to recalculate its tab.area.width
             if len(self._visible_tabs) == 1:
@@ -397,9 +391,11 @@ class DockGroup(gtk.Container):
             by = (tab.area.height - bh) / 2 + 1
             tab.button.size_allocate(gdk.Rectangle(bx, by, bw, bh))
 
+            print tab, cx, cy
             cx += tab.area.width
 
-        # Allocate space for the current item
+
+        # Allocate space for the current *item*
         if self._current_tab:
             ix = self._frame_width + self.border_width
             iy = self._decoration_area.height + self.border_width
@@ -450,62 +446,59 @@ class DockGroup(gtk.Container):
         c.stroke()
 
         # Draw tabs
-        if self._tabs:
-            current_tab_index = self._tabs.index(self._current_tab)
-            visible_index = 0
-            for index, tab in enumerate(self._tabs):
-                if tab in self._visible_tabs:
-                    tx = tab.area.x
-                    ty = tab.area.y
-                    tw = tab.area.width
-                    th = tab.area.height
+        if self._visible_tabs:
+            visible_index = self._visible_tabs.index(self._current_tab)
 
-                    if index < current_tab_index and visible_index != 0:
+            for index, tab in enumerate(self._visible_tabs):
+                tx = tab.area.x
+                ty = tab.area.y
+                tw = tab.area.width
+                th = tab.area.height
+
+                print 'drawing', index, visible_index
+                if index < visible_index and index != 0:
+                    c.move_to(tx + 0.5, ty + th)
+                    c.line_to(tx + 0.5, ty + 8.5)
+                    c.arc(tx + 8.5, 8.5, 8, 180 * (pi / 180), 270 * (pi / 180))
+                    c.set_source_rgb(*dark)
+                    c.stroke()
+                elif index > visible_index:
+                    c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
+                    c.line_to(tx + tw - 0.5, ty + th)
+                    c.set_source_rgb(*dark)
+                    c.stroke()
+                elif index == visible_index:
+                    if visible_index == 0:
+                        c.move_to(tx + 0.5, ty + th)
+                        c.line_to(tx + 0.5, ty + 0.5)
+                        c.line_to(tx + tw - 8.5, ty + 0.5)
+                        c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
+                        c.line_to(tx + tw - 0.5, ty + th)
+                        linear = cairo.LinearGradient(0.5, 0.5, 0.5, th)
+                        linear.add_color_stop_rgb(0, 0.87843137254901960784313725490196, 0.91764705882352941176470588235294, 0.98431372549019607843137254901961)
+                        linear.add_color_stop_rgb(1, 0.6, 0.72941176470588235294117647058824, 0.95294117647058823529411764705882)
+                        c.set_source(linear)
+                        c.fill_preserve()
+                        c.set_source_rgb(*dark)
+                        c.stroke()
+                    else:
                         c.move_to(tx + 0.5, ty + th)
                         c.line_to(tx + 0.5, ty + 8.5)
                         c.arc(tx + 8.5, 8.5, 8, 180 * (pi / 180), 270 * (pi / 180))
-                        c.set_source_rgb(*dark)
-                        c.stroke()
-                    elif index > current_tab_index:
+                        c.line_to(tx + tw - 8.5, ty + 0.5)
                         c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
                         c.line_to(tx + tw - 0.5, ty + th)
+                        linear = cairo.LinearGradient(0.5, 0.5, 0.5, th)
+                        linear.add_color_stop_rgb(0, 0.87843137254901960784313725490196, 0.91764705882352941176470588235294, 0.98431372549019607843137254901961)
+                        linear.add_color_stop_rgb(1, 0.6, 0.72941176470588235294117647058824, 0.95294117647058823529411764705882)
+                        c.set_source(linear)
+                        c.fill_preserve()
                         c.set_source_rgb(*dark)
                         c.stroke()
-                    elif index == current_tab_index:
-                        if visible_index == 0:
-                            c.move_to(tx + 0.5, ty + th)
-                            c.line_to(tx + 0.5, ty + 0.5)
-                            c.line_to(tx + tw - 8.5, ty + 0.5)
-                            c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
-                            c.line_to(tx + tw - 0.5, ty + th)
-                            linear = cairo.LinearGradient(0.5, 0.5, 0.5, th)
-                            linear.add_color_stop_rgb(0, 0.87843137254901960784313725490196, 0.91764705882352941176470588235294, 0.98431372549019607843137254901961)
-                            linear.add_color_stop_rgb(1, 0.6, 0.72941176470588235294117647058824, 0.95294117647058823529411764705882)
-                            c.set_source(linear)
-                            c.fill_preserve()
-                            c.set_source_rgb(*dark)
-                            c.stroke()
-                        else:
-                            c.move_to(tx + 0.5, ty + th)
-                            c.line_to(tx + 0.5, ty + 8.5)
-                            c.arc(tx + 8.5, 8.5, 8, 180 * (pi / 180), 270 * (pi / 180))
-                            c.line_to(tx + tw - 8.5, ty + 0.5)
-                            c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
-                            c.line_to(tx + tw - 0.5, ty + th)
-                            linear = cairo.LinearGradient(0.5, 0.5, 0.5, th)
-                            linear.add_color_stop_rgb(0, 0.87843137254901960784313725490196, 0.91764705882352941176470588235294, 0.98431372549019607843137254901961)
-                            linear.add_color_stop_rgb(1, 0.6, 0.72941176470588235294117647058824, 0.95294117647058823529411764705882)
-                            c.set_source(linear)
-                            c.fill_preserve()
-                            c.set_source_rgb(*dark)
-                            c.stroke()
 
-                    self.propagate_expose(tab.image, event)
-                    self.propagate_expose(tab.label, event)
-                    self.propagate_expose(tab.button, event)
-
-                    # Keep track of visible tabs
-                    visible_index  += 1
+                self.propagate_expose(tab.image, event)
+                self.propagate_expose(tab.label, event)
+                self.propagate_expose(tab.button, event)
 
         self.propagate_expose(self._list_button, event)
         self.propagate_expose(self._min_button, event)
@@ -959,6 +952,7 @@ class DockGroup(gtk.Container):
         self._list_menu.append(tab.menu_item)
         tab.state = gtk.STATE_NORMAL
         tab.area = gdk.Rectangle()
+        tab.last_focused = time()
 
         self._tabs.insert(position, tab)
 
@@ -1093,6 +1087,7 @@ class DockGroup(gtk.Container):
                 current_tab_index = item_num
 
             self._current_tab = self._tabs[current_tab_index]
+            self._current_tab.last_focused = time()
             # Update properties on new current tab
             self._on_item_title_changed(self._current_tab)
             self._on_item_title_tooltip_text_changed(self._current_tab)
