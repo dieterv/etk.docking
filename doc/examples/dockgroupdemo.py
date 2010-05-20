@@ -41,8 +41,8 @@ except ImportError:
 class MainWindow(gtk.Window):
     def __init__(self):
         gtk.Window.__init__(self)
-        self.set_size_request(500, 150)
 
+        self.set_default_size(500, 150)
         self.set_title('DockGroup Demo')
         self.set_border_width(4)
         self._counter = 1
