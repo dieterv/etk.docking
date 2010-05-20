@@ -274,16 +274,6 @@ class DockGroup(gtk.Container):
         if self._tabs:
             current_tab_index = self._tabs.index(self._current_tab)
 
-            # We'll try to keep the current item's tab in the same location to
-            # prevent tabs from jumping around. To do this we need to store the
-            # current item's tab position before we reset self._visible_tabs.
-            max_tabs_before_current = len(self._tabs)
-            if self._visible_tabs and self._current_tab in self._visible_tabs:
-                max_tabs_before_current = self._visible_tabs.index(self._current_tab)
-
-            # Reset visible tabs
-            #self._visible_tabs = []
-
             # Calculate available tab area width
             available_width = (allocation.width - self._frame_width - self._spacing -
                                max_w - min_w - list_w - self._spacing -
@@ -954,7 +944,6 @@ class DockGroup(gtk.Container):
         self._tabs.insert(position, tab)
         
         if visible_position is not None:
-            print 'inserting tab on', visible_position
             self._visible_tabs.insert(visible_position, tab)
 
 
