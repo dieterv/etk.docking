@@ -122,7 +122,7 @@ class DockGroup(gtk.Container):
                            gdk.ACTION_MOVE)
         # There doesn't seem to be a do_drag_failed virtual method that handles
         # the drag-failed event, so we specifically connect to it...
-        self.connect('drag-failed', DockGroup.on_drag_failed)
+        self.connect('drag-failed', DockGroup._do_drag_failed)
 
         self._drag_target = None
         self._dragged_tab = None
@@ -544,7 +544,7 @@ class DockGroup(gtk.Container):
         # current tab's child widget
         if event.window is self.window:
             if event.state & gdk.BUTTON1_MASK:
-                tab = self.find_tab(event.x, event.y)
+                tab = self._get_tab_at_pos(event.x, event.y)
                 if tab:
                     drag_source = [DRAG_TARGET_ITEM]
                     self._dragged_tab = tab
@@ -751,7 +751,7 @@ class DockGroup(gtk.Container):
         self.log.debug('do_drag_motion: %s, %s, %s, %s' % (context, x, y, timestamp))
 
         # Insert the dragged tab before the tab under (x, y)
-        drop_tab = self.find_tab(x, y)
+        drop_tab = self._get_tab_at_pos(x, y)
 
         if drop_tab:
             self._drop_tab_index = self._tabs.index(drop_tab)
