@@ -33,9 +33,9 @@ from .dockitem import DockItem
 from .util import rect_contains
 
 
-DRAG_TARGET_GROUP = ('x-etk-docking/group', gtk.TARGET_SAME_APP, 0)
-DRAG_TARGET_ITEM = ('x-etk-docking/item', gtk.TARGET_SAME_APP, 1)
-DRAG_TARGETS = [DRAG_TARGET_GROUP, DRAG_TARGET_ITEM]
+DRAG_TARGET_ITEM = ('x-etk-docking/item', gtk.TARGET_SAME_APP, 0)
+DRAG_TARGET_GROUP = ('x-etk-docking/group', gtk.TARGET_SAME_APP, 1)
+DRAG_TARGETS = [DRAG_TARGET_ITEM, DRAG_TARGET_GROUP]
 
 
 class _DockGroupTab(object):
@@ -43,8 +43,8 @@ class _DockGroupTab(object):
     Convenience class storing information about a tab.
     '''
     __slots__ = ['item',                # DockItem associated with this tab
-                 'item_title_handler',
-                 'item_title_tooltip_text_handler',
+                 'item_title_handler',  # item title property notification signal handler id
+                 'item_title_tooltip_text_handler', # item title-tooltip-text property notification signal handler id
                  'image',               # icon (gtk.Image)
                  'label',               # title (gtk.Label)
                  'button',              # close button (etk.docking.CompactButton)
@@ -53,7 +53,7 @@ class _DockGroupTab(object):
                  'area']                # area, used for hit testing (gdk.Rectangle)
 
     def __contains__(self, pos):
-        return rect_contains(self.area, pos[0], pos[1])
+        return rect_contains(self.area, *pos)
 
     def __str__(self):
         return "<%s object at 0x%x with label '%s' on %s>" % (self.__class__.__name__, id(self), self.label.get_text(), self.area)
@@ -61,12 +61,14 @@ class _DockGroupTab(object):
 
 class DockGroup(gtk.Container):
     '''
-    The etk.DockGroup class groups etk.DockItem children in a tabbed interface.
+    The etk.DockGroup widget is a gtk.Container that groups its children in a
+    tabbed interface.
 
     You can reorder tabs by dragging them to the desired location within the
     same or another etk.DockGroup having the same group-id. You can also drag
     a complete etk.DockGroup onto another etk.DockGroup having the same group-id
-    to merge all etk.DockItems from the source into the destination etk.DockGroup.
+    to merge all etk.DockItems from the source into the destination
+    etk.DockGroup.
     '''
     __gtype_name__ = 'EtkDockGroup'
     __gproperties__ = {'group-id': (gobject.TYPE_UINT,
@@ -118,9 +120,11 @@ class DockGroup(gtk.Container):
         self.drag_dest_set(gtk.DEST_DEFAULT_MOTION | gtk.DEST_DEFAULT_HIGHLIGHT,
                            DRAG_TARGETS,
                            gdk.ACTION_MOVE)
+        # There doesn't seem to be a do_drag_failed virtual method that handles
+        # the drag-failed event, so we specifically connect to it...
         self.connect('drag-failed', DockGroup.on_drag_failed)
 
-        self._drag_target = None 
+        self._drag_target = None
         self._dragged_tab = None
         self._drop_tab_index = None
         self._drag_drop_failed = False
@@ -223,10 +227,11 @@ class DockGroup(gtk.Container):
             (lw, lh) = tab.label.size_request()
             (bw, bh) = tab.button.size_request()
 
-            tab.area.width = (self._frame_width + self._spacing + iw +
-                             self._spacing + lw + self._spacing + bw +
-                             self._spacing + self._frame_width)
-            tab.area.height = (self._frame_width + self._spacing + max(ih, lh, bh) +
+            tab.area.width = (self._frame_width + self._spacing +
+                              iw + self._spacing + lw + self._spacing +
+                              bw + self._spacing + self._frame_width)
+            tab.area.height = (self._frame_width + self._spacing +
+                               max(ih, lh, bh) +
                                self._spacing + self._frame_width)
 
             if tab == self._current_tab:
@@ -594,8 +599,25 @@ class DockGroup(gtk.Container):
 
     # drag source
     def do_drag_begin(self, context):
-        #super(DockGroup, self).do_drag_begin(context)
-        # TODO: Set drag icon
+        '''
+        :param context: the gdk.DragContext
+
+        The do_drag_begin() signal handler is executed on the drag source when
+        the user initiates a drag operation. A typical reason to use this signal
+        handler is to set up a custom drag icon with the drag_source_set_icon()
+        method.
+        '''
+        self.log.debug('do_drag_begin: %s' % context)
+
+        #TODO: Set drag icon to be empty
+        #TODO: Set drag cursor -> will most likely not (only) happen here...
+        # Can be any of the following, depending on the selected drag destination:
+        #   - gdk.DIAMOND_CROSS    "stacking" a dockitem into a dockgroup
+        #   - gdk.SB_UP_ARROW      "splitting" a dockitem into a new dockgroup above the source dockgroup (needs docklayout)
+        #   - gdk.SB_DOWN_ARROW    "splitting" a dockitem into a new dockgroup below the source dockgroup (needs docklayout)
+        #   - gdk.SB_LEFT_ARROW    "splitting" a dockitem into a new dockgroup on the left of the source dockgroup (needs docklayout)
+        #   - gdk.SB_RIGHT_ARROW   "splitting" a dockitem into a new dockgroup on the right of the source dockgroup (needs docklayout)
+
         tab = self._dragged_tab
         self._drag_drop_failed = False
         if tab:
@@ -620,20 +642,50 @@ class DockGroup(gtk.Container):
         #context.set_icon_pixmap(tab.image.get_pixmap(), -2, -2)
 
     def do_drag_data_get(self, context, selection_data, info, timestamp):
-        # TODO: Fill selection_data with the right data (set() or set_text())
-        self.log.debug('Drag data get: %s, %s, %s' % (context, selection_data, info))
+        '''
+        :param context: the gdk.DragContext
+        :param selection_data: a gtk.SelectionData object
+        :param info: an integer ID for the drag
+        :param timestamp: the time of the drag event
+
+        The do_drag_data_get() signal handler is executed when a drag operation
+        completes that copies data or when a drag drop occurs using the
+        gtk.gdk.DRAG_PROTO_ROOTWIN protocol. The drag source executes this
+        handler when the drag destination requests the data using the
+        drag_get_data() method. This handler needs to fill selection_data
+        with the data in the format specified by the target associated with
+        info.
+        '''
+        #TODO: Fill selection_data with the right data (set() or set_text())
+        self.log.debug('do_drag_data_get: %s, %s, %s' % (context, selection_data, info))
+
         if self._drag_target is DRAG_TARGET_ITEM:
             selection_data.set(gdk.atom_intern(DRAG_TARGET_ITEM[0]), 8, 'Dummy item')
         elif self._drag_target is DRAG_TARGET_GROUP:
             selection_data.set(gdk.atom_intern(DRAG_TARGET_GROUP[0]), 8, 'Dummy group')
 
-#    def do_drag_data_delete(self, context):
-#        self.log.debug('Drag delete: %s' % context)
+    def do_drag_data_delete(self, context):
+        '''
+        :param context: the gdk.DragContext
+
+        The do_drag_data_delete() signal handler is executed when the drag
+        completes a move operation and requires the source data to be deleted.
+        The handler is responsible for deleting the data that has been dropped.
+        '''
+        self.log.debug('do_drag_data_delete: %s' % context)
 
     def do_drag_end(self, context):
+        '''
+        :param context: the gdk.DragContext
+
+        The do_drag_end() signal handler is executed when the drag operation is
+        completed. A typical reason to use this signal handler is to undo things
+        done in the do_drag_begin() handler.
+        '''
+        self.log.debug('do_drag_end: %s - %s', context, context.drag_drop_succeeded())
         self._dragged_tab = None
         self._drop_tab_index = None
-        self.log.debug('Drag end: %s - %s', context, context.drag_drop_succeeded())
+
         if not self._drag_drop_failed:
             if self._drag_target is DRAG_TARGET_ITEM:
                 pass
@@ -648,52 +700,146 @@ class DockGroup(gtk.Container):
                 # TODO: create new window with paned, Then add group (or merge items)
                 pass
 
-#    def do_drag_failed(self, context, result):
-#        self.log.debug('Drag failed: %s, %s' % [context, result])
+    def do_drag_failed(self, context, result):
+        '''
+        :param context: the gdk.DragContext
+        :param result: the result of the drag operation
+        :returns: True if the failed drag operation has been already handled.
 
-    # Looks like the default callback is not working here...
-    def on_drag_failed(self, context, result):
-        self.log.debug('Drag failed event: %s, %s, %s' % (context, result, context))
+        The do_drag_failed() signal handler is executed on the drag source when
+        a drag has failed. The handler may hook custom code to handle a failed
+        DND operation based on the type of error. It returns True if the
+        failure has been already handled (not showing the default
+        "drag operation failed" animation), otherwise it returns False.
+        '''
+        self.log.debug('do_drag_failed: %s, %s' % (context, result))
+        self._drag_drop_failed = True
+        #context.drop_finish(False, 0)
+        return True
+
+    # There doesn't seem to be a do_drag_failed virtual method that handles
+    # the drag-failed event, so we have specifically connected _do_drag_failed.
+    #TODO: check bugs.gnome.org.
+    def _do_drag_failed(self, context, result):
+        self.log.debug('_do_drag_failed: %s, %s' % (context, result))
         self._drag_drop_failed = True
         #context.drop_finish(False, 0)
 
     # drop destination
     def do_drag_motion(self, context, x, y, timestamp):
-#        #self.log.debug('%s, %s, %s' % (context, x, y))
+        '''
+        :param context: the gdk.DragContext
+        :param x: the X position of the drop
+        :param y: the Y position of the drop
+        :param timestamp: the time of the drag event
+        :returns: True if the cursor is in a drop zone
+
+        The do_drag_motion() signal handler is executed when the drag operation
+        moves over a drop target widget. The handler must determine if the
+        cursor position is in a drop zone or not. If it is not in a drop zone,
+        it should return False and no further processing is necessary. Otherwise,
+        the handler should return True. In this case, the handler is responsible
+        for providing the necessary information for displaying feedback to the
+        user, by calling the gdk.DragContext.drag_status() method. If the
+        decision to accept or reject the drop can't be made based solely on
+        the cursor position and the type of the data, the handler may inspect
+        the dragged data by calling the drag_get_data() method and defer the
+        gdk.DragContext.drag_status() method call to the do_drag_data_received()
+        signal handler.
+
+        Note::
+            There is no do_drag_enter() signal handler. The drag receiver has
+            to keep track of any do_drag_motion() signals received since the
+            last do_drag_leave() signal. The first do_drag_motion() signal
+            received after a do_drag_leave() signal should be treated as an
+            "enter" signal. Upon an "enter", the handler will typically
+            highlight the drop site with the drag_highlight() method.
+        '''
+        self.log.debug('do_drag_motion: %s, %s, %s, %s' % (context, x, y, timestamp))
+
         # Insert the dragged tab before the tab under (x, y)
         drop_tab = self.find_tab(x, y)
+
         if drop_tab:
             self._drop_tab_index = self._tabs.index(drop_tab)
         elif self._tabs:
             self._drop_tab_index = self._tabs.index(self._current_tab)
+
         target = self.drag_dest_find_target(context, ());
         self.log.info('%d move over tab %s, target = %s', timestamp, self._drop_tab_index, target)
         return True
 
+    def do_drag_leave(self, context, timestamp):
+        '''
+        :param context: the gdk.DragContext
+        :param timestamp: the time of the drag event
 
-#    def do_drag_leave(self, context, timestamp):
-#        Can do something here like stopping an animation for creating some space between
-#        tabs where the dragged tan can be dropped
-#        self.log.debug('%s, %s' % (context, timestamp))
+        The dp_drag_leave() signal handler is executed when the drag operation
+        moves off of a drop target widget. A typical reason to use this signal
+        handler is to undo things done in the do_drag_motion() handler, e.g. undo
+        highlighting with the drag_unhighlight() method.
+        '''
+        #Can do something here like stopping an animation for creating some space between
+        #tabs where the dragged tan can be dropped
+        self.log.debug('do_drag_leave, %s, %s' % (context, timestamp))
+        self.drag_unhighlight()
 
     def do_drag_drop(self, context, x, y, timestamp):
-        """
-        Can we accept the drop? If correct, do_drag_data_get() will be called on the source
-        and a resulting do_drag_data_received will be handled on the destination side.
-        """
-        self.log.debug('Drop on %s, %s' % (x, y))
+        '''
+        :param context: the gdk.DragContext
+        :param x: the X position of the drop
+        :param y: the Y position of the drop
+        :param timestamp: the time of the drag event
+        :returns: True if the cursor is in a drop zone
+
+        The do_drag_drop() signal handler is executed when the drag initiates a
+        drop operation on the destination widget. The signal handler must
+        determine whether the cursor position is in a drop zone or not. If it is
+        not in a drop zone, it returns False and no further processing is
+        necessary. Otherwise, the handler returns True. In this case, the handler
+        must ensure that the gdk.DragContext.finish() method is called to let
+        the source know that the drop is done. The call to the
+        gdk.DragContext.finish() method can be done either directly or in the
+        do_drag_data_received() handler that gets triggered by calling the
+        drag_get_data() method to receive the data for one or more of the
+        supported targets.
+        '''
+        self.log.debug('do_drag_drop, %s, %s, %s, %s' % (context, x, y, timestamp))
+
         target = self.drag_dest_find_target(context, DRAG_TARGETS)
         # TODO: check if target is x-etk-docking/item|group
         item_target = gdk.atom_intern(DRAG_TARGET_ITEM[0])
         group_target = gdk.atom_intern(DRAG_TARGET_GROUP[0])
+
         if target == item_target or target == group_target:
             # Register location where to drop
             self.log.debug('Dropping item/group at index %s with target %s' % (self._drop_tab_index, target))
             self.drag_get_data(context, target, timestamp)
             return True
+
         return False
 
     def do_drag_data_received(self, context, x, y, selection_data, info, timestamp):
+        '''
+        :param context: the gdk.DragContext
+        :param x: the X position of the drop
+        :param y: the Y position of the drop
+        :param selection_data: a gtk.SelectionData object
+        :param info: an integer ID for the drag
+        :param timestamp: the time of the drag event
+
+        The do_drag_data_received() signal handler is executed when the drag
+        destination receives the data from the drag operation. If the data was
+        received in order to determine whether the drop will be accepted, the
+        handler is expected to call the gdk.DragContext.drag_status() method
+        and not finish the drag. If the data was received in response to a
+        do_drag_drop() signal (and this is the last target to be received),
+        the handler for this signal is expected to process the received data
+        and then call the gdk.DragContext.finish() method, setting the success
+        parameter to True if the data was processed successfully.
+        '''
+        self.log.debug('do_drag_data_received, %s, %s, %s, %s, %s, %s' % (context, x, y, selection_data, info, timestamp))
+
         source = context.get_source_widget()
         assert source
 
@@ -707,7 +853,7 @@ class DockGroup(gtk.Container):
         else:
             context.finish(False, False, timestamp) # success, delete, time
             return
-        
+
         #source._dragged_tab = None
         context.finish(True, False, timestamp) # success, delete, time
 
@@ -768,10 +914,11 @@ class DockGroup(gtk.Container):
 
         The insert_item() method inserts a DockItem into the DockGroup at the
         location specified by position (0 is the first item). item is the
-        DockItem to insert. If position is None the item is appended to the DockGroup.
+        DockItem to insert. If position is None the item is appended to the
+        DockGroup.
         '''
         if not isinstance(item, DockItem):
-            raise TypeError('Inserted item should be of type DockItem (was: %s)' % (item,))
+            raise TypeError('item should be of type "DockItem", got: "%s"' % type(item).__name__)
 
         if position is None:
             position = self.get_n_items()
@@ -881,7 +1028,8 @@ class DockGroup(gtk.Container):
         '''
         :returns: the number of item tabs in the DockGroup.
 
-        The get_n_items() method returns the number of item tabs in the DockGroup.
+        The get_n_items() method returns the number of item tabs in the
+        DockGroup.
         '''
         return len(self._tabs)
 
