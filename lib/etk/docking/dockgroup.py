@@ -989,10 +989,6 @@ class DockGroup(gtk.Container):
         # We need this to reset the current item below
         old_tab_index = self._tabs.index(self._current_tab)
 
-        # Remove from self._visible_tabs list
-        if tab in self._visible_tabs:
-            self._visible_tabs.remove(tab)
-
         # Remove tab item
         tab.item.disconnect(tab.item_title_handler)
         tab.item.disconnect(tab.item_title_tooltip_text_handler)
