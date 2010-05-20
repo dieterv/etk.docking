@@ -588,16 +588,9 @@ class DockGroup(gtk.Container):
 
         return True
 
-    def find_tab(self, x, y):
-        """
-        Returns the tab (x,y) is in, otherwise returns None.
-        """
-        rc = rect_contains
-        for tab in self._visible_tabs:
-            if rc(tab.area, x, y):
-                return tab
-
-    # drag source
+    ############################################################################
+    # GtkWidget drag source
+    ############################################################################
     def do_drag_begin(self, context):
         '''
         :param context: the gdk.DragContext
@@ -885,6 +878,22 @@ class DockGroup(gtk.Container):
     ############################################################################
     # EtkDockGroup
     ############################################################################
+    def _get_tab_at_pos(self, x, y):
+        '''
+        :param x: the x coordinate of the position
+        :param y: the y coordinate of the position
+        :returns: the item tab at the position specified by x and y or None
+
+        The _get_tab_at_pos() method returns the _DockGroupTab whose area
+        contains the position specified by x and y or None if no _DockGroupTab
+        area contains position.
+        '''
+        for tab in self._visible_tabs:
+            if (x, y) in tab:
+                return tab
+        else:
+            return None
+
     def append_item(self, item):
         '''
         :param item: a DockItem
