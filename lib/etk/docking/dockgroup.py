@@ -226,7 +226,6 @@ class DockGroup(gtk.Container):
                 dw = tab.area.width - lw
 
             dh = max(dh, tab.area.height)
-            print tab.label, tab.area
 
         # Add decoration button sizes to the decoration area
         (list_w, list_h) = self._list_button.size_request()
@@ -391,9 +390,7 @@ class DockGroup(gtk.Container):
             by = (tab.area.height - bh) / 2 + 1
             tab.button.size_allocate(gdk.Rectangle(bx, by, bw, bh))
 
-            print tab, cx, cy
             cx += tab.area.width
-
 
         # Allocate space for the current *item*
         if self._current_tab:
@@ -455,7 +452,6 @@ class DockGroup(gtk.Container):
                 tw = tab.area.width
                 th = tab.area.height
 
-                print 'drawing', index, visible_index
                 if index < visible_index and index != 0:
                     c.move_to(tx + 0.5, ty + th)
                     c.line_to(tx + 0.5, ty + 8.5)
@@ -522,12 +518,12 @@ class DockGroup(gtk.Container):
             if event.state & gdk.BUTTON1_MASK:
                 tab = self._get_tab_at_pos(event.x, event.y)
                 if tab:
-                    drag_source = [DRAG_TARGET_ITEM]
+                    drag_source = DRAG_TARGET_ITEM
                     self._dragged_tab = tab
                 else:
-                    drag_source = [DRAG_TARGET_GROUP]
+                    drag_source = DRAG_TARGET_GROUP
                     self._dragged_tab = None
-                self.drag_begin(drag_source, gdk.ACTION_MOVE, 1, event)
+                self.drag_begin([drag_source], gdk.ACTION_MOVE, 1, event)
 
             for tab in self._visible_tabs:
                 if (event.x, event.y) in tab:
@@ -746,12 +742,11 @@ class DockGroup(gtk.Container):
         drop_tab = self._get_tab_at_pos(x, y)
 
         if drop_tab:
-            self._drop_tab_index = self._tabs.index(drop_tab)
+            self._drop_tab_index = self._visible_tabs.index(drop_tab)
         elif self._tabs:
-            self._drop_tab_index = self._tabs.index(self._current_tab)
-
+            self._drop_tab_index = self._visible_tabs.index(self._current_tab)
         target = self.drag_dest_find_target(context, ());
-        self.log.info('%d move over tab %s, target = %s', timestamp, self._drop_tab_index, target)
+        #self.log.info('%d move over tab %s, target = %s', timestamp, self._drop_tab_index, target)
         return True
 
     def do_drag_leave(self, context, timestamp):
@@ -831,7 +826,7 @@ class DockGroup(gtk.Container):
         if selection_data.target == gdk.atom_intern(DRAG_TARGET_ITEM[0]):
             self.log.debug('Recieving item %s' % source._dragged_tab)
             source.remove_item(source._dragged_tab_index, retain_item=True)
-            self.insert_item(source._dragged_tab.item, self._drop_tab_index)
+            self.insert_item(source._dragged_tab.item, visible_position=self._drop_tab_index)
         if selection_data.target == gdk.atom_intern(DRAG_TARGET_GROUP[0]):
             self.log.debug('Recieving group from %s' % source)
             self.merge_items_from_group(source, self._drop_tab_index)
@@ -907,7 +902,7 @@ class DockGroup(gtk.Container):
         '''
         return self.insert_item(item, position=0)
 
-    def insert_item(self, item, position=None):
+    def insert_item(self, item, position=None, visible_position=None):
         '''
         :param item: a DockItem
         :param position: the index (starting at 0) at which to insert the item,
@@ -921,6 +916,8 @@ class DockGroup(gtk.Container):
         '''
         if not isinstance(item, DockItem):
             raise TypeError('item should be of type "DockItem", got: "%s"' % type(item).__name__)
+        if item in self._tabs:
+            raise ValueError('Inserted item is already in the group')
 
         if position is None:
             position = self.get_n_items()
@@ -955,6 +952,11 @@ class DockGroup(gtk.Container):
         tab.last_focused = time()
 
         self._tabs.insert(position, tab)
+        
+        if visible_position is not None:
+            print 'inserting tab on', visible_position
+            self._visible_tabs.insert(visible_position, tab)
+
 
         if self.flags() & gtk.REALIZED:
             tab.item.set_parent_window(self.window)
