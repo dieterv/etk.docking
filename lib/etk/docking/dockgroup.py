@@ -151,21 +151,6 @@ class DockGroup(gtk.Container):
     ############################################################################
     # GtkWidget
     ############################################################################
-#    def _drag_hightlight_expose(self, widget, event):
-#        pass
-#
-#    def drag_highlight(self, widget):
-#        '''
-#        Highlight the given widget in the default manner.
-#        '''
-#        pass
-#
-#    def drag_unhighlight(self, widget):
-#        '''
-#        Refresh the given widget to remove the highlight.
-#        '''
-#        pass
-
     def do_realize(self):
         # Internal housekeeping
         self.set_flags(self.flags() | gtk.REALIZED)
@@ -718,7 +703,22 @@ class DockGroup(gtk.Container):
         self._drag_drop_failed = True
         #context.drop_finish(False, 0)
 
-    # drop destination
+    ############################################################################
+    # GtkWidget drag destination
+    ############################################################################
+    def drag_highlight(self):
+        '''
+        Highlight the currently selected drag destination "widget" in the default
+        manner.
+        '''
+        self.log.debug('drag_highlight')
+
+    def drag_unhighlight(self):
+        '''
+        Remove the currently applied drag highlight.
+        '''
+        self.log.debug('drag_unhighlight')
+
     def do_drag_motion(self, context, x, y, timestamp):
         '''
         :param context: the gdk.DragContext
