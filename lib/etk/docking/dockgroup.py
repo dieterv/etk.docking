@@ -702,6 +702,7 @@ class DockGroup(gtk.Container):
         self.log.debug('_do_drag_failed: %s, %s' % (context, result))
         self._drag_drop_failed = True
         #context.drop_finish(False, 0)
+        return True
 
     ############################################################################
     # GtkWidget drag destination
