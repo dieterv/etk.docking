@@ -283,6 +283,11 @@ class DockGroup(gtk.Container):
             if self._current_tab and self._current_tab not in self._visible_tabs:
                 self._visible_tabs.append(self._current_tab)
 
+            #if not set(self._visible_tabs) <= set(self._tabs):
+            for tab in self._visible_tabs:
+                if tab not in self._tabs:
+                    self._visible_tabs.remove(tab)
+
             calculated_width = 0
             for tab in self._visible_tabs:
                 calculated_width += tab.area.width
@@ -301,7 +306,7 @@ class DockGroup(gtk.Container):
                         calculated_width += tab_age[0].area.width
                         self._visible_tabs.append(tab_age[0])
                     del tab_age[0]
-                    
+
             # If the current item's tab is the only visible tab,
             # we need to recalculate its tab.area.width
             if len(self._visible_tabs) == 1:
@@ -654,6 +659,7 @@ class DockGroup(gtk.Container):
             elif self._drag_target is DRAG_TARGET_GROUP:
                 # TODO: create new window with paned, Then add group (or merge items)
                 pass
+        self.queue_resize()
 
     def do_drag_failed(self, context, result):
         '''
@@ -945,7 +951,6 @@ class DockGroup(gtk.Container):
         
         if visible_position is not None:
             self._visible_tabs.insert(visible_position, tab)
-
 
         if self.flags() & gtk.REALIZED:
             tab.item.set_parent_window(self.window)
