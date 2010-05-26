@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# vim:sw=4:et:ai
 #
 # Copyright © 2010 etk.docking Contributors
 #
@@ -130,7 +131,6 @@ class DockGroup(gtk.Container):
         self._drag_target = None
         self._dragged_tab = None
         self._drop_tab_index = None
-        self._drag_drop_failed = False
 
 
     ############################################################################
@@ -271,7 +271,9 @@ class DockGroup(gtk.Container):
         # Check what tabs we can show with the space we have been allocated.
         # Tabs on the far right of the current item tab get hidden first,
         # then tabs on the far left.
-        if self._tabs:
+        if not self._tabs:
+            del self._visible_tabs[:]
+        else:
             current_tab_index = self._tabs.index(self._current_tab)
 
             # Calculate available tab area width
@@ -579,7 +581,6 @@ class DockGroup(gtk.Container):
         #   - gdk.SB_RIGHT_ARROW   "splitting" a dockitem into a new dockgroup on the right of the source dockgroup (needs docklayout)
 
         tab = self._dragged_tab
-        self._drag_drop_failed = False
         if tab:
             self._dragged_tab_index = self._tabs.index(tab)
             #self.remove_item(self._dragged_tab_index, retain_item=True)
@@ -615,11 +616,18 @@ class DockGroup(gtk.Container):
         drag_get_data() method. This handler needs to fill selection_data
         with the data in the format specified by the target associated with
         info.
+
+        For tab movement, here the tab is removed from the group. If the
+        drop fails, the tab is restored in do_drag_failed().
+
+        For group movement, no special action is taken.
         '''
         #TODO: Fill selection_data with the right data (set() or set_text())
         self.log.debug('do_drag_data_get: %s, %s, %s' % (context, selection_data, info))
 
         if self._drag_target is DRAG_TARGET_ITEM:
+            # Free the item for transport.
+            self.remove_item(self._dragged_tab_index, retain_item=True)
             selection_data.set(gdk.atom_intern(DRAG_TARGET_ITEM[0]), 8, 'Dummy item')
         elif self._drag_target is DRAG_TARGET_GROUP:
             selection_data.set(gdk.atom_intern(DRAG_TARGET_GROUP[0]), 8, 'Dummy group')
@@ -631,35 +639,15 @@ class DockGroup(gtk.Container):
         The do_drag_data_delete() signal handler is executed when the drag
         completes a move operation and requires the source data to be deleted.
         The handler is responsible for deleting the data that has been dropped.
+
+        For groups, the group is deleted, for tabs the group is destroyed
+        of there are no more tabs left (see do_drag_data_get()).
         '''
         self.log.debug('do_drag_data_delete: %s' % context)
-
-    def do_drag_end(self, context):
-        '''
-        :param context: the gdk.DragContext
-
-        The do_drag_end() signal handler is executed when the drag operation is
-        completed. A typical reason to use this signal handler is to undo things
-        done in the do_drag_begin() handler.
-        '''
-        self.log.debug('do_drag_end: %s - %s', context, context.drag_drop_succeeded())
-        self._dragged_tab = None
-        self._drop_tab_index = None
-
-        if not self._drag_drop_failed:
-            if self._drag_target is DRAG_TARGET_ITEM:
-                pass
-            elif self._drag_target is DRAG_TARGET_GROUP:
-                #self.get_parent().queue_resize()
-                self.destroy()
-        else:
-            if self._drag_target is DRAG_TARGET_ITEM:
-                # TODO: Create new window with paned and group. Then add item to group
-                pass
-            elif self._drag_target is DRAG_TARGET_GROUP:
-                # TODO: create new window with paned, Then add group (or merge items)
-                pass
-        self.queue_resize()
+        if self._drag_target is DRAG_TARGET_ITEM and not self._tabs:
+            self.destroy()
+        if self._drag_target is DRAG_TARGET_GROUP:
+            self.destroy()
 
     def do_drag_failed(self, context, result):
         '''
@@ -674,16 +662,31 @@ class DockGroup(gtk.Container):
         "drag operation failed" animation), otherwise it returns False.
         '''
         self.log.debug('do_drag_failed: %s, %s' % (context, result))
-        self._drag_drop_failed = True
+        # Put back the item removed in do_drag_data_get()
         #context.drop_finish(False, 0)
         return True
+
+    def do_drag_end(self, context):
+        '''
+        :param context: the gdk.DragContext
+
+        The do_drag_end() signal handler is executed when the drag operation is
+        completed. A typical reason to use this signal handler is to undo things
+        done in the do_drag_begin() handler.
+        '''
+        self.log.debug('do_drag_end: %s - %s', context, context.drag_drop_succeeded())
+        self._dragged_tab = None
+        self._drop_tab_index = None
+
+        self.queue_resize()
 
     # There doesn't seem to be a do_drag_failed virtual method that handles
     # the drag-failed event, so we have specifically connected _do_drag_failed.
     #TODO: check bugs.gnome.org.
     def _do_drag_failed(self, context, result):
         self.log.debug('_do_drag_failed: %s, %s' % (context, result))
-        self._drag_drop_failed = True
+        if not self._dragged_tab.item.get_parent():
+            self.insert_item(self._dragged_tab.item, position=self._dragged_tab_index)
         #context.drop_finish(False, 0)
         return True
 
@@ -755,8 +758,8 @@ class DockGroup(gtk.Container):
         handler is to undo things done in the do_drag_motion() handler, e.g. undo
         highlighting with the drag_unhighlight() method.
         '''
-        #Can do something here like stopping an animation for creating some space between
-        #tabs where the dragged tan can be dropped
+        # Can do something here like stopping an animation for creating some
+        # space between tabs where the dragged tan can be dropped
         self.log.debug('do_drag_leave, %s, %s' % (context, timestamp))
         self.drag_unhighlight()
 
@@ -821,9 +824,8 @@ class DockGroup(gtk.Container):
 
         if selection_data.target == gdk.atom_intern(DRAG_TARGET_ITEM[0]):
             self.log.debug('Recieving item %s' % source._dragged_tab)
-            source.remove_item(source._dragged_tab_index, retain_item=True)
             self.insert_item(source._dragged_tab.item, visible_position=self._drop_tab_index)
-        if selection_data.target == gdk.atom_intern(DRAG_TARGET_GROUP[0]):
+        elif selection_data.target == gdk.atom_intern(DRAG_TARGET_GROUP[0]):
             self.log.debug('Recieving group from %s' % source)
             self.merge_items_from_group(source, self._drop_tab_index)
         else:
@@ -831,7 +833,7 @@ class DockGroup(gtk.Container):
             return
 
         #source._dragged_tab = None
-        context.finish(True, False, timestamp) # success, delete, time
+        context.finish(True, True, timestamp) # success, delete, time
 
     ############################################################################
     # GtkContainer
