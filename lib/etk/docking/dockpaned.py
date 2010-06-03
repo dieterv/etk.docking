@@ -404,7 +404,7 @@ class DockPaned(gtk.Container):
             self.window.set_cursor(cursor)
 
     # drop destination
-    def do_drag_motion(self, context, x, y, timestamp):
+    def xx_do_drag_motion(self, context, x, y, timestamp):
         self.log.debug('Paned motion: %s, %s, %s' % (context, x, y))
         self._drop_handle = None
         pos = (x, y)
@@ -415,7 +415,7 @@ class DockPaned(gtk.Container):
                 return True
         return False
 
-    def do_drag_data_received(self, context, x, y, selection_data, info, timestamp):
+    def xx_do_drag_data_received(self, context, x, y, selection_data, info, timestamp):
         source = context.get_source_widget()
         assert source
         assert self._drop_handle
