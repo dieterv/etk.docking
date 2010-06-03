@@ -1140,7 +1140,7 @@ class DockGroup(gtk.Container):
         self._tabs.insert(position, tab)
 
 
-    def merge_items_from_group(self, group, position=0, retain_group=False):
+    def merge_items_from_group(self, group, position=0):
         """
         Merge the items in group with the current item
         """
