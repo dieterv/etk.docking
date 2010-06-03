@@ -18,7 +18,7 @@
 # along with etk.docking. If not, see <http://www.gnu.org/licenses/>.
 
 
-from __future__ import absolute_import,  division
+from __future__ import absolute_import
 from logging import getLogger
 
 import gobject
@@ -28,34 +28,38 @@ import gtk.gdk as gdk
 
 class DockItem(gtk.Bin):
     __gtype_name__ = 'EtkDockItem'
-    __gproperties__ = {'icon-name': (gobject.TYPE_STRING,
-                                     'icon name',
-                                     'icon name',
-                                     '',
-                                     gobject.PARAM_READWRITE),
-                       'title': (gobject.TYPE_STRING,
-                                 'icon name',
-                                 'icon name',
-                                 '',
-                                 gobject.PARAM_READWRITE),
-                       'title-tooltip-text': (gobject.TYPE_STRING,
-                                              'title tooltip text',
-                                              'title tooltip text',
-                                              '',
-                                              gobject.PARAM_READWRITE)}
+    __gproperties__ = {'icon-name':
+                           (gobject.TYPE_STRING,
+                            'icon name',
+                            'icon name',
+                            '',
+                            gobject.PARAM_READWRITE),
+                       'title':
+                           (gobject.TYPE_STRING,
+                            'icon name',
+                            'icon name',
+                            '',
+                            gobject.PARAM_READWRITE),
+                       'title-tooltip-text':
+                           (gobject.TYPE_STRING,
+                            'title tooltip text',
+                            'title tooltip text',
+                            '',
+                            gobject.PARAM_READWRITE)}
 
     def __init__(self, icon_name='', title='', title_tooltip_text=''):
         gtk.Bin.__init__(self)
+
+        # This is a NO_WINDOW widget
         self.set_flags(self.flags() | gtk.NO_WINDOW)
 
         # Initialize logging
         self.log = getLogger('<%s object at %s>' % (self.__gtype_name__, hex(id(self))))
 
         # Internal housekeeping
-        self._icon_name = icon_name
-        self._title = title
-        self.set_name(title)
-        self._title_tooltip_text = title_tooltip_text
+        self.set_icon_name(icon_name)
+        self.set_title(title)
+        self.set_title_tooltip_text(title_tooltip_text)
 
     ############################################################################
     # GObject
@@ -101,66 +105,26 @@ class DockItem(gtk.Bin):
     ############################################################################
     # GtkWidget
     ############################################################################
-    def do_realize(self):
-        self.set_flags(self.flags() | gtk.REALIZED)
-
-        self.window = gdk.Window(self.get_parent_window(),
-                                 x = self.allocation.x,
-                                 y = self.allocation.y,
-                                 width = self.allocation.width,
-                                 height = self.allocation.height,
-                                 window_type = gdk.WINDOW_CHILD,
-                                 wclass = gdk.INPUT_OUTPUT,
-                                 event_mask = (gdk.EXPOSURE_MASK))
-        self.window.set_user_data(self)
-        self.style.attach(self.window)
-        self.style.set_background(self.window, gtk.STATE_NORMAL)
-
-        if self.child:
-            self.child.set_parent_window(self.window)
-
-    def do_unrealize(self):
-        self.window.set_user_data(None)
-        self.window.destroy()
-        gtk.Bin.do_unrealize(self)
-
-    def do_map(self):
-        gtk.Bin.do_map(self)
-
-        if self.window:
-            self.window.show()
-
-    def do_unmap(self):
-        gtk.Bin.do_unmap(self)
-        self.window.hide()
-
-    def do_show(self):
-        gtk.Bin.do_show(self)
-        self.child.show()
-
-    def do_hide(self):
-        gtk.Bin.do_hide(self)
-        self.child.hide()
-
     def do_size_request(self, requisition):
-        requisition.width = self.border_width * 2
-        requisition.height = self.border_width * 2
+        self.log.debug('%s' % requisition)
 
-        if self.child:
-            (w, h) = self.child.size_request()
-            requisition.width += w
-            requisition.height += h
+        requisition.width = 0
+        requisition.height = 0
+
+        if self.child and self.child.flags() & gtk.VISIBLE:
+            (requisition.width, requisition.height) = self.child.size_request()
+            requisition.width += self.border_width * 2
+            requisition.height += self.border_width * 2
 
     def do_size_allocate(self, allocation):
+        self.log.debug('%s' % allocation)
+
         self.allocation = allocation
 
-        if self.child:
+        if self.child and self.child.flags() & gtk.VISIBLE:
             child_allocation = gdk.Rectangle()
-            child_allocation.x = self.border_width
-            child_allocation.y = self.border_width
-            child_allocation.width = max(self.allocation.width - self.border_width, 0)
-            child_allocation.height = max(self.allocation.height - self.border_width, 0)
+            child_allocation.x = allocation.x + self.border_width
+            child_allocation.y = allocation.y + self.border_width
+            child_allocation.width = allocation.width - (2 * self.border_width)
+            child_allocation.height = allocation.height - (2 * self.border_width)
             self.child.size_allocate(child_allocation)
-
-        if self.flags() & gtk.REALIZED:
-            self.window.move_resize(*self.allocation)
