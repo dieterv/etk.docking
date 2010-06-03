@@ -54,12 +54,13 @@ class MainWindow(gtk.Window):
         ########################################################################
         # DockLayout
         ########################################################################
-        #self.docklayout = DockLayout()
-        #vbox.pack_start(self.docklayout)
+        self.docklayout = DockLayout()
+        vbox.pack_start(self.docklayout)
 
         self.dp1 = DockPaned()
         self.dp1.set_orientation(gtk.ORIENTATION_HORIZONTAL)
-        vbox.pack_start(self.dp1)
+        #vbox.pack_start(self.dp1)
+        self.docklayout.add(self.dp1)
 
         self.dg1 = DockGroup()
         self.dp1.add(self.dg1)
