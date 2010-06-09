@@ -24,6 +24,7 @@ from logging import getLogger
 
 import gtk
 from .dockframe import DockFrame
+from .dockgroup import DRAG_TARGETS
 
 class DockLayout(object):
 
@@ -35,25 +36,26 @@ class DockLayout(object):
     def add(self, frame):
         assert isinstance(frame, DockFrame)
         self.frames.add(frame)
-        self.setup_signal_handlers(frame)
+        self.add_signal_handlers(frame)
 
     def remove(self, frame):
         self.remove_signal_handlers(frame)
         self.frames.remove(frame)
 
 
-    def setup_signal_handlers(self, widget):
+    def add_signal_handlers(self, widget):
         """
         Set up signal handlers for layout and child widgets
         """
         if self._signal_handlers.get(widget):
             return
         signals = set()
-        signals.add(widget.connect('add', self.on_add))
-        signals.add(widget.connect('remove', self.on_remove))
+        for name, callback in (('add', self.on_add),
+                               ('remove', self.on_remove)):
+            signals.add(widget.connect(name, callback))
         self._signal_handlers[widget] = signals
         if isinstance(widget, gtk.Container):
-            widget.foreach(self.setup_signal_handlers)
+            widget.foreach(self.add_signal_handlers)
 
     def remove_signal_handlers(self, widget):
         """
@@ -67,6 +69,8 @@ class DockLayout(object):
             for s in signals:
                 widget.disconnect(s)
             del self._signal_handlers[widget]
+            if isinstance(widget, gtk.Container):
+                widget.foreach(self.remove_signal_handlers)
 
 
     def on_add(self, container, widget):
@@ -74,7 +78,11 @@ class DockLayout(object):
         Deal with new elements being added to the layout or it's children.
         """
         if isinstance(widget, gtk.Container):
-            self.setup_signal_handlers(widget)
+            self.add_signal_handlers(widget)
 
     def on_remove(self, container, widget):
-        pass
+        if isinstance(widget, gtk.Container):
+            self.remove_signal_handlers(widget)
+
+
+

@@ -44,6 +44,7 @@ class TestDockGroup(unittest.TestCase):
         layout.add(frame)
 
         assert frame in layout.frames
+        print layout._signal_handlers
         self.assertEquals(4, len(layout._signal_handlers))
         self.assertEquals(2, len(layout._signal_handlers[frame]))
 
@@ -51,5 +52,34 @@ class TestDockGroup(unittest.TestCase):
 
         assert not layout._signal_handlers, layout._signal_handlers
         assert frame not in layout.frames
+
+    def test_construction_after_setting_layout(self):
+        win = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        frame = DockFrame()
+        paned = DockPaned()
+        group = DockGroup()
+        item = DockItem()
+
+        layout = DockLayout()
+
+        layout.add(frame)
+
+        win.add(frame)
+        frame.add(paned)
+        paned.add(group)
+        group.add(item)
+        
+        assert frame in layout.frames
+        self.assertEquals(4, len(layout._signal_handlers))
+        self.assertEquals(2, len(layout._signal_handlers[frame]))
+
+        paned.remove(group)
+
+        self.assertEquals(2, len(layout._signal_handlers), layout._signal_handlers)
+        assert frame in layout._signal_handlers.keys(), layout._signal_handlers
+        assert paned in layout._signal_handlers.keys(), layout._signal_handlers
+        assert group not in layout._signal_handlers.keys(), layout._signal_handlers
+        assert item not in layout._signal_handlers.keys(), layout._signal_handlers
+        assert frame in layout.frames
 
 
