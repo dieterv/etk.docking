@@ -21,7 +21,7 @@
 from __future__ import absolute_import
 
 
-__all__ = ['DockLayout', 'DockPaned', 'DockGroup', 'DockItem']
+__all__ = ['DockLayout', 'DockFrame', 'DockPaned', 'DockGroup', 'DockItem']
 __version__ = '0.0.1'
 __docformat__ = 'restructuredtext'
 
@@ -52,6 +52,7 @@ del os, gtk, elib.intl, path
 # This also defines the widgets that can be considered public.
 ############################################################################
 from .docklayout import DockLayout
+from .dockframe import DockFrame
 from .dockpaned import DockPaned
 from .dockgroup import DockGroup
 from .dockitem import DockItem

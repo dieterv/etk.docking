@@ -29,7 +29,7 @@ import gtk
 import gtk.gdk as gdk
 
 try:
-    from etk.docking import DockLayout, DockPaned, DockGroup, DockItem
+    from etk.docking import DockLayout, DockFrame, DockPaned, DockGroup, DockItem
 except ImportError:
     # The lib directory is most likely not on PYTHONPATH, so add it here.
     import os, sys
@@ -55,12 +55,13 @@ class MainWindow(gtk.Window):
         # DockLayout
         ########################################################################
         self.docklayout = DockLayout()
-        vbox.pack_start(self.docklayout)
+        self.dockframe = DockFrame()
+        vbox.pack_start(self.dockframe)
 
         self.dp1 = DockPaned()
         self.dp1.set_orientation(gtk.ORIENTATION_HORIZONTAL)
         #vbox.pack_start(self.dp1)
-        self.docklayout.add(self.dp1)
+        self.dockframe.add(self.dp1)
 
         self.dg1 = DockGroup()
         self.dp1.add(self.dg1)

@@ -22,37 +22,31 @@
 from __future__ import absolute_import
 from logging import getLogger
 
-import gtk
+from .dockframe import DockFrame
 
-
-class DockLayout(gtk.EventBox):
-    """
-    Top level widget for a dock layout hierarchy.
-    """
-    __gtype_name__ = 'EtkDockLayout'
+class DockLayout(object):
 
     def __init__(self):
-        gtk.EventBox.__init__(self)
+        self.frames = set()
 
-        # Initialize logging
-        self.log = getLogger('<%s object at %s>' % (self.__gtype_name__, hex(id(self))))
+    def add(self, frame):
+        assert isinstance(frame, DockFrame)
+        self.frames.add(frame)
+        self.setup_signal_handlers(frame)
 
-        # Child containers:
-        self._floating_windows = []
-        #self.set_above_child(True)
+    def remove_layout(self, frame):
+        self.remove_signal_handlers(frame)
+        self.frames.remove(frame)
 
 
-    ############################################################################
-    # GtkWidget drag source
-    ############################################################################
+    def setup_signal_handlers(self, frame):
+        """
+        Set up signal handlers for layout and child widgets
+        """
+        pass
 
-    def do_drag_begin(self, context):
-        self.log.debug('Layout do_drag_begin: %s' % context)
-
-    ############################################################################
-    # GtkWidget drag destination
-    ############################################################################
-
-    def do_drag_motion(self, context, x, y, timestamp):
-        print 'Layout drag motion', x, y
-
+    def remove_signal_handlers(self, frame):
+        """
+        Remove signal handlers.
+        """
+        pass
