@@ -57,6 +57,7 @@ class MainWindow(gtk.Window):
         self.docklayout = DockLayout()
         self.dockframe = DockFrame()
         vbox.pack_start(self.dockframe)
+        self.docklayout.add(self.dockframe)
 
         self.dp1 = DockPaned()
         self.dp1.set_orientation(gtk.ORIENTATION_HORIZONTAL)

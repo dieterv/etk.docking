@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# vim:sw=4:et:ai
 #
 # Copyright © 2010 etk.docking Contributors
 #
@@ -269,7 +270,7 @@ class DockPaned(gtk.Container):
                                 item.size -= shrinkable_height / (allocation.height - n_handles * self._handle_size)
                                 delta_h -= shrinkable_height
                     else:
-                        item.size = item.child.item.get_child_requisition()[1] / (allocation.height - n_handles * self._handle_size)
+                        item.size = item.child.get_child_requisition()[1] / (allocation.height - n_handles * self._handle_size)
 
             # Allocate size
             for item in self._items:

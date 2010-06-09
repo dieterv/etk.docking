@@ -24,7 +24,6 @@ from logging import getLogger
 
 import gtk
 from .dockframe import DockFrame
-from .dockgroup import DRAG_TARGETS
 
 class DockLayout(object):
 
@@ -50,6 +49,7 @@ class DockLayout(object):
         if self._signal_handlers.get(widget):
             return
         signals = set()
+        # TODO: Add DND handlers
         for name, callback in (('add', self.on_add),
                                ('remove', self.on_remove)):
             signals.add(widget.connect(name, callback))

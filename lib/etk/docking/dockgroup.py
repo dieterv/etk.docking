@@ -36,9 +36,7 @@ from .dockitem import DockItem
 from .util import rect_contains
 
 
-DRAG_TARGET_ITEM = ('x-etk-docking/item', gtk.TARGET_SAME_APP, 0)
-DRAG_TARGET_GROUP = ('x-etk-docking/group', gtk.TARGET_SAME_APP, 1)
-DRAG_TARGETS = [DRAG_TARGET_ITEM, DRAG_TARGET_GROUP]
+DRAG_TARGET_ITEM_LIST = ('x-etk-docking/item-list', gtk.TARGET_SAME_APP, 0)
 
 
 class _DockGroupTab(object):
@@ -122,14 +120,14 @@ class DockGroup(gtk.Container):
 
         # Configure drag/drop
         self.drag_dest_set(gtk.DEST_DEFAULT_MOTION | gtk.DEST_DEFAULT_HIGHLIGHT,
-                           DRAG_TARGETS,
+                           [DRAG_TARGET_ITEM_LIST],
                            gdk.ACTION_MOVE)
         # There doesn't seem to be a do_drag_failed virtual method that handles
         # the drag-failed event, so we specifically connect to it...
         self.connect('drag-failed', DockGroup._do_drag_failed)
 
         self._drag_target = None
-        self._dragged_tab = None
+        self._dragged_tabs = []
         self._drop_tab_index = None
 
 
@@ -515,12 +513,10 @@ class DockGroup(gtk.Container):
             if event.state & gdk.BUTTON1_MASK:
                 tab = self._get_tab_at_pos(event.x, event.y)
                 if tab:
-                    drag_source = DRAG_TARGET_ITEM
-                    self._dragged_tab = tab
+                    self._dragged_tabs = [tab]
                 else:
-                    drag_source = DRAG_TARGET_GROUP
-                    self._dragged_tab = None
-                self.drag_begin([drag_source], gdk.ACTION_MOVE, 1, event)
+                    self._dragged_tabs = list(self._tabs)
+                self.drag_begin([DRAG_TARGET_ITEM_LIST], gdk.ACTION_MOVE, 1, event)
 
             for tab in self._visible_tabs:
                 if (event.x, event.y) in tab:
@@ -580,19 +576,6 @@ class DockGroup(gtk.Container):
         #   - gdk.SB_LEFT_ARROW    "splitting" a dockitem into a new dockgroup on the left of the source dockgroup (needs docklayout)
         #   - gdk.SB_RIGHT_ARROW   "splitting" a dockitem into a new dockgroup on the right of the source dockgroup (needs docklayout)
 
-        tab = self._dragged_tab
-        if tab:
-            self._dragged_tab_index = self._tabs.index(tab)
-            #self.remove_item(self._dragged_tab_index, retain_item=True)
-            self._drag_target = DRAG_TARGET_ITEM
-        else:
-            # Drag the group itself:
-            self._dragged_tab_index = None
-            # Can not unparent the group, as that will prevent the drag events from coming in
-            self._drag_target = DRAG_TARGET_GROUP
-            #self.hide()
-            #self.queue_resize()
-
         #dnd_window = gtk.Window(gtk.WINDOW_POPUP)
         #dnd_window.set_screen(self.get_screen())
         #dnd_window.add(tab.item)
@@ -625,12 +608,15 @@ class DockGroup(gtk.Container):
         #TODO: Fill selection_data with the right data (set() or set_text())
         self.log.debug('do_drag_data_get: %s, %s, %s' % (context, selection_data, info))
 
-        if self._drag_target is DRAG_TARGET_ITEM:
-            # Free the item for transport.
+        # Free the item for transport.
+        for tab in self._dragged_tabs:
+            self._dragged_tab_index = self._tabs.index(tab)
             self.remove_item(self._dragged_tab_index, retain_item=True)
-            selection_data.set(gdk.atom_intern(DRAG_TARGET_ITEM[0]), 8, 'Dummy item')
-        elif self._drag_target is DRAG_TARGET_GROUP:
-            selection_data.set(gdk.atom_intern(DRAG_TARGET_GROUP[0]), 8, 'Dummy group')
+
+        # Set some data, so DnD process continues
+        selection_data.set(gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0]), 8,
+                            '%d tabs' % len(self._dragged_tabs))
+
 
     def do_drag_data_delete(self, context):
         '''
@@ -644,10 +630,7 @@ class DockGroup(gtk.Container):
         of there are no more tabs left (see do_drag_data_get()).
         '''
         self.log.debug('do_drag_data_delete: %s' % context)
-        if self._drag_target is DRAG_TARGET_ITEM and not self._tabs:
-            self.destroy()
-        if self._drag_target is DRAG_TARGET_GROUP:
-            self.destroy()
+        # Let this be handled by the DockLayout
 
     def do_drag_failed(self, context, result):
         '''
@@ -675,8 +658,8 @@ class DockGroup(gtk.Container):
         done in the do_drag_begin() handler.
         '''
         self.log.debug('do_drag_end: %s - %s', context, context.drag_drop_succeeded())
-        self._dragged_tab = None
-        self._drop_tab_index = None
+        self._dragged_tabs = []
+        #self._drop_tab_index = None
 
         self.queue_resize()
 
@@ -785,12 +768,11 @@ class DockGroup(gtk.Container):
         '''
         self.log.debug('do_drag_drop, %s, %s, %s, %s' % (context, x, y, timestamp))
 
-        target = self.drag_dest_find_target(context, DRAG_TARGETS)
+        target = self.drag_dest_find_target(context, [DRAG_TARGET_ITEM_LIST])
         # TODO: check if target is x-etk-docking/item|group
-        item_target = gdk.atom_intern(DRAG_TARGET_ITEM[0])
-        group_target = gdk.atom_intern(DRAG_TARGET_GROUP[0])
+        item_target = gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0])
 
-        if target == item_target or target == group_target:
+        if target == item_target:
             # Register location where to drop
             self.log.debug('Dropping item/group at index %s with target %s' % (self._drop_tab_index, target))
             self.drag_get_data(context, target, timestamp)
@@ -822,18 +804,14 @@ class DockGroup(gtk.Container):
         source = context.get_source_widget()
         assert source
 
-        if selection_data.target == gdk.atom_intern(DRAG_TARGET_ITEM[0]):
-            self.log.debug('Recieving item %s' % source._dragged_tab)
-            self.insert_item(source._dragged_tab.item, visible_position=self._drop_tab_index)
-        elif selection_data.target == gdk.atom_intern(DRAG_TARGET_GROUP[0]):
-            self.log.debug('Recieving group from %s' % source)
-            self.merge_items_from_group(source, self._drop_tab_index)
+        if selection_data.target == gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0]):
+            self.log.debug('Recieving item %s' % source._dragged_tabs)
+            for tab in reversed(source._dragged_tabs):
+                self.insert_item(tab.item, visible_position=self._drop_tab_index)
+            context.finish(True, True, timestamp) # success, delete, time
         else:
             context.finish(False, False, timestamp) # success, delete, time
-            return
 
-        #source._dragged_tab = None
-        context.finish(True, True, timestamp) # success, delete, time
 
     ############################################################################
     # GtkContainer
