@@ -28,36 +28,42 @@ import gtk.gdk as gdk
 
 class CompactButton(gtk.Widget):
     __gtype_name__ = 'EtkCompactButton'
-    __gsignals__ = {'clicked': (gobject.SIGNAL_RUN_FIRST | gobject.SIGNAL_ACTION,
-                                gobject.TYPE_NONE, tuple())}
-    __gproperties__ = {'icon-name-normal': (gobject.TYPE_STRING,
-                                            'icon name normal',
-                                            'icon name normal',
-                                            '',
-                                            gobject.PARAM_READWRITE),
-                       'icon-name-prelight': (gobject.TYPE_STRING,
-                                              'icon name prelight',
-                                              'icon name prelight',
-                                              '',
-                                              gobject.PARAM_READWRITE),
-                       'icon-name-active': (gobject.TYPE_STRING,
-                                            'icon name active',
-                                            'icon name active',
-                                            '',
-                                            gobject.PARAM_READWRITE),
-                       'size': (gobject.TYPE_UINT,
-                                'size',
-                                'size',
-                                0,
-                                gobject.G_MAXUINT,
-                                16,
-                                gobject.PARAM_READWRITE
-                                ),
-                       'has-frame': (gobject.TYPE_BOOLEAN,
-                                     'has frame',
-                                     'has frame',
-                                     True,
-                                     gobject.PARAM_READWRITE)}
+    __gsignals__ = {'clicked':
+                        (gobject.SIGNAL_RUN_FIRST | gobject.SIGNAL_ACTION,
+                         gobject.TYPE_NONE,
+                         tuple())}
+    __gproperties__ = {'icon-name-normal':
+                           (gobject.TYPE_STRING,
+                            'icon name normal',
+                            'icon name normal',
+                            '',
+                            gobject.PARAM_READWRITE),
+                       'icon-name-prelight':
+                           (gobject.TYPE_STRING,
+                            'icon name prelight',
+                            'icon name prelight',
+                            '',
+                            gobject.PARAM_READWRITE),
+                       'icon-name-active':
+                           (gobject.TYPE_STRING,
+                            'icon name active',
+                            'icon name active',
+                            '',
+                            gobject.PARAM_READWRITE),
+                       'size':
+                           (gobject.TYPE_UINT,
+                            'size',
+                            'size',
+                            0,
+                            gobject.G_MAXUINT,
+                            16,
+                            gobject.PARAM_READWRITE),
+                       'has-frame':
+                           (gobject.TYPE_BOOLEAN,
+                            'has frame',
+                            'has frame',
+                            True,
+                            gobject.PARAM_READWRITE)}
 
     def __init__(self, icon_name_normal='', size=16, has_frame=True):
         gtk.Widget.__init__(self)

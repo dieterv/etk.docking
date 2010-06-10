@@ -61,20 +61,22 @@ class DockPaned(gtk.Container):
     horizontally or vertically.
     '''
     __gtype_name__ = 'EtkDockPaned'
-    __gproperties__ = {'handle-size': (gobject.TYPE_UINT,
-                                       'handle size',
-                                       'handle size',
-                                       0,
-                                       gobject.G_MAXINT,
-                                       4,
-                                       gobject.PARAM_READWRITE),
-                       'orientation': (gobject.TYPE_UINT,
-                                       'handle size',
-                                       'handle size',
-                                       0,
-                                       1,
-                                       0,
-                                       gobject.PARAM_READWRITE)}
+    __gproperties__ = {'handle-size':
+                           (gobject.TYPE_UINT,
+                            'handle size',
+                            'handle size',
+                            0,
+                            gobject.G_MAXINT,
+                            4,
+                            gobject.PARAM_READWRITE),
+                       'orientation':
+                           (gobject.TYPE_UINT,
+                            'handle size',
+                            'handle size',
+                            0,
+                            1,
+                            0,
+                            gobject.PARAM_READWRITE)}
 
     def __init__(self):
         gtk.Container.__init__(self)
@@ -432,7 +434,7 @@ class DockPaned(gtk.Container):
 #        else:
 #            context.finish(False, False, timestamp) # success, delete, time
 #            return
-#        
+#
 #        source._dragged_tab = None
         context.finish(True, False, timestamp) # success, delete, time
 

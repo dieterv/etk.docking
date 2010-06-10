@@ -73,13 +73,14 @@ class DockGroup(gtk.Container):
     etk.DockGroup.
     '''
     __gtype_name__ = 'EtkDockGroup'
-    __gproperties__ = {'group-id': (gobject.TYPE_UINT,
-                                    'group id',
-                                    'group id',
-                                    0,
-                                    gobject.G_MAXUINT,
-                                    0,
-                                    gobject.PARAM_READWRITE)}
+    __gproperties__ = {'group-id':
+                           (gobject.TYPE_UINT,
+                            'group id',
+                            'group id',
+                            0,
+                            gobject.G_MAXUINT,
+                            0,
+                            gobject.PARAM_READWRITE)}
 
     def __init__(self):
         gtk.Container.__init__(self)
