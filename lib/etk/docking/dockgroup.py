@@ -668,8 +668,9 @@ class DockGroup(gtk.Container):
     #TODO: check bugs.gnome.org.
     def _do_drag_failed(self, context, result):
         self.log.debug('_do_drag_failed: %s, %s' % (context, result))
-        if not self._dragged_tab.item.get_parent():
-            self.insert_item(self._dragged_tab.item, position=self._dragged_tab_index)
+        for tab in self._dragged_tabs:
+            if not tab.item.get_parent():
+                self.insert_item(self._dragged_tab.item, position=self._dragged_tab_index)
         #context.drop_finish(False, 0)
         return True
 
