@@ -86,7 +86,7 @@ class DockGroup(gtk.Container):
         gtk.Container.__init__(self)
 
         # Initialize logging
-        self.log = getLogger('<%s object at %s>' % (self.__gtype_name__, hex(id(self))))
+        self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
 
         # Internal housekeeping
         self.set_border_width(2)

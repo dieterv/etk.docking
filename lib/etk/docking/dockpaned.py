@@ -82,7 +82,7 @@ class DockPaned(gtk.Container):
         gtk.Container.__init__(self)
 
         # Initialize logging
-        self.log = getLogger('<%s object at %s>' % (self.__gtype_name__, hex(id(self))))
+        self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
 
         # Internal housekeeping
         self._items = []
@@ -99,7 +99,6 @@ class DockPaned(gtk.Container):
                            gdk.ACTION_MOVE)
 
         self._drop_handle = None
-
 
     ############################################################################
     # GObject
@@ -288,7 +287,6 @@ class DockPaned(gtk.Container):
 
         if self.flags() & gtk.REALIZED:
             self.window.move_resize(*allocation)
-
 
     def do_expose_event(self, event):
         for item in self._items:
@@ -502,7 +500,6 @@ class DockPaned(gtk.Container):
     ############################################################################
     # EtkDockPaned
     ############################################################################
-
     def _update_handles(self):
         """
         Update the _handles list.
@@ -534,7 +531,6 @@ class DockPaned(gtk.Container):
             handle.item_after = after
             self._handles.append(handle)
 
-
     def insert_child(self, widget, position=-1):
         item = _DockPanedItem()
         item.child = widget
@@ -550,7 +546,6 @@ class DockPaned(gtk.Container):
             item.child.set_parent_window(self.window)
 
         self._recalculate_sizes()
-
 
     #TODO: def append_item(self, item):
     #TODO: def prepend_item(item, tab_label=None)

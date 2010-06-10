@@ -23,7 +23,9 @@ from __future__ import absolute_import
 from logging import getLogger
 
 import gtk
+
 from .dockframe import DockFrame
+
 
 class DockLayout(object):
 
@@ -83,6 +85,3 @@ class DockLayout(object):
     def on_remove(self, container, widget):
         if isinstance(widget, gtk.Container):
             self.remove_signal_handlers(widget)
-
-
-

@@ -71,7 +71,7 @@ class CompactButton(gtk.Widget):
         self.set_flags(self.flags() | gtk.NO_WINDOW)
 
         # Initialize logging
-        self.log = getLogger('<%s object at %s>' % (self.__gtype_name__, hex(id(self))))
+        self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
 
         # Internal housekeeping
         self._entered = False
@@ -207,8 +207,8 @@ class CompactButton(gtk.Widget):
         gtk.Widget.do_unrealize(self)
 
     def do_map(self):
-        gtk.Widget.do_map(self)
         self._input_window.show()
+        gtk.Widget.do_map(self)
 
     def do_unmap(self):
         self._input_window.hide()

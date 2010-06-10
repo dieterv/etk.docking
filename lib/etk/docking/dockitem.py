@@ -55,7 +55,7 @@ class DockItem(gtk.Bin):
         self.set_flags(self.flags() | gtk.NO_WINDOW)
 
         # Initialize logging
-        self.log = getLogger('<%s object at %s>' % (self.__gtype_name__, hex(id(self))))
+        self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
 
         # Internal housekeeping
         self.set_icon_name(icon_name)
