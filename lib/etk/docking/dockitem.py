@@ -51,13 +51,13 @@ class DockItem(gtk.Bin):
     def __init__(self, icon_name='', title='', title_tooltip_text=''):
         gtk.Bin.__init__(self)
 
-        # This is a NO_WINDOW widget
-        self.set_flags(self.flags() | gtk.NO_WINDOW)
-
         # Initialize logging
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
+        self.log.debug('%s, %s, %s' % (icon_name, title, title_tooltip_text))
 
         # Internal housekeeping
+        self.set_flags(self.flags() | gtk.NO_WINDOW)
+        self.set_redraw_on_allocate(False)
         self.set_icon_name(icon_name)
         self.set_title(title)
         self.set_title_tooltip_text(title_tooltip_text)
