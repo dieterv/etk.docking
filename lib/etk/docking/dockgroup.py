@@ -87,6 +87,7 @@ class DockGroup(gtk.Container):
 
         # Initialize logging
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
+        self.log.debug('')
 
         # Internal housekeeping
         self.set_border_width(2)
@@ -154,6 +155,8 @@ class DockGroup(gtk.Container):
     # GtkWidget
     ############################################################################
     def do_realize(self):
+        self.log.debug('')
+
         # Internal housekeeping
         self.set_flags(self.flags() | gtk.REALIZED)
         self.window = gdk.Window(self.get_parent_window(),
@@ -183,11 +186,15 @@ class DockGroup(gtk.Container):
         self._max_button.set_parent_window(self.window)
 
     def do_unrealize(self):
+        self.log.debug('')
+
         self.window.set_user_data(None)
         self.window.destroy()
         gtk.Container.do_unrealize(self)
 
     def do_map(self):
+        self.log.debug('')
+
         gtk.Container.do_map(self)
         self._list_button.show()
         self._min_button.show()
@@ -195,6 +202,8 @@ class DockGroup(gtk.Container):
         self.window.show()
 
     def do_unmap(self):
+        self.log.debug('')
+
         self._list_button.hide()
         self._min_button.hide()
         self._max_button.hide()
@@ -202,6 +211,8 @@ class DockGroup(gtk.Container):
         gtk.Container.do_unmap(self)
 
     def do_size_request(self, requisition):
+        self.log.debug('%s' % requisition)
+
         # Start with a zero sized decoration area
         dw = dh = 0
 
@@ -255,7 +266,12 @@ class DockGroup(gtk.Container):
         requisition.height = dh + ih
 
     def do_size_allocate(self, allocation):
+        self.log.debug('%s' % allocation)
+
         self.allocation = allocation
+
+        if self.flags() & gtk.REALIZED:
+            self.window.move_resize(*allocation)
 
         # Allocate space for decoration buttons
         max_w, max_h = self._max_button.get_child_requisition()
@@ -396,10 +412,9 @@ class DockGroup(gtk.Container):
             ih = max(allocation.height - (2 * self._frame_width) - (2 * self.border_width) - 23, 0)
             self._current_tab.item.size_allocate(gdk.Rectangle(ix, iy, iw, ih))
 
-        if self.flags() & gtk.REALIZED:
-            self.window.move_resize(*allocation)
-
     def do_expose_event(self, event):
+        self.log.debug('%s' % event)
+
         # Prepare colors
         bg = self.style.bg[self.state]
         bg = (bg.red_float, bg.green_float, bg.blue_float)
@@ -440,7 +455,7 @@ class DockGroup(gtk.Container):
 
         # Draw tabs
         if self._visible_tabs:
-            visible_index = self._visible_tabs.index(self._current_tab)
+            visible_index = self._visible_tabs.index(self._current_tab) #TODO: this sometimes fails???
 
             for index, tab in enumerate(self._visible_tabs):
                 tx = tab.area.x
