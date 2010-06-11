@@ -406,7 +406,7 @@ class DockPaned(gtk.Container):
 
     # drop destination
     def xx_do_drag_motion(self, context, x, y, timestamp):
-        self.log.debug('Paned motion: %s, %s, %s' % (context, x, y))
+        self.log.debug('%s, %s, %s' % (context, x, y))
         self._drop_handle = None
         pos = (x, y)
         for handle in self._handles:

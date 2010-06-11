@@ -41,18 +41,14 @@ class DockFrame(gtk.EventBox):
         self._floating_windows = []
         #self.set_above_child(True)
 
-
     ############################################################################
     # GtkWidget drag source
     ############################################################################
-
     def do_drag_begin(self, context):
-        self.log.debug('Layout do_drag_begin: %s' % context)
+        self.log.debug('%s' % context)
 
     ############################################################################
     # GtkWidget drag destination
     ############################################################################
-
     def do_drag_motion(self, context, x, y, timestamp):
-        print 'Layout drag motion', x, y
-
+        self.log.debug('%s, %s, %s, %s' % (context, x, y, timestamp))

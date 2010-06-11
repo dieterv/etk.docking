@@ -566,7 +566,7 @@ class DockGroup(gtk.Container):
         handler is to set up a custom drag icon with the drag_source_set_icon()
         method.
         '''
-        self.log.debug('do_drag_begin: %s' % context)
+        self.log.debug('%s' % context)
 
         #TODO: Set drag icon to be empty
         #TODO: Set drag cursor -> will most likely not (only) happen here...
@@ -607,7 +607,7 @@ class DockGroup(gtk.Container):
         For group movement, no special action is taken.
         '''
         #TODO: Fill selection_data with the right data (set() or set_text())
-        self.log.debug('do_drag_data_get: %s, %s, %s' % (context, selection_data, info))
+        self.log.debug('%s, %s, %s' % (context, selection_data, info))
 
         # Free the item for transport.
         for tab in self._dragged_tabs:
@@ -630,7 +630,7 @@ class DockGroup(gtk.Container):
         For groups, the group is deleted, for tabs the group is destroyed
         of there are no more tabs left (see do_drag_data_get()).
         '''
-        self.log.debug('do_drag_data_delete: %s' % context)
+        self.log.debug('%s' % context)
         # Let this be handled by the DockLayout
 
     def do_drag_failed(self, context, result):
@@ -645,7 +645,7 @@ class DockGroup(gtk.Container):
         failure has been already handled (not showing the default
         "drag operation failed" animation), otherwise it returns False.
         '''
-        self.log.debug('do_drag_failed: %s, %s' % (context, result))
+        self.log.debug('%s, %s' % (context, result))
         # Put back the item removed in do_drag_data_get()
         #context.drop_finish(False, 0)
         return True
@@ -658,7 +658,7 @@ class DockGroup(gtk.Container):
         completed. A typical reason to use this signal handler is to undo things
         done in the do_drag_begin() handler.
         '''
-        self.log.debug('do_drag_end: %s - %s', context, context.drag_drop_succeeded())
+        self.log.debug('%s - %s', context, context.drag_drop_succeeded())
         self._dragged_tabs = []
         #self._drop_tab_index = None
 
@@ -668,7 +668,7 @@ class DockGroup(gtk.Container):
     # the drag-failed event, so we have specifically connected _do_drag_failed.
     #TODO: check bugs.gnome.org.
     def _do_drag_failed(self, context, result):
-        self.log.debug('_do_drag_failed: %s, %s' % (context, result))
+        self.log.debug('%s, %s' % (context, result))
         for tab in self._dragged_tabs:
             if not tab.item.get_parent():
                 self.insert_item(self._dragged_tab.item, position=self._dragged_tab_index)
@@ -683,13 +683,13 @@ class DockGroup(gtk.Container):
         Highlight the currently selected drag destination "widget" in the default
         manner.
         '''
-        self.log.debug('drag_highlight')
+        self.log.debug('')
 
     def drag_unhighlight(self):
         '''
         Remove the currently applied drag highlight.
         '''
-        self.log.debug('drag_unhighlight')
+        self.log.debug('')
 
     def do_drag_motion(self, context, x, y, timestamp):
         '''
@@ -720,7 +720,7 @@ class DockGroup(gtk.Container):
             "enter" signal. Upon an "enter", the handler will typically
             highlight the drop site with the drag_highlight() method.
         '''
-        self.log.debug('do_drag_motion: %s, %s, %s, %s' % (context, x, y, timestamp))
+        self.log.debug('%s, %s, %s, %s' % (context, x, y, timestamp))
 
         # Insert the dragged tab before the tab under (x, y)
         drop_tab = self._get_tab_at_pos(x, y)
@@ -738,14 +738,14 @@ class DockGroup(gtk.Container):
         :param context: the gdk.DragContext
         :param timestamp: the time of the drag event
 
-        The dp_drag_leave() signal handler is executed when the drag operation
+        The do_drag_leave() signal handler is executed when the drag operation
         moves off of a drop target widget. A typical reason to use this signal
         handler is to undo things done in the do_drag_motion() handler, e.g. undo
         highlighting with the drag_unhighlight() method.
         '''
         # Can do something here like stopping an animation for creating some
         # space between tabs where the dragged tan can be dropped
-        self.log.debug('do_drag_leave, %s, %s' % (context, timestamp))
+        self.log.debug('%s, %s' % (context, timestamp))
         self.drag_unhighlight()
 
     def do_drag_drop(self, context, x, y, timestamp):
@@ -768,7 +768,7 @@ class DockGroup(gtk.Container):
         drag_get_data() method to receive the data for one or more of the
         supported targets.
         '''
-        self.log.debug('do_drag_drop, %s, %s, %s, %s' % (context, x, y, timestamp))
+        self.log.debug('%s, %s, %s, %s' % (context, x, y, timestamp))
 
         target = self.drag_dest_find_target(context, [DRAG_TARGET_ITEM_LIST])
         # TODO: check if target is x-etk-docking/item|group
@@ -801,7 +801,7 @@ class DockGroup(gtk.Container):
         and then call the gdk.DragContext.finish() method, setting the success
         parameter to True if the data was processed successfully.
         '''
-        self.log.debug('do_drag_data_received, %s, %s, %s, %s, %s, %s' % (context, x, y, selection_data, info, timestamp))
+        self.log.debug('%s, %s, %s, %s, %s, %s' % (context, x, y, selection_data, info, timestamp))
 
         source = context.get_source_widget()
         assert source
@@ -929,7 +929,7 @@ class DockGroup(gtk.Container):
         tab.last_focused = time()
 
         self._tabs.insert(position, tab)
-        
+
         if visible_position is not None:
             self._visible_tabs.insert(visible_position, tab)
 

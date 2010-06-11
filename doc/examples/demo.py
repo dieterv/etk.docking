@@ -157,7 +157,7 @@ def quit(widget, event, mainloop):
 def main():
     # Initialize logging
     logging.basicConfig(level=logging.DEBUG,
-                        format='%(levelname)s:%(name)s:%(message)s')
+                        format='%(levelname)-8s %(name)-25s %(funcName)-30s %(message)s')
 
     # Initialize mainloop
     gobject.threads_init()
