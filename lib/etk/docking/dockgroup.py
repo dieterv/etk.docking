@@ -423,7 +423,6 @@ class DockGroup(gtk.Container):
 
         # Create cairo context
         c = self.window.cairo_create()
-        c.set_line_width(self._frame_width)
         # Restrict context to the exposed area, avoid extra work
         c.rectangle(event.area.x, event.area.y, event.area.width, event.area.height)
         c.clip_preserve()
@@ -440,7 +439,8 @@ class DockGroup(gtk.Container):
                      (self._spacing + self._min_button.allocation.height + self._spacing),
                      (self._spacing + self._max_button.allocation.height + self._spacing))
 
-        # Draw DockGroup frame
+        # Draw frame
+        c.set_line_width(self._frame_width)
         c.move_to(0.5, 0.5)
         c.line_to(self.allocation.width - 0.5, 0.5)
         c.line_to(self.allocation.width - 0.5, self.allocation.height - 0.5)
@@ -453,8 +453,15 @@ class DockGroup(gtk.Container):
         c.set_source_rgb(*dark)
         c.stroke()
 
-        # Draw tabs
         if self._visible_tabs:
+            # Draw border
+            c.set_line_width(self.border_width)
+            c.rectangle(self._frame_width + 1, dh + 1, self.allocation.width - (2 * self._frame_width) - 2, self.allocation.height - dh - self._frame_width - 2)
+            c.set_source_rgb(0.6, 0.72941176470588235294117647058824, 0.95294117647058823529411764705882)
+            c.stroke()
+
+            # Draw tabs
+            c.set_line_width(self._frame_width)
             visible_index = self._visible_tabs.index(self._current_tab) #TODO: this sometimes fails???
 
             for index, tab in enumerate(self._visible_tabs):
@@ -503,6 +510,8 @@ class DockGroup(gtk.Container):
                         c.set_source_rgb(*dark)
                         c.stroke()
 
+                    self.propagate_expose(self._current_tab.item, event)
+
                 self.propagate_expose(tab.image, event)
                 self.propagate_expose(tab.label, event)
                 self.propagate_expose(tab.button, event)
@@ -510,14 +519,6 @@ class DockGroup(gtk.Container):
         self.propagate_expose(self._list_button, event)
         self.propagate_expose(self._min_button, event)
         self.propagate_expose(self._max_button, event)
-
-        if self._current_tab:
-            # Draw border around DockItem
-            c.rectangle(self._frame_width, dh, self.allocation.width - 2*self._frame_width, self.allocation.height - dh - self._frame_width)
-            c.set_source_rgb(0.6, 0.72941176470588235294117647058824, 0.95294117647058823529411764705882)
-            c.fill()
-
-            self.propagate_expose(self._current_tab.item, event)
 
         return False
 
