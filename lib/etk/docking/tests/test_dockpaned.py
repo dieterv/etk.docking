@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-#
+# vim:sw=4:et:ai
+
+
 # Copyright © 2010 etk.docking Contributors
 #
 # This file is part of etk.docking.

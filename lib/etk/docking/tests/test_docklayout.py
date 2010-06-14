@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim:sw=4:et:ai
-#
+
+
 # Copyright © 2010 etk.docking Contributors
 #
 # This file is part of etk.docking.
@@ -38,7 +39,7 @@ class TestDockGroup(unittest.TestCase):
         frame.add(paned)
         paned.add(group)
         group.add(item)
-        
+
         layout = DockLayout()
 
         layout.add(frame)
@@ -68,7 +69,7 @@ class TestDockGroup(unittest.TestCase):
         frame.add(paned)
         paned.add(group)
         group.add(item)
-        
+
         assert frame in layout.frames
         self.assertEquals(4, len(layout._signal_handlers))
         self.assertEquals(2, len(layout._signal_handlers[frame]))
