@@ -49,13 +49,13 @@ class MainWindow(gtk.Window):
         self.set_border_width(4)
         self.file_counter = 1
 
-        ########################################################################
-        # Docking
-        ########################################################################
         vbox = gtk.VBox()
         vbox.set_spacing(4)
         self.add(vbox)
 
+        ########################################################################
+        # Docking
+        ########################################################################
         self.dg = DockGroup()
         vbox.pack_start(self.dg)
 
@@ -63,8 +63,6 @@ class MainWindow(gtk.Window):
         # Testing Tools
         ########################################################################
         adddibutton = gtk.Button('Create docked items')
-        # The following is an ugly hack, but it allows to showcase resizing the
-        # dockgroup to the minimum.
         adddibutton.child.set_ellipsize(pango.ELLIPSIZE_MIDDLE)
         adddibutton.connect('clicked', self._on_add_di_button_clicked)
         vbox.pack_start(adddibutton, False, False)

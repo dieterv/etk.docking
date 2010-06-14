@@ -28,6 +28,7 @@ import random
 import gobject
 import gtk
 import gtk.gdk as gdk
+import pango
 
 try:
     from etk.docking import DockLayout, DockFrame, DockPaned, DockGroup, DockItem
@@ -46,23 +47,22 @@ class MainWindow(gtk.Window):
         self.set_default_size(500, 150)
         self.set_title('etk.docking demo')
         self.set_border_width(4)
-        self._counter = 1
+        self.file_counter = 1
 
         vbox = gtk.VBox()
         vbox.set_spacing(4)
         self.add(vbox)
 
         ########################################################################
-        # DockLayout
+        # Docking
         ########################################################################
-        self.docklayout = DockLayout()
         self.dockframe = DockFrame()
-        vbox.pack_start(self.dockframe)
+        self.docklayout = DockLayout()
         self.docklayout.add(self.dockframe)
+        vbox.pack_start(self.dockframe)
 
         self.dp1 = DockPaned()
         self.dp1.set_orientation(gtk.ORIENTATION_HORIZONTAL)
-        #vbox.pack_start(self.dp1)
         self.dockframe.add(self.dp1)
 
         self.dg1 = DockGroup()
@@ -84,15 +84,18 @@ class MainWindow(gtk.Window):
         ########################################################################
         # Testing Tools
         ########################################################################
-        adddgbutton = gtk.Button('Add DockGroup')
+        adddgbutton = gtk.Button('Create docked group')
+        adddgbutton.child.set_ellipsize(pango.ELLIPSIZE_MIDDLE)
         adddgbutton.connect('clicked', self._on_add_dg_button_clicked)
         vbox.pack_start(adddgbutton, False, False)
 
-        adddibutton = gtk.Button('Create DockItems')
+        adddibutton = gtk.Button('Create docked items')
+        adddibutton.child.set_ellipsize(pango.ELLIPSIZE_MIDDLE)
         adddibutton.connect('clicked', self._on_add_di_button_clicked)
         vbox.pack_start(adddibutton, False, False)
 
         orientationbutton = gtk.Button('Switch Orientation')
+        orientationbutton.child.set_ellipsize(pango.ELLIPSIZE_MIDDLE)
         orientationbutton.connect('clicked', self._on_orientation_button_clicked)
         vbox.pack_start(orientationbutton, False, False)
 
@@ -142,13 +145,15 @@ class MainWindow(gtk.Window):
             scrolledwindow.add(textview)
 
             # Create a DockItem and add our TextView
-            di = DockItem(icon_name=icon_name, title='New %s' % self._counter, title_tooltip_text=tooltip_text)
+            di = DockItem(icon_name=icon_name, title='New %s' % self.file_counter, title_tooltip_text=tooltip_text)
             di.add(scrolledwindow)
             di.show_all()
-            self._counter += 1
 
             # Add out DockItem to the DockGroup
             dockgroup.add(di)
+
+            # Increment file counter
+            self.file_counter += 1
 
 
 def quit(widget, event, mainloop):
