@@ -511,11 +511,13 @@ class DockGroup(gtk.Container):
         self.propagate_expose(self._min_button, event)
         self.propagate_expose(self._max_button, event)
 
-        # Draw DockItem border
         if self._current_tab:
+            # Draw border around DockItem
             c.rectangle(self._frame_width, dh, self.allocation.width - 2*self._frame_width, self.allocation.height - dh - self._frame_width)
             c.set_source_rgb(0.6, 0.72941176470588235294117647058824, 0.95294117647058823529411764705882)
             c.fill()
+
+            self.propagate_expose(self._current_tab.item, event)
 
         return False
 
