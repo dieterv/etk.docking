@@ -28,6 +28,7 @@ import random
 import gobject
 import gtk
 import gtk.gdk as gdk
+import pango
 
 try:
     from etk.docking import DockLayout, DockPaned, DockGroup, DockItem
@@ -46,18 +47,14 @@ class MainWindow(gtk.Window):
         self.set_default_size(500, 150)
         self.set_title('DockGroup Demo')
         self.set_border_width(4)
-        self._counter = 1
+        self.file_counter = 1
 
+        ########################################################################
+        # Docking
+        ########################################################################
         vbox = gtk.VBox()
         vbox.set_spacing(4)
         self.add(vbox)
-
-
-        ########################################################################
-        # DockLayout
-        ########################################################################
-        #self.docklayout = DockLayout()
-        #vbox.pack_start(self.docklayout)
 
         self.dg = DockGroup()
         vbox.pack_start(self.dg)
@@ -65,17 +62,16 @@ class MainWindow(gtk.Window):
         ########################################################################
         # Testing Tools
         ########################################################################
-        adddibutton = gtk.Button('Go!')
+        adddibutton = gtk.Button('Create docked items')
+        # The following is an ugly hack, but it allows to showcase resizing the
+        # dockgroup to the minimum.
+        adddibutton.child.set_ellipsize(pango.ELLIPSIZE_MIDDLE)
         adddibutton.connect('clicked', self._on_add_di_button_clicked)
         vbox.pack_start(adddibutton, False, False)
 
         self.show_all()
-        self._add_dockitems(self.dg)
 
     def _on_add_di_button_clicked(self, button):
-        self._add_dockitems(self.dg)
-
-    def _add_dockitems(self, dockgroup):
         examples = [('calc', 'calculator', '#!/usr/bin/env python\n\nprint \'Hello!\''),
                     ('file-manager', 'Hi!', 'Hello!'),
                     ('fonts', 'ABC', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'),
@@ -94,13 +90,15 @@ class MainWindow(gtk.Window):
             scrolledwindow.add(textview)
 
             # Create a DockItem and add our TextView
-            di = DockItem(icon_name=icon_name, title='New %s' % self._counter, title_tooltip_text=tooltip_text)
+            di = DockItem(icon_name=icon_name, title='New %s' % self.file_counter, title_tooltip_text=tooltip_text)
             di.add(scrolledwindow)
             di.show_all()
-            self._counter += 1
 
             # Add out DockItem to the DockGroup
-            dockgroup.add(di)
+            self.dg.add(di)
+
+            # Increment file counter
+            self.file_counter += 1
 
 
 def quit(widget, event, mainloop):
