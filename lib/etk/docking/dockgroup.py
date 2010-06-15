@@ -250,6 +250,7 @@ class DockGroup(gtk.Container):
                  (self._spacing + min_h + self._spacing),
                  (self._spacing + max_h + self._spacing))
 
+        # Store decoration area size for later usage
         self._decoration_area.width = dw
         self._decoration_area.height = dh
 
@@ -424,9 +425,11 @@ class DockGroup(gtk.Container):
 
         # Create cairo context
         c = self.window.cairo_create()
+
         # Restrict context to the exposed area, avoid extra work
         c.rectangle(event.area.x, event.area.y, event.area.width, event.area.height)
         c.clip_preserve()
+
         # Draw background
         c.set_source_rgb(*bg)
         c.fill()
@@ -448,7 +451,10 @@ class DockGroup(gtk.Container):
         if self._visible_tabs:
             # Draw border
             c.set_line_width(self.border_width)
-            c.rectangle(self._frame_width + 1, self._decoration_area.height + 1, self.allocation.width - (2 * self._frame_width) - 2, self.allocation.height - self._decoration_area.height - self._frame_width - 2)
+            c.rectangle(self._frame_width + self.border_width / 2,
+                        self._decoration_area.height + self.border_width / 2,
+                        self.allocation.width - (2 * self._frame_width) - self.border_width,
+                        self.allocation.height - self._decoration_area.height - self._frame_width - self.border_width)
             c.set_source_rgb(0.6, 0.72941176470588235294117647058824, 0.95294117647058823529411764705882)
             c.stroke()
 
