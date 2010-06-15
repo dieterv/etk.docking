@@ -431,15 +431,6 @@ class DockGroup(gtk.Container):
         c.set_source_rgb(*bg)
         c.fill()
 
-        # Decoration area height
-        dh = 0
-        for tab in self._tabs:
-            dh = max(dh, tab.area.height)
-
-        dh = max(dh, (self._spacing + self._list_button.allocation.height + self._spacing),
-                     (self._spacing + self._min_button.allocation.height + self._spacing),
-                     (self._spacing + self._max_button.allocation.height + self._spacing))
-
         # Draw frame
         c.set_line_width(self._frame_width)
         c.move_to(0.5, 0.5)
@@ -449,15 +440,15 @@ class DockGroup(gtk.Container):
         c.line_to(0.5, 0.5)
         c.set_source_rgb(*dark)
         c.stroke()
-        c.move_to(0.5, dh - 0.5)
-        c.line_to(self.allocation.width + 0.5, dh - 0.5)
+        c.move_to(0.5, self._decoration_area.height - 0.5)
+        c.line_to(self.allocation.width + 0.5, self._decoration_area.height - 0.5)
         c.set_source_rgb(*dark)
         c.stroke()
 
         if self._visible_tabs:
             # Draw border
             c.set_line_width(self.border_width)
-            c.rectangle(self._frame_width + 1, dh + 1, self.allocation.width - (2 * self._frame_width) - 2, self.allocation.height - dh - self._frame_width - 2)
+            c.rectangle(self._frame_width + 1, self._decoration_area.height + 1, self.allocation.width - (2 * self._frame_width) - 2, self.allocation.height - self._decoration_area.height - self._frame_width - 2)
             c.set_source_rgb(0.6, 0.72941176470588235294117647058824, 0.95294117647058823529411764705882)
             c.stroke()
 
