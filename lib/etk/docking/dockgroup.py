@@ -34,6 +34,7 @@ import gtk.gdk as gdk
 from . import _
 from .compactbutton import CompactButton
 from .dockitem import DockItem
+from .dnd import DockDragContext
 from .util import rect_contains
 
 
@@ -121,7 +122,10 @@ class DockGroup(gtk.Container):
         self._max_button.set_parent(self)
         gtk.widget_pop_composite_child()
 
-        # Configure drag/drop
+        # Configure DnD
+        self.dragcontext = DockDragContext()
+
+        # Configure DockGroup as a drag destination
         self.drag_dest_set(gtk.DEST_DEFAULT_MOTION | gtk.DEST_DEFAULT_HIGHLIGHT,
                            [DRAG_TARGET_ITEM_LIST],
                            gdk.ACTION_MOVE)
@@ -132,7 +136,6 @@ class DockGroup(gtk.Container):
         self._drag_target = None
         self._dragged_tabs = []
         self._drop_tab_index = None
-
 
     ############################################################################
     # GObject
@@ -520,21 +523,106 @@ class DockGroup(gtk.Container):
 
         return False
 
+    def do_button_press_event(self, event):
+        '''
+        :param event: the event that triggered the signal
+        :returns : True to stop other handlers from being invoked for the event.
+                   False to propagate the event further.
+
+        The do_button_press_event() signal handler is executed when a mouse
+        button is pressed.
+        '''
+        self.log.debug('%s' % event)
+
+        # We might start a drag operation, or we could simply be starting
+        # a click on a tab. Store information from this event in self.dragcontext
+        # and decide in do_motion_notify_event if we're actually starting a
+        # drag operation.
+        if event.window is self.window and event.button == 1:
+            self.dragcontext.source_x = event.x
+            self.dragcontext.source_y = event.y
+            self.dragcontext.source_button = event.button
+
+        return True
+
+    def do_button_release_event(self, event):
+        '''
+        :param event: the event that triggered the signal
+        :returns : True to stop other handlers from being invoked for the event.
+                   False to propagate the event further.
+
+        The do_button_release_event() signal handler is executed when a mouse
+        button is released.
+        '''
+        self.log.debug('%s' % event)
+
+        # Reset DnD
+        if event.button == self.dragcontext.source_button:
+                self.dragcontext.dragging = False
+                self.dragcontext.source_x = None
+                self.dragcontext.source_y = None
+                self.dragcontext.source_button = None
+
+        # Did we click a tab?
+        clicked_tab = self._get_tab_at_pos(event.x, event.y)
+
+        if clicked_tab:
+            # Set the current item on left click
+            if event.button == 1:
+                self.set_current_item(self._tabs.index(clicked_tab))
+            # Show context menu on right click
+            elif event.button == 3:
+                #TODO: implement tab context menu
+                def _menu_position(menu):
+                    wx, wy = self.window.get_origin()
+                    x = int(wx + event.x)
+                    y = int(wy + event.y)
+                    return (x, y, True)
+
+                self._tab_menu.show_all()
+                self._tab_menu.popup(parent_menu_shell=None,
+                                     parent_menu_item=None,
+                                     func=_menu_position,
+                                     button=event.button,
+                                     activate_time=event.time)
+
+        return True
+
     def do_motion_notify_event(self, event):
+        '''
+        :param event: the event that triggered the signal
+        :returns : True to stop other handlers from being invoked for the event.
+                   False to propagate the event further.
+
+        The do_motion-notify-event() signal handler is executed when the mouse
+        pointer moves while over this widget.
+        '''
+        self.log.debug('%s' % event)
+
         # Reset tooltip text
         self.set_tooltip_text(None)
 
         # We should not react to motion_notify_events originating from the
         # current tab's child widget
         if event.window is self.window:
-            if event.state & gdk.BUTTON1_MASK:
-                tab = self._get_tab_at_pos(event.x, event.y)
-                if tab:
-                    self._dragged_tabs = [tab]
-                else:
-                    self._dragged_tabs = list(self._tabs)
-                self.drag_begin([DRAG_TARGET_ITEM_LIST], gdk.ACTION_MOVE, 1, event)
+            # Check if we are actually starting a DnD operation
+            if event.state & gdk.BUTTON1_MASK and self.dragcontext.source_button == 1:
+                if self.drag_check_threshold(self.dragcontext.source_x, self.dragcontext.source_y, event.x, event.y):
+                    self.log.debug('drag_begin')
+                    self.dragcontext.dragging = True
 
+                    # What are we dragging?
+                    tab = self._get_tab_at_pos(event.x, event.y)
+
+                    if tab:
+                        self._dragged_tabs = [tab]
+                    else:
+                        self._dragged_tabs = list(self._tabs)
+
+                    self.drag_begin([DRAG_TARGET_ITEM_LIST], gdk.ACTION_MOVE,
+                                    self.dragcontext.source_button, event)
+
+            # Update tab state
             for tab in self._visible_tabs:
                 if (event.x, event.y) in tab:
                     # Update tooltip for tab under the cursor
@@ -544,29 +632,11 @@ class DockGroup(gtk.Container):
                         tab.state = gtk.STATE_PRELIGHT
                         self.queue_resize()
                 # Doing this as an elif above might seem tempting, but this way
-                # reduces flicker on the close button...
+                # reduces flicker on the close button while the pointer moves
+                # over an inactive tab...
                 else:
                     tab.state = gtk.STATE_NORMAL
                     self.queue_resize()
-
-    def do_button_release_event(self, event):
-        for tab in self._visible_tabs:
-            if (event.x, event.y) in tab:
-                if event.button == 1:
-                    self.set_current_item(self._tabs.index(tab))
-                elif event.button == 3:
-                    def _menu_position(menu):
-                        wx, wy = self.window.get_origin()
-                        x = wx + event.x
-                        y = wy + event.y
-                        return (x, y, True)
-
-                    self._tab_menu.show_all()
-                    self._tab_menu.popup(parent_menu_shell=None, parent_menu_item=None,
-                                          func=_menu_position, button=3,
-                                          activate_time=0)
-
-                break
 
         return True
 

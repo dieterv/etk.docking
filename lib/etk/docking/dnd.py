@@ -27,6 +27,28 @@ import gtk
 import gtk.gdk as gdk
 
 
+class DockDragContext(object):
+    '''
+    As we can't reliably use drag_source_set to initiate a drag operation
+    (there's just to much information locked away in C structs - GtkDragSourceSite,
+    GtkDragSourceInfo, GtkDragDestSite, GtkDragDestInfo, ... - that are not
+    exposed to Python), we are sadly forced to mimic some of that default behavior.
+
+    This class can also used to store extra information about a drag operation
+    in progress.
+    '''
+    __slots__ = ['dragging',        # are we dragging or not (bool)
+                 'source_x',        # x coordinate starting a potential drag
+                 'source_y',        # y coordinate starting a potential drag
+                 'source_button']   # the button the user pressed to start the drag
+
+    def __init__(self):
+        self.dragging = False
+        self.source_x = None
+        self.source_y = None
+        self.source_button = None
+
+
 class HighlightWindow(gtk.Window):
     '''
     The etk.dnd.HighlightWindow widget is a gtk.Window that can highlight an
