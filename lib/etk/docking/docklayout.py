@@ -123,20 +123,22 @@ class DockLayout(object):
     def on_widget_drag_failed(self, widget, context, result):
         return drag_failed(widget, context, result)
 
+
 def get_parent_info(widget):
     '''
     :param widget: the gtk.Widget to obtain parent info from
     :returns: Tuple (parent widget, px, py), where px/py is the parent item offset
     '''
     parent = widget.get_parent()
-    # The interface for TextView.get_window() is slightly different :(
-    if isinstance(widget, gtk.TextView):
-        w = widget.get_window(gtk.TEXT_WINDOW_WIDGET)
-    else:
-        w = widget.get_window()
+
+    # We can use gtk.Widget.get_window(widget) instead of special casing
+    # gtk.TextView.get_window (mapped to gtk_text_view_get_window in pygtk
+    # whereas get_window for other widgets is mapped to gtk_widget_get_window).
+    if isinstance(widget, gtk.Widget):
+        w = gtk.Widget.get_window(widget)
+
     px, py = w.get_position()
     return parent, px, py
-
 
 @generic
 def drag_motion(widget, context, x, y, timestamp):
@@ -170,7 +172,7 @@ def drag_motion(widget, context, x, y, timestamp):
     '''
     parent, px, py = get_parent_info(widget)
     return drag_motion(parent, context, px + x, px + y, timestamp)
-    
+
 @generic
 def drag_leave(widget, context, timestamp):
     '''
@@ -209,7 +211,7 @@ def drag_drop(widget, context, x, y, timestamp):
     '''
     parent, px, py = get_parent_info(widget)
     return drag_drop(parent, context, px + x, px + y, timestamp)
-  
+
 @generic
 def drag_data_received(widget, context, x, y, selection_data, info, timestamp):
     '''
@@ -232,7 +234,7 @@ def drag_data_received(widget, context, x, y, selection_data, info, timestamp):
     '''
     parent, px, py = get_parent_info(widget)
     return drag_data_received(parent, context, px + x, px + y, selection_data, info, timestamp)
- 
+
 @generic
 def drag_failed(widget, context, result):
     '''
@@ -307,5 +309,3 @@ def _do_drag_failed(self, context, result):
             self.insert_item(self._dragged_tab.item, position=self._dragged_tab_index)
     #context.drop_finish(False, 0)
     return True
-
-
