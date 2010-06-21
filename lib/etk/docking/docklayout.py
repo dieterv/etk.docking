@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # vim:sw=4:et:ai
-
-
+#
 # Copyright © 2010 etk.docking Contributors
 #
 # This file is part of etk.docking.
@@ -19,7 +18,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with etk.docking. If not, see <http://www.gnu.org/licenses/>.
 
-
 from __future__ import absolute_import
 from logging import getLogger
 
@@ -28,7 +26,6 @@ import gtk.gdk as gdk
 from simplegeneric import generic
 from .dockframe import DockFrame
 from .dockgroup import DockGroup, DRAG_TARGET_ITEM_LIST
-
 
 
 class DockLayout(object):
@@ -50,7 +47,6 @@ class DockLayout(object):
     def remove(self, frame):
         self.remove_signal_handlers(frame)
         self.frames.remove(frame)
-
 
     def add_signal_handlers(self, widget):
         """
@@ -94,7 +90,6 @@ class DockLayout(object):
             if isinstance(widget, gtk.Container):
                 widget.foreach(self.remove_signal_handlers)
 
-
     def on_widget_add(self, container, widget):
         """
         Deal with new elements being added to the layout or it's children.
@@ -103,6 +98,9 @@ class DockLayout(object):
             self.add_signal_handlers(widget)
 
     def on_widget_remove(self, container, widget):
+        """
+        Remove signals from containers and subcontainers.
+        """
         if isinstance(widget, gtk.Container):
             self.remove_signal_handlers(widget)
 
@@ -124,6 +122,20 @@ class DockLayout(object):
 
     def on_widget_drag_failed(self, widget, context, result):
         return drag_failed(widget, context, result)
+
+def get_parent_info(widget):
+    '''
+    :param widget: the gtk.Widget to obtain parent info from
+    :returns: Tuple (parent widget, px, py), where px/py is the parent item offset
+    '''
+    parent = widget.get_parent()
+    # The interface for TextView.get_window() is slightly different :(
+    if isinstance(widget, gtk.TextView):
+        w = widget.get_window(gtk.TEXT_WINDOW_WIDGET)
+    else:
+        w = widget.get_window()
+    px, py = w.get_position()
+    return parent, px, py
 
 
 @generic
@@ -156,10 +168,9 @@ def drag_motion(widget, context, x, y, timestamp):
         "enter" signal. Upon an "enter", the handler will typically
         highlight the drop site with the drag_highlight() method.
     '''
-    pass
-    #parent = widget.get_parent()
-    #drag_motion(parent, context, x, y, timestamp)
-
+    parent, px, py = get_parent_info(widget)
+    return drag_motion(parent, context, px + x, px + y, timestamp)
+    
 @generic
 def drag_leave(widget, context, timestamp):
     '''
@@ -171,7 +182,9 @@ def drag_leave(widget, context, timestamp):
     handler is to undo things done in the do_drag_motion() handler, e.g. undo
     highlighting with the drag_unhighlight() method.
     '''
-    pass
+    parent = widget.get_parent()
+    if parent:
+        drag_leave(parent, context, timestamp)
 
 @generic
 def drag_drop(widget, context, x, y, timestamp):
@@ -194,7 +207,8 @@ def drag_drop(widget, context, x, y, timestamp):
     drag_get_data() method to receive the data for one or more of the
     supported targets.
     '''
-    pass
+    parent, px, py = get_parent_info(widget)
+    return drag_drop(parent, context, px + x, px + y, timestamp)
   
 @generic
 def drag_data_received(widget, context, x, y, selection_data, info, timestamp):
@@ -216,7 +230,8 @@ def drag_data_received(widget, context, x, y, selection_data, info, timestamp):
     and then call the gdk.DragContext.finish() method, setting the success
     parameter to True if the data was processed successfully.
     '''
-    pass
+    parent, px, py = get_parent_info(widget)
+    return drag_data_received(parent, context, px + x, px + y, selection_data, info, timestamp)
  
 @generic
 def drag_failed(widget, context, result):
@@ -231,11 +246,12 @@ def drag_failed(widget, context, result):
     failure has been already handled (not showing the default
     "drag operation failed" animation), otherwise it returns False.
     '''
-    pass
+    parent = widget.get_parent()
+    return drag_failed(parent, context, result)
 
-##############################
+################################################################################
 # DockGroup
-##############################
+################################################################################
 
 @drag_motion.when_type(DockGroup)
 def dock_group_drag_motion(self, context, x, y, timestamp):
@@ -252,7 +268,6 @@ def dock_group_drag_motion(self, context, x, y, timestamp):
     #self.log.info('%d move over tab %s, target = %s', timestamp, self._drop_tab_index, target)
     return True
 
-
 @drag_drop.when_type(DockGroup)
 def dock_group_drag_drop(self, context, x, y, timestamp):
     self.log.debug('%s, %s, %s, %s' % (context, x, y, timestamp))
@@ -268,7 +283,6 @@ def dock_group_drag_drop(self, context, x, y, timestamp):
         return True
 
     return False
-
 
 @drag_data_received.when_type(DockGroup)
 def dock_group_drag_data_received(self, context, x, y, selection_data, info, timestamp):
