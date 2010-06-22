@@ -23,7 +23,9 @@ from logging import getLogger
 
 import gtk
 import gtk.gdk as gdk
+
 from simplegeneric import generic
+
 from .dockframe import DockFrame
 from .dockgroup import DockGroup, DRAG_TARGET_ITEM_LIST
 
@@ -60,7 +62,7 @@ class DockLayout(object):
                              [DRAG_TARGET_ITEM_LIST],
                              gdk.ACTION_MOVE)
 
-        # Use instance methods here, so layout can do aditional bookkeeping
+        # Use instance methods here, so layout can do additional bookkeeping
         for name, callback in (('add', self.on_widget_add),
                                ('remove', self.on_widget_remove),
                                ('drag_motion', self.on_widget_drag_motion),
