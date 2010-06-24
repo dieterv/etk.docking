@@ -91,7 +91,6 @@ class DockPaned(gtk.Container):
 
         # Initialize attributes
         self._children = []
-        self._first_allocation = True
 
         # Initialize handle dragging (this is not DnD!)
         self.dragcontext = DockDragContext()
@@ -123,7 +122,6 @@ class DockPaned(gtk.Container):
 
     def set_orientation(self, value):
         self._orientation = value
-        self._first_allocation = True
         self.queue_resize()
         self.notify('orientation')
 
@@ -181,21 +179,20 @@ class DockPaned(gtk.Container):
         # Compute total size request
         width = height = 0
 
-        if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-            for item in self._children:
-                if isinstance(item, _DockPanedItem):
-                    w, h = item.child.size_request()
+        for item in self._children:
+            if isinstance(item, _DockPanedItem):
+                w, h = item.child.size_request()
+
+                if self._orientation == gtk.ORIENTATION_HORIZONTAL:
                     width += w
                     height = max(height, h)
-                elif isinstance(item, _DockPanedHandle):
-                    width += self._handle_size
-        elif self._orientation == gtk.ORIENTATION_VERTICAL:
-            for item in self._children:
-                if isinstance(item, _DockPanedItem):
-                    w, h = item.child.size_request()
+                else:
                     width = max(width, w)
                     height += h
-                elif isinstance(item, _DockPanedHandle):
+            elif isinstance(item, _DockPanedHandle):
+                if self._orientation == gtk.ORIENTATION_HORIZONTAL:
+                    width += self._handle_size
+                else:
                     height += self._handle_size
 
         requisition.width = width
