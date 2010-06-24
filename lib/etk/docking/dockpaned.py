@@ -22,12 +22,12 @@
 
 from __future__ import absolute_import, division
 from logging import getLogger
-from math import floor
 
 import gobject
 import gtk
 import gtk.gdk as gdk
 
+from .dnd import DockDragContext
 from .util import rect_overlaps
 
 
@@ -35,9 +35,10 @@ class _DockPanedHandle(object):
     '''
     Convenience class storing information about a handle.
     '''
-    __slots__ = ['item_before', # item before this handle (_DockPanedItem)
-                 'item_after',  # item after this handle (_DockPanedItem)
-                 'area']        # area, used for hit testing (gdk.Rectangle)
+    __slots__ = ['area']    # area, used for hit testing (gdk.Rectangle)
+
+    def __init__(self):
+        self.area = gdk.Rectangle()
 
     def __contains__(self, pos):
         return rect_overlaps(self.area, pos[0], pos[1])
@@ -47,14 +48,13 @@ class _DockPanedItem(object):
     '''
     Convenience class storing information about a child.
     '''
-    __slots__ = ['child',               # child widget
-                 'area',                # area, used to calculate allocation (gdk.Rectangle)
-                 'size']                # percentual size used by this item (float)
+    __slots__ = ['child',   # child widget
+                 'area']    # area, used to calculate allocation (gdk.Rectangle)
 
+    def __init__(self):
+        self.child = None
+        self.area = gdk.Rectangle()
 
-DRAG_TARGET_GROUP = ('x-etk-docking/group', gtk.TARGET_SAME_APP, 0)
-DRAG_TARGET_ITEM = ('x-etk-docking/item', gtk.TARGET_SAME_APP, 1)
-DRAG_TARGETS = [DRAG_TARGET_GROUP, DRAG_TARGET_ITEM]
 
 class DockPaned(gtk.Container):
     '''
@@ -85,21 +85,16 @@ class DockPaned(gtk.Container):
         # Initialize logging
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
 
-        # Internal housekeeping
-        self._items = []
-        self._handles = []
-        self._handle_size = 4
-        self._orientation = gtk.ORIENTATION_HORIZONTAL
+        # Initialize properties
+        self.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+        self.set_handle_size(4)
+
+        # Initialize attributes
+        self._children = []
         self._first_allocation = True
-        self._dragging = False
-        self._drag_pos = None
-        self._drag_handle = None
 
-        self.drag_dest_set(gtk.DEST_DEFAULT_ALL,
-                           DRAG_TARGETS,
-                           gdk.ACTION_MOVE)
-
-        self._drop_handle = None
+        # Initialize handle dragging (this is not DnD!)
+        self.dragcontext = DockDragContext()
 
     ############################################################################
     # GObject
@@ -128,22 +123,7 @@ class DockPaned(gtk.Container):
 
     def set_orientation(self, value):
         self._orientation = value
-
-#        # Reset item sizes
-#        n_items = self.get_n_items()
-#
-#        if n_items == 1:
-#            self._items[0].size = 1.0
-#        elif n_items > 1:
-#            for item in self._items:
-#                items.size = 1.0 / n_items
-
-        # Queue resize event
         self._first_allocation = True
-
-        for item in self._items:
-            item.child.queue_resize()
-
         self.queue_resize()
         self.notify('orientation')
 
@@ -151,6 +131,8 @@ class DockPaned(gtk.Container):
     # GtkWidget
     ############################################################################
     def do_realize(self):
+        self.log.debug('')
+
         # Internal housekeeping
         self.set_flags(self.flags() | gtk.REALIZED)
         self.window = gdk.Window(self.get_parent_window(),
@@ -161,338 +143,261 @@ class DockPaned(gtk.Container):
                                  window_type = gdk.WINDOW_CHILD,
                                  wclass = gdk.INPUT_OUTPUT,
                                  event_mask = (gdk.EXPOSURE_MASK |
-                                               gdk.POINTER_MOTION_MASK |
+                                               gdk.LEAVE_NOTIFY_MASK |
                                                gdk.BUTTON_PRESS_MASK |
-                                               gdk.BUTTON_RELEASE_MASK))
+                                               gdk.BUTTON_RELEASE_MASK |
+                                               gdk.POINTER_MOTION_MASK))
         self.window.set_user_data(self)
         self.style.attach(self.window)
         self.style.set_background(self.window, gtk.STATE_NORMAL)
 
         # Set parent window on all child widgets
-        for item in self._items:
-            item.child.set_parent_window(self.window)
+        for item in self._children:
+            if isinstance(item, gtk.Widget):
+                item.child.set_parent_window(self.window)
 
     def do_unrealize(self):
+        self.log.debug('')
+
+        self.window.set_user_data(None)
         self.window.destroy()
         gtk.Container.do_unrealize(self)
 
     def do_map(self):
+        self.log.debug('')
+
         gtk.Container.do_map(self)
         self.window.show()
 
     def do_unmap(self):
+        self.log.debug('')
+
         self.window.hide()
         gtk.Container.do_unmap(self)
 
     def do_size_request(self, requisition):
-        # Calculate total size request
+        self.log.debug('%s' % requisition)
+
+        # Compute total size request
         width = height = 0
 
         if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-            for item in self._items:
-                w, h = item.child.size_request()
-                width += w
-                height = max(height, h)
-
-            width += (self.get_n_items() - 1) * self._handle_size
+            for item in self._children:
+                if isinstance(item, _DockPanedItem):
+                    w, h = item.child.size_request()
+                    width += w
+                    height = max(height, h)
+                elif isinstance(item, _DockPanedHandle):
+                    width += self._handle_size
         elif self._orientation == gtk.ORIENTATION_VERTICAL:
-            for item in self._items:
-                w, h = item.child.size_request()
-                width = max(width, w)
-                height += h
-
-            height += (self.get_n_items() - 1) * self._handle_size
+            for item in self._children:
+                if isinstance(item, _DockPanedItem):
+                    w, h = item.child.size_request()
+                    width = max(width, w)
+                    height += h
+                elif isinstance(item, _DockPanedHandle):
+                    height += self._handle_size
 
         requisition.width = width
         requisition.height = height
 
     def do_size_allocate(self, allocation):
-#        if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-#            counter = 0.0
-#            for item in self._items:
-#                print item.size,
-#                counter += item.size
-#            print
-#            print counter
-#            print
-
-        if self._first_allocation:
-            delta_w = 0
-            delta_h = 0
-            self._first_allocation = False
-        else:
-            delta_w = allocation.width - self.allocation.width
-            delta_h = allocation.height - self.allocation.height
+        self.log.debug('%s' % allocation)
 
         self.allocation = allocation
-
-        # Reset handles
-        self._handles = []
-
-        n_handles = len(self._items) - 1
-        cx = cy = 0
-
-        if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-            # Don't shrink our children's allocated width below their requested width
-            if delta_w < 0:
-                delta_w = abs(delta_w)
-
-                for item in reversed(self._items):
-                    if item.child.allocation.width > item.child.get_child_requisition()[0]:
-                        if delta_w > 0:
-                            shrinkable_width = item.child.allocation.width - item.child.get_child_requisition()[0]
-                            if shrinkable_width >= delta_w:
-                                shrinkable_width = delta_w
-                                item.size -= shrinkable_width / (allocation.width - n_handles * self._handle_size)
-                                delta_w -= shrinkable_width
-                    else:
-                        item.size = item.child.get_child_requisition()[0] / (allocation.width - n_handles * self._handle_size)
-
-            # Allocate size
-            for item in self._items:
-                item.area.x = cx
-                item.area.y = cy
-                item.area.width = floor((allocation.width - n_handles * self._handle_size) * item.size)
-                item.area.height = allocation.height
-                cx += item.area.width + self._handle_size
-
-                item.child.size_allocate(item.area)
-
-        elif self._orientation == gtk.ORIENTATION_VERTICAL:
-            # Don't shrink our children's allocated height below their requested height
-            if delta_h < 0:
-                delta_h = abs(delta_h)
-
-                for item in reversed(self._items):
-                    if item.child.allocation.height > item.child.get_child_requisition()[1]:
-                        if delta_h > 0:
-                            shrinkable_height = item.child.allocation.height - item.child.get_child_requisition()[1]
-                            if shrinkable_height >= delta_h:
-                                shrinkable_height = delta_h
-                                item.size -= shrinkable_height / (allocation.height - n_handles * self._handle_size)
-                                delta_h -= shrinkable_height
-                    else:
-                        item.size = item.child.get_child_requisition()[1] / (allocation.height - n_handles * self._handle_size)
-
-            # Allocate size
-            for item in self._items:
-                item.area.x = cx
-                item.area.y = cy
-                item.area.width = allocation.width
-                item.area.height = floor((allocation.height - n_handles * self._handle_size) * item.size)
-                cy += item.area.height + self._handle_size
-
-                item.child.size_allocate(item.area)
-
-        self._update_handles()
 
         if self.flags() & gtk.REALIZED:
             self.window.move_resize(*allocation)
 
+        cx = cy = 0  # current x and y counters
+        min_size = 0 # minimum required width/height
+
+        # Calculate minimum size
+        for item in self._children:
+            if isinstance(item, _DockPanedItem):
+                if self._orientation == gtk.ORIENTATION_HORIZONTAL:
+                    requested_size = item.child.get_child_requisition()[0]
+                    item.area.width = requested_size
+                else:
+                    requested_size = item.child.get_child_requisition()[1]
+                    item.area.height = requested_size
+
+                min_size += requested_size
+            elif isinstance(item, _DockPanedHandle):
+                min_size += self._handle_size
+
+        # Calculate extra_size
+        if self._orientation == gtk.ORIENTATION_HORIZONTAL:
+            extra_size = allocation.width - min_size
+        else:
+            extra_size = allocation.height - min_size
+
+        quotient, remainder = divmod(extra_size, self.get_n_items())
+
+        # Give items their requested minimum size + extra size
+        for item in self._children:
+            if isinstance(item, _DockPanedItem):
+                item.area.x = cx
+                item.area.y = cy
+                if self._orientation == gtk.ORIENTATION_HORIZONTAL:
+                    item.area.width += quotient
+                    item.area.height = allocation.height
+                    cx += item.area.width
+                else:
+                    item.area.width = allocation.width
+                    item.area.height += quotient
+                    cy += item.area.height
+            elif isinstance(item, _DockPanedHandle):
+                item.area.x = cx
+                item.area.y = cy
+                if self._orientation == gtk.ORIENTATION_HORIZONTAL:
+                    item.area.width = self._handle_size
+                    item.area.height = allocation.height
+                    cx += self._handle_size
+                else:
+                    item.area.width = allocation.width
+                    item.area.height = self._handle_size
+                    cy += self._handle_size
+
+        # Give the remainder size to the last item in the list
+        if self._orientation == gtk.ORIENTATION_HORIZONTAL:
+            self._children[-1].area.width += remainder
+        elif self._orientation == gtk.ORIENTATION_VERTICAL:
+            self._children[-1].area.height += remainder
+
+        # Allocate child sizes
+        for item in self._children:
+            if isinstance(item, _DockPanedItem):
+                item.child.size_allocate(item.area)
+
     def do_expose_event(self, event):
-        for item in self._items:
-            self.propagate_expose(item.child, event)
+        self.log.debug('%s' % event)
+
+        for item in self._children:
+            if isinstance(item, _DockPanedItem):
+                self.propagate_expose(item.child, event)
+            elif isinstance(item, _DockPanedHandle):
+                #TODO: render themed handle if not using compact layout
+                pass
 
         return False
+
+    def do_leave_notify_event(self, event):
+        self.log.debug('%s' % event)
+
+        # Reset cursor
+        self.window.set_cursor(None)
 
     def do_button_press_event(self, event):
-        self._dragging = False
-        self._drag_handle = None
-        self._drag_pos = None
+        '''
+        :param event: the event that triggered the signal
+        :returns : True to stop other handlers from being invoked for the event.
+                   False to propagate the event further.
 
-        for handle in self._handles:
-            if (event.x, event.y) in handle:
-                self._dragging = True
-                self._drag_handle = handle
-                self._drag_pos = (event.x, event.y)
-                break
+        The do_button_press_event() signal handler is executed when a mouse
+        button is pressed.
+        '''
+        self.log.debug('%s' % event)
+
+        # We might start a drag operation, or we could simply be starting
+        # a click somewhere. Store information from this event in self.dragcontext
+        # and decide in do_motion_notify_event if we're actually starting a
+        # drag operation.
+        if event.window is self.window and event.button == 1:
+            for item in self._children:
+                if isinstance(item, _DockPanedHandle) and (event.x, event.y) in item:
+                    self.dragcontext.dragging = False
+                    self.dragcontext.dragged_object = item
+                    self.dragcontext.source_x = event.x
+                    self.dragcontext.source_y = event.y
+                    self.dragcontext.source_button = event.button
+                    break
 
     def do_button_release_event(self, event):
-        if self._dragging:
-            self._dragging = False
-            self._drag_handle = None
-            self._drag_pos = None
-            self.window.set_cursor(None)
+        '''
+        :param event: the event that triggered the signal
+        :returns : True to stop other handlers from being invoked for the event.
+                   False to propagate the event further.
+
+        The do_button_release_event() signal handler is executed when a mouse
+        button is released.
+        '''
+        self.log.debug('%s' % event)
+
+        # Reset drag context
+        if event.button == self.dragcontext.source_button:
+            self.dragcontext.dragging = False
+            self.dragcontext.dragged_object = None
+            self.dragcontext.source_x = None
+            self.dragcontext.source_y = None
+            self.dragcontext.source_button = None
 
     def do_motion_notify_event(self, event):
-        if self._dragging:
-            if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-                delta_w = self.get_pointer()[0] - self._drag_pos[0]
+        '''
+        :param event: the event that triggered the signal
+        :returns : True to stop other handlers from being invoked for the event.
+                   False to propagate the event further.
 
-                # Don't shrink our children's allocated width below their requested width
-                if delta_w < 0:
-                    # Enlarge the item after and shrink the items before the handle
-                    delta_w = abs(delta_w)
-                    enlarge = self._drag_handle.item_after
-                    shrink = reversed(self._items[:self._items.index(enlarge)])
-                elif delta_w > 0:
-                    # Enlarge the item before and shrink the items after the handle
-                    enlarge = self._drag_handle.item_before
-                    shrink = self._items[self._items.index(enlarge) + 1:]
-                elif delta_w == 0:
-                    return
+        The do_motion-notify-event() signal handler is executed when the mouse
+        pointer moves while over this widget.
+        '''
+        self.log.debug('%s' % event)
 
-                # Distribute delta_w amongst the children marked as shrinkable
-                for item in shrink:
-                    if item.child.allocation.width > item.child.get_child_requisition()[0]:
-                        if delta_w > 0:
-                            shrinkable_width = item.child.allocation.width - item.child.get_child_requisition()[0]
+        # Check if we are actually starting a DnD operation
+        if not self.dragcontext.dragging and self.dragcontext.dragged_object:
+            if event.state & gdk.BUTTON1_MASK and self.dragcontext.source_button == 1:
+                if self.drag_check_threshold(self.dragcontext.source_x, self.dragcontext.source_y, event.x, event.y):
+                    self.log.debug('begin dragging handle %s' % self.dragcontext.dragged_object)
+                    self.dragcontext.dragging = True
 
-                            if shrinkable_width >= delta_w:
-                                shrinkable_width = delta_w
+        # Set an appropriate cursor
+        cursor = None
 
-                                enlarge.size += shrinkable_width / (self.allocation.width - len(self._handles) * self._handle_size)
-                                item.size -= shrinkable_width / (self.allocation.width - len(self._handles) * self._handle_size)
-                                delta_w -= shrinkable_width
-                    else:
-                        item.size = item.child.get_child_requisition()[0] / (self.allocation.width - len(self._handles) * self._handle_size)
-#            elif self._orientation == gtk.ORIENTATION_VERTICAL:
-#                delta_h = self.get_pointer()[1] - self._drag_pos[1]
-#
-#                if delta_h < 0:
-#                    # Don't shrink our children's allocated height below their requested height
-#                    delta_w = abs(delta_w)
-#                    ia = self._drag_handle.item_after
-#
-#                    for child in reversed(self._items[:self._items.index(ia)]):
-#                        if child.item.allocation.width > child.item.get_child_requisition()[0]:
-#                            if delta_w > 0:
-#                                shrinkable_width = child.item.allocation.width - child.item.get_child_requisition()[0]
-#                                if shrinkable_width >= delta_w:
-#                                    shrinkable_width = delta_w
-#                                    ia.size += shrinkable_width
-#                                    child.size -= shrinkable_width / (self.allocation.width - len(self._handles) * self._handle_size)
-#                                    delta_w -= shrinkable_width
-#                        else:
-#                            child.size = child.item.get_child_requisition()[0] / (self.allocation.width - len(self._handles) * self._handle_size)
-#
-##                    ia = self._drag_handle.item_after
-##                    items = reversed(self._items[:self._items.index(self._drag_handle.item_after)])
-##
-##                    for item in items:
-##                        if ia.area.height - delta_h >= ia.item.get_child_requisition()[1] and item.area.height + delta_h >= item.item.get_child_requisition()[1]:
-##                            item.size += size_delta
-##                            ia.size -= size_delta
-##                            break
-#                elif delta_h > 0:
-#                    ib = self._drag_handle.item_before
-#                    items = self._items[self._items.index(self._drag_handle.item_before) + 1:]
-#
-#                    for item in items:
-#                        if ib.area.height + delta_h >= ib.item.get_child_requisition()[1] and item.area.height - delta_h >= item.item.get_child_requisition()[1]:
-#                            item.size -= size_delta
-#                            ib.size += size_delta
-#                            break
+        if event.window is self.window:
+            for item in self._children:
+                if isinstance(item, _DockPanedHandle) and (event.x, event.y) in item:
+                    if self._orientation == gtk.ORIENTATION_HORIZONTAL:
+                        cursor = gtk.gdk.Cursor(self.get_display(), gdk.SB_H_DOUBLE_ARROW)
+                    elif self._orientation == gtk.ORIENTATION_VERTICAL:
+                        cursor = gtk.gdk.Cursor(self.get_display(), gdk.SB_V_DOUBLE_ARROW)
 
-            # Update drag position
-            self._drag_pos = (event.x, event.y)
+                    break
 
-            self.queue_resize()
-        else:
-            if event.window is self.window:
-                for handle in self._handles:
-                    if (event.x, event.y) in handle:
-                        if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-                            cursor = gtk.gdk.Cursor(self.get_display(), gdk.SB_H_DOUBLE_ARROW)
-                        elif self._orientation == gtk.ORIENTATION_VERTICAL:
-                            cursor = gtk.gdk.Cursor(self.get_display(), gdk.SB_V_DOUBLE_ARROW)
-
-                        break
-                else:
-                    cursor = None
-            else:
-                cursor = None
-
+        if cursor:
             self.window.set_cursor(cursor)
-
-    # drop destination
-    def xx_do_drag_motion(self, context, x, y, timestamp):
-        self.log.debug('%s, %s, %s' % (context, x, y))
-        self._drop_handle = None
-        pos = (x, y)
-        for handle in self._handles:
-            if pos in handle:
-                self._drop_handle = handle
-                print '*** drop handle:', self._drop_handle
-                return True
-        return False
-
-    def xx_do_drag_data_received(self, context, x, y, selection_data, info, timestamp):
-        source = context.get_source_widget()
-        assert source
-        assert self._drop_handle
-        self.log.debug('Paned received data %s', selection_data.target)
-        if selection_data.target == gdk.atom_intern(DRAG_TARGET_ITEM[0]):
-            self.log.debug('... will create group for item %s', source._dragged_tab)
-#            self.log.debug('Recieving item %s' % source._dragged_tab)
-#            self.insert_item(source._dragged_tab.item, self._drop_tab_index)
-        if selection_data.target == gdk.atom_intern(DRAG_TARGET_GROUP[0]):
-            self.log.debug('... will add group %s', source)
-#            self.log.debug('Recieving group from %s' % source)
-#            self.merge_group(source, self._drop_tab_index)
-#        else:
-#            context.finish(False, False, timestamp) # success, delete, time
-#            return
-#
-#        source._dragged_tab = None
-        context.finish(True, False, timestamp) # success, delete, time
 
     ############################################################################
     # GtkContainer
     ############################################################################
     def do_forall(self, internals, callback, data):
-        for item in self._items:
-            callback(item.child, data)
+        for item in self._children:
+            if isinstance(item, _DockPanedItem):
+                callback(item.child, data)
 
     def do_add(self, widget):
         self.insert_child(widget)
 
-    def _recalculate_sizes(self):
-        """
-        Recalculate sizes (%) for all children.
-        """
-        n_items = self.get_n_items()
-        size_ok = []
-        size_nok = []
-
-        for item in self._items:
-            if item.size is None:
-                size_nok.append(item)
-            else:
-                size_ok.append(item)
-
-        for item in size_nok:
-            if n_items > 1:
-                # Set a default size
-                item.size = 1.0 / n_items
-                delta = item.size / (n_items - 1)
-
-                # And the rest has to shrink...
-                for item in size_ok:
-                    item.size -= delta
-            else:
-                item.size = 1.0
-
-        self.queue_resize()
-
     def do_remove(self, widget):
         # Get the _DockPanedItem associated with widget
-        for item in self._items:
-            if item.child is widget:
-                # Remove child from the list
+        for item in self._children:
+            if isinstance(item, _DockPanedItem) and item.child is widget:
                 item.child.unparent()
-                self._items.remove(item)
+                index = self._children.index(item)
+                # Remove the DockPanedItem from the list
+                del self._children[index]
 
-                # Distribute the freed size over the other children
-                n_items = self.get_n_items()
-
-                if n_items > 1:
-                    delta = item.size / n_items
-
-                    for item in self._items:
-                        item.size += delta
-                elif n_items == 1:
-                    self._items[0].size = 1.0
+                # If there are still items/handles in the list, we'd like to
+                # remove a handle...
+                if self._children:
+                    try:
+                        # Remove the DockPanedHandle that used to be located after
+                        # the DockPanedItem we just removed
+                        del self._children[index]
+                    except IndexError:
+                        # Well, seems we removed the last DockPanedItem from the
+                        # list, so we'll remove the DockPanedHandle that used to
+                        # be located before the DockPanedItem we just removed
+                        del self._children[index - 1]
 
                 break
 
@@ -501,52 +406,26 @@ class DockPaned(gtk.Container):
     ############################################################################
     # EtkDockPaned
     ############################################################################
-    def _update_handles(self):
-        """
-        Update the _handles list.
-        """
-        allocation = self.allocation
-        cx = cy = 0
-        if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-            width = self._handle_size
-            height = allocation.height
-        elif self._orientation == gtk.ORIENTATION_VERTICAL:
-            width = allocation.width
-            height = self._handle_size
-        items = self._items
-        for before, after in zip(items, items[1:]):
-            handle = _DockPanedHandle()
-            handle.area = gdk.Rectangle()
-            if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-                cx += before.area.width
-                handle.area.x = cx
-                cx += self._handle_size
-            elif self._orientation == gtk.ORIENTATION_VERTICAL:
-                cy = before.area.height
-                handle.area.y = cy
-                cy += self._handle_size
-            handle.area.width = width
-            handle.area.height = height
-
-            handle.item_before = before
-            handle.item_after = after
-            self._handles.append(handle)
-
     def insert_child(self, widget, position=-1):
+        handle = _DockPanedHandle()
         item = _DockPanedItem()
         item.child = widget
         item.child.set_parent(self)
-        item.area = gdk.Rectangle()
-        item.size = None
+
         if position == -1:
-            self._items.append(item)
+            if len(self._children) >= 1:
+                self._children.append(handle)
+
+            self._children.append(item)
+
         else:
-            self._items.insert(position, item)
+            if len(self._children) >= 1:
+                self._children.append(position * 2, handle)
+
+            self._children.insert(position * 2, item)
 
         if self.flags() & gtk.REALIZED:
             item.child.set_parent_window(self.window)
-
-        self._recalculate_sizes()
 
     #TODO: def append_item(self, item):
     #TODO: def prepend_item(item, tab_label=None)
@@ -559,7 +438,7 @@ class DockPaned(gtk.Container):
         '''
         The get_n_items() method returns the number of items in the DockPaned.
         '''
-        return len(self._items)
+        return int(len(self._children) / 2) + 1
 
     #TODO: def item_num(self, item):
     #TODO: def set_current_item(self, item_num):
