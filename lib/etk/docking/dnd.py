@@ -40,13 +40,15 @@ class DockDragContext(object):
     __slots__ = ['dragging',        # are we dragging or not (bool)
                  'source_x',        # x coordinate starting a potential drag
                  'source_y',        # y coordinate starting a potential drag
-                 'source_button']   # the button the user pressed to start the drag
+                 'source_button',   # the button the user pressed to start the drag
+                 'dragged_object']  # object being dragged
 
     def __init__(self):
         self.dragging = False
         self.source_x = None
         self.source_y = None
         self.source_button = None
+        self.dragged_object = None
 
 
 class HighlightWindow(gtk.Window):
