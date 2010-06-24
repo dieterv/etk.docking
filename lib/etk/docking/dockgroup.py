@@ -60,7 +60,10 @@ class _DockGroupTab(object):
         return rect_contains(self.area, *pos)
 
     def __str__(self):
-        return "<%s object at 0x%x with label '%s' on %s>" % (self.__class__.__name__, id(self), self.label.get_text(), self.area)
+        return "<%s object at 0x%x with label '%s' on %s>" % (self.__class__.__name__,
+                                                              hex(id(self)),
+                                                              self.label.get_text(),
+                                                              self.area)
 
 
 class DockGroup(gtk.Container):
@@ -93,7 +96,7 @@ class DockGroup(gtk.Container):
 
         # Internal housekeeping
         self.set_border_width(2)
-        self._group_id = 0
+        self.set_group_id(0)
         self._frame_width = 1
         self._spacing = 3
         self._current_tab = None
@@ -208,11 +211,12 @@ class DockGroup(gtk.Container):
 
     def do_size_request(self, requisition):
         self.log.debug('%s' % requisition)
+        gtk.Container.do_size_request(self, requisition)
 
         # Start with a zero sized decoration area
         dw = dh = 0
 
-        # Precalculate width and height for each tab, but only add
+        # Compute width and height for each tab, but only add
         # current item tab size to the decoration area requisition as
         # the other tabs can be hidden when we don't get enough room
         # in the allocation fase.
@@ -258,7 +262,7 @@ class DockGroup(gtk.Container):
         iw += 2 * self._frame_width + 2 * self.border_width
         ih += self._frame_width + 2 * self.border_width
 
-        # Calculate total size requisition
+        # Compute total size requisition
         requisition.width = max(dw, iw)
         requisition.height = dh + ih
 
@@ -288,7 +292,7 @@ class DockGroup(gtk.Container):
         else:
             current_tab_index = self._tabs.index(self._current_tab)
 
-            # Calculate available tab area width
+            # Compute available tab area width
             available_width = (allocation.width - self._frame_width - self._spacing -
                                max_w - min_w - list_w - self._spacing -
                                self._current_tab.area.width)
@@ -369,7 +373,7 @@ class DockGroup(gtk.Container):
         else:
             self._list_button.hide()
 
-        # Precalculate x an y for each visible tab and allocate space for
+        # Compute x an y for each visible tab and allocate space for
         # the tab's composite children.
         cx = cy = 0
         for tab in self._visible_tabs:
@@ -526,10 +530,10 @@ class DockGroup(gtk.Container):
         '''
         self.log.debug('%s' % event)
 
-        # We might start a drag operation, or we could simply be starting
+        # We might start a DnD operation, or we could simply be starting
         # a click on a tab. Store information from this event in self.dragcontext
         # and decide in do_motion_notify_event if we're actually starting a
-        # drag operation.
+        # dnd operation.
         if event.window is self.window and event.button == 1:
             self.dragcontext.source_x = event.x
             self.dragcontext.source_y = event.y
@@ -548,9 +552,10 @@ class DockGroup(gtk.Container):
         '''
         self.log.debug('%s' % event)
 
-        # Reset DnD
+        # Reset drag context
         if event.button == self.dragcontext.source_button:
                 self.dragcontext.dragging = False
+                self.dragcontext.dragged_object = None
                 self.dragcontext.source_x = None
                 self.dragcontext.source_y = None
                 self.dragcontext.source_button = None
@@ -820,6 +825,7 @@ class DockGroup(gtk.Container):
         '''
         if not isinstance(item, DockItem):
             raise TypeError('item should be of type "DockItem", got: "%s"' % type(item).__name__)
+
         if item in self._tabs:
             raise ValueError('Inserted item is already in the group')
 
@@ -857,6 +863,7 @@ class DockGroup(gtk.Container):
 
         self._tabs.insert(position, tab)
 
+        #TODO: get rid of this pronto!
         if visible_position is not None:
             self._visible_tabs.insert(visible_position, tab)
 
@@ -992,6 +999,7 @@ class DockGroup(gtk.Container):
 
             self._current_tab = self._tabs[current_tab_index]
             self._current_tab.last_focused = time()
+
             # Update properties on new current tab
             self._on_item_title_changed(self._current_tab)
             self._on_item_title_tooltip_text_changed(self._current_tab)
