@@ -61,17 +61,17 @@ class HighlightWindow(gtk.Window):
 
     def __init__(self, dockgroup):
         gtk.Window.__init__(self, gtk.WINDOW_POPUP)
-
-        # Initialize logging
-        self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
-
-        # Internal housekeeping
-        self._gc = dockgroup.style.bg_gc[gtk.STATE_SELECTED]
-
         self.set_skip_taskbar_hint(True)
         self.set_decorated(False)
         self.set_transient_for(dockgroup.get_toplevel())
         self.set_type_hint(gdk.WINDOW_TYPE_HINT_UTILITY)
+
+        # Initialize logging
+        self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
+        self.log.debug('%s' % dockgroup)
+
+        # Internal housekeeping
+        self._gc = dockgroup.style.bg_gc[gtk.STATE_SELECTED]
 
         self.realize()
 

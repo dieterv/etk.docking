@@ -73,6 +73,7 @@ class CompactButton(gtk.Widget):
 
         # Initialize logging
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
+        self.log.debug('')
 
         # Internal housekeeping
         self._entered = False

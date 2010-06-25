@@ -37,6 +37,7 @@ class DockFrame(gtk.EventBox):
 
         # Initialize logging
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
+        self.log.debug('')
 
         # Child containers:
         self._floating_windows = []

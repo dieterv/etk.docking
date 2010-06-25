@@ -35,7 +35,8 @@ class DockLayout(object):
     def __init__(self):
 
         # Initialize logging
-        self.log = getLogger('<%s object at %s>' % (self.__class__.__name__, hex(id(self))))
+        self.log = getLogger('%s.%s' % (self.__class__.__name__, hex(id(self))))
+        self.log.debug('')
 
         self.frames = set()
         # Map widget -> set([signals, ...])
