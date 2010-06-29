@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # vim:sw=4:et:ai
-#
+
 # etk.docking documentation build configuration file.
 #
 # This file is execfile()d with the current directory set to its containing dir.
