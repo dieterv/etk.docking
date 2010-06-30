@@ -23,7 +23,7 @@ import unittest
 
 import gtk
 
-from etk.docking import DockPaned
+from etk.docking import DockPaned, DockGroup
 
 
 class TestDockPaned(unittest.TestCase):
@@ -94,6 +94,38 @@ class TestDockPaned(unittest.TestCase):
         self.assertTrue(notify_called,
                         msg='orientation property change notification failed when using .props attribute')
 
+        dockpaned.destroy()
+
+    ############################################################################
+    # Test child properties
+    ############################################################################
+    def test_child_prop_expand(self):
+        global notify_called
+
+        def _on_notify(gobject, pspec):
+            global notify_called
+            notify_called = True
+
+        dockpaned = DockPaned()
+
+        notify_called = False
+        dockgroup1 = DockGroup()
+        handlerid = dockgroup1.connect('child-notify::expand', _on_notify)
+        dockpaned.insert_child(dockgroup1, position=0, expand=False)
+        self.assertTrue(notify_called,
+                        msg='expand child property change notification failed')
+        dockgroup1.disconnect(handlerid)
+
+        notify_called = False
+        dockgroup2 = DockGroup()
+        handlerid = dockgroup2.connect('child-notify::expand', _on_notify)
+        dockpaned.add(dockgroup2)
+        self.assertTrue(notify_called,
+                        msg='expand child property change notification failed')
+        dockgroup2.disconnect(handlerid)
+
+        dockgroup1.destroy()
+        dockgroup2.destroy()
         dockpaned.destroy()
 
     ############################################################################
