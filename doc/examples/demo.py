@@ -89,6 +89,11 @@ class MainWindow(gtk.Window):
         adddgbutton.connect('clicked', self._on_add_dg_button_clicked)
         vbox.pack_start(adddgbutton, False, False)
 
+        rmdgbutton = gtk.Button('Remove docked group')
+        rmdgbutton.child.set_ellipsize(pango.ELLIPSIZE_MIDDLE)
+        rmdgbutton.connect('clicked', self._on_remove_dg_button_clicked)
+        vbox.pack_start(rmdgbutton, False, False)
+
         adddibutton = gtk.Button('Create docked items')
         adddibutton.child.set_ellipsize(pango.ELLIPSIZE_MIDDLE)
         adddibutton.connect('clicked', self._on_add_di_button_clicked)
@@ -109,6 +114,9 @@ class MainWindow(gtk.Window):
         dg = DockGroup()
         dg.show()
         self.dp2.add(dg)
+
+    def _on_remove_dg_button_clicked(self, button):
+        self.dp.remove(self.dp.get_children()[-1])
 
     def _on_add_di_button_clicked(self, button):
         for child in self.dp1:
