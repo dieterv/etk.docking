@@ -28,6 +28,7 @@ from simplegeneric import generic
 
 from .dockframe import DockFrame
 from .dockgroup import DockGroup, DRAG_TARGET_ITEM_LIST
+from .dockpaned import DockPaned
 
 
 class DockLayout(object):
@@ -257,6 +258,9 @@ def drag_failed(widget, context, result):
 
 ################################################################################
 # DockGroup
+#
+# TODO: If cursor is near the border, propagate event to the parent
+#
 ################################################################################
 
 def dock_group_expose_highlight(self, event):
@@ -275,10 +279,11 @@ def dock_group_expose_highlight(self, event):
 def dock_group_highlight(self):
     if not hasattr(self, '_expose_event_id'):
         self.log.debug('attaching expose event')
-        self._expose_event_id = self.connect_after('expose-event', dock_group_expose_highlight)
+        self._expose_event_id = self.connect_after('expose-event',
+                                                   dock_group_expose_highlight)
     self.queue_resize()
 
-def dock_group_unhighlight(self):
+def dock_unhighlight(self):
     self.queue_resize()
     try:
         self.disconnect(self._expose_event_id)
@@ -305,7 +310,7 @@ def dock_group_drag_motion(self, context, x, y, timestamp):
 
 @drag_leave.when_type(DockGroup)
 def dock_group_drag_leave(self, context, timestamp):
-    dock_group_unhighlight(self)
+    dock_unhighlight(self)
 
 @drag_drop.when_type(DockGroup)
 def dock_group_drag_drop(self, context, x, y, timestamp):
@@ -338,11 +343,51 @@ def dock_group_drag_data_received(self, context, x, y, selection_data, info, tim
     else:
         context.finish(False, False, timestamp) # success, delete, time
 
+# Attached to drag *source*
 @drag_failed.when_type(DockGroup)
-def _do_drag_failed(self, context, result):
+def dock_group_drag_failed(self, context, result):
     self.log.debug('%s, %s' % (context, result))
     for tab in self._dragged_tabs:
         if not tab.item.get_parent():
             self.insert_item(self._dragged_tab.item, position=self._dragged_tab_index)
     #context.drop_finish(False, 0)
     return True
+
+################################################################################
+# DockPaned
+################################################################################
+
+def dock_paned_expose_highlight(self, event):
+    self.log.debug('')
+
+def dock_paned_highlight(self):
+    if not hasattr(self, '_expose_event_id'):
+        self.log.debug('attaching expose event')
+        self._expose_event_id = self.connect_after('expose-event',
+                                                   dock_paned_expose_highlight)
+    self.queue_resize()
+
+@drag_motion.when_type(DockPaned)
+def dock_group_drag_motion(self, context, x, y, timestamp):
+    self.log.debug('%s, %s, %s, %s' % (context, x, y, timestamp))
+
+    dock_paned_highlight(self)
+
+    return True
+
+@drag_leave.when_type(DockPaned)
+def dock_paned_drag_leave(self, context, timestamp):
+    dock_unhighlight(self)
+
+@drag_drop.when_type(DockPaned)
+def dock_group_drag_drop(self, context, x, y, timestamp):
+    # TODO: Find out where to add the items
+    return False
+
+@drag_data_received.when_type(DockPaned)
+def dock_group_drag_data_received(self, context, x, y, selection_data, info, timestamp):
+    self.log.debug('%s, %s, %s, %s, %s, %s' % (context, x, y, selection_data, info, timestamp))
+
+    source = context.get_source_widget()
+    assert source
+
