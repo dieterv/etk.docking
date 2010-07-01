@@ -610,7 +610,8 @@ class DockGroup(gtk.Container):
                     self.dragcontext.dragging = True
 
                     # What are we dragging?
-                    tab = self.get_tab_at_pos(event.x, event.y)
+                    tab = self.get_tab_at_pos(self.dragcontext.source_x,
+                                              self.dragcontext.source_y)
 
                     if tab:
                         self._dragged_tabs = [tab]
