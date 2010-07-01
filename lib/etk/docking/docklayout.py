@@ -59,7 +59,7 @@ class DockLayout(object):
             return
         signals = set()
         # TODO: Remove Highlight flag. Create it ourselves.
-        widget.drag_dest_set(gtk.DEST_DEFAULT_MOTION | gtk.DEST_DEFAULT_HIGHLIGHT,
+        widget.drag_dest_set(gtk.DEST_DEFAULT_MOTION,
                              [DRAG_TARGET_ITEM_LIST],
                              gdk.ACTION_MOVE)
 
@@ -174,7 +174,7 @@ def drag_motion(widget, context, x, y, timestamp):
         highlight the drop site with the drag_highlight() method.
     '''
     parent, px, py = get_parent_info(widget)
-    return drag_motion(parent, context, px + x, px + y, timestamp)
+    return parent and drag_motion(parent, context, px + x, px + y, timestamp)
 
 @generic
 def drag_leave(widget, context, timestamp):
@@ -213,7 +213,7 @@ def drag_drop(widget, context, x, y, timestamp):
     supported targets.
     '''
     parent, px, py = get_parent_info(widget)
-    return drag_drop(parent, context, px + x, px + y, timestamp)
+    return parent and drag_drop(parent, context, px + x, px + y, timestamp)
 
 @generic
 def drag_data_received(widget, context, x, y, selection_data, info, timestamp):
@@ -236,7 +236,8 @@ def drag_data_received(widget, context, x, y, selection_data, info, timestamp):
     parameter to True if the data was processed successfully.
     '''
     parent, px, py = get_parent_info(widget)
-    return drag_data_received(parent, context, px + x, px + y, selection_data, info, timestamp)
+    if parent:
+        drag_data_received(parent, context, px + x, px + y, selection_data, info, timestamp)
 
 @generic
 def drag_failed(widget, context, result):
@@ -252,12 +253,39 @@ def drag_failed(widget, context, result):
     "drag operation failed" animation), otherwise it returns False.
     '''
     parent = widget.get_parent()
-    return drag_failed(parent, context, result)
+    return parent and drag_failed(parent, context, result)
 
 ################################################################################
 # DockGroup
 ################################################################################
 
+def dock_group_expose_highlight(self, event):
+    cr = self.window.cairo_create()
+    cr.set_source_rgb(0, 0, 0)
+    cr.set_line_width(1.0)
+    tab = self._visible_tabs[self._drop_tab_index]
+    if tab is self._current_tab:
+        a = event.area
+    else:
+        a = tab.area
+
+    cr.rectangle(a.x + 0.5, a.y + 0.5, a.width - 1, a.height - 1)
+    cr.stroke()
+
+def dock_group_highlight(self):
+    if not hasattr(self, '_expose_event_id'):
+        self.log.debug('attaching expose event')
+        self._expose_event_id = self.connect_after('expose-event', dock_group_expose_highlight)
+    self.queue_resize()
+
+def dock_group_unhighlight(self):
+    self.queue_resize()
+    try:
+        self.disconnect(self._expose_event_id)
+        del self._expose_event_id
+    except AttributeError, e:
+        print e
+    
 @drag_motion.when_type(DockGroup)
 def dock_group_drag_motion(self, context, x, y, timestamp):
     self.log.debug('%s, %s, %s, %s' % (context, x, y, timestamp))
@@ -270,8 +298,14 @@ def dock_group_drag_motion(self, context, x, y, timestamp):
     elif self._tabs:
         self._drop_tab_index = self._visible_tabs.index(self._current_tab)
     target = self.drag_dest_find_target(context, ());
-    #self.log.info('%d move over tab %s, target = %s', timestamp, self._drop_tab_index, target)
+
+    dock_group_highlight(self)
+
     return True
+
+@drag_leave.when_type(DockGroup)
+def dock_group_drag_leave(self, context, timestamp):
+    dock_group_unhighlight(self)
 
 @drag_drop.when_type(DockGroup)
 def dock_group_drag_drop(self, context, x, y, timestamp):
