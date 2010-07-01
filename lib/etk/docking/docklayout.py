@@ -267,7 +267,7 @@ def dock_group_expose_highlight(self, event):
     cr = self.window.cairo_create()
     cr.set_source_rgb(0, 0, 0)
     cr.set_line_width(1.0)
-    tab = self._visible_tabs[self._drop_tab_index]
+    tab = self.visible_tabs[self._drop_tab_index]
     if tab is self._current_tab:
         a = event.area
     else:
@@ -296,12 +296,12 @@ def dock_group_drag_motion(self, context, x, y, timestamp):
     self.log.debug('%s, %s, %s, %s' % (context, x, y, timestamp))
 
     # Insert the dragged tab before the tab under (x, y)
-    drop_tab = self._get_tab_at_pos(x, y)
+    drop_tab = self.get_tab_at_pos(x, y)
 
     if drop_tab:
-        self._drop_tab_index = self._visible_tabs.index(drop_tab)
+        self._drop_tab_index = self.visible_tabs.index(drop_tab)
     elif self._tabs:
-        self._drop_tab_index = self._visible_tabs.index(self._current_tab)
+        self._drop_tab_index = self.visible_tabs.index(self._current_tab)
     target = self.drag_dest_find_target(context, ());
 
     dock_group_highlight(self)
