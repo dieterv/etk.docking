@@ -124,7 +124,6 @@ class DockGroup(gtk.Container):
         self._max_button.set_parent(self)
         gtk.widget_pop_composite_child()
 
-        # Configure DnD
         self.dragcontext = DockDragContext()
 
     ############################################################################
@@ -735,12 +734,7 @@ class DockGroup(gtk.Container):
         '''
         self.log.debug('%s - %s', context, context.drag_drop_succeeded())
 
-        # Reset drag context
-        self.dragcontext.dragging = False
-        self.dragcontext.dragged_object = None
-        self.dragcontext.source_x = None
-        self.dragcontext.source_y = None
-        self.dragcontext.source_button = None
+        self.dragcontext.reset()
 
         self.queue_resize()
 

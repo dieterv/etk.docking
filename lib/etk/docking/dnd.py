@@ -43,12 +43,14 @@ class DockDragContext(object):
                  'dragged_object']  # object being dragged
 
     def __init__(self):
+        self.reset()
+
+    def reset(self):
         self.dragging = False
         self.source_x = None
         self.source_y = None
         self.source_button = None
         self.dragged_object = None
-
 
 class HighlightWindow(gtk.Window):
     '''
