@@ -342,8 +342,8 @@ def dock_group_drag_data_received(self, context, x, y, selection_data, info, tim
     assert source
 
     if selection_data.target == gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0]):
-        self.log.debug('Recieving item %s' % source._dragged_tabs)
-        for tab in reversed(source._dragged_tabs):
+        self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
+        for tab in reversed(source.dragcontext.dragged_object):
             self.insert_item(tab.item, visible_position=self._drop_tab_index)
         context.finish(True, True, timestamp) # success, delete, time
     else:
@@ -353,9 +353,9 @@ def dock_group_drag_data_received(self, context, x, y, selection_data, info, tim
 @drag_failed.when_type(DockGroup)
 def dock_group_drag_failed(self, context, result):
     self.log.debug('%s, %s' % (context, result))
-    for tab in self._dragged_tabs:
+    for tab in self.dragcontext.dragged_object:
         if not tab.item.get_parent():
-            self.insert_item(self._dragged_tab.item, position=self._dragged_tab_index)
+            self.insert_item(tab.item, position=self._dragged_tab_index)
     #context.drop_finish(False, 0)
     return True
 

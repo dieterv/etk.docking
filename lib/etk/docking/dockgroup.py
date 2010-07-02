@@ -127,8 +127,6 @@ class DockGroup(gtk.Container):
         # Configure DnD
         self.dragcontext = DockDragContext()
 
-        self._dragged_tabs = []
-
     ############################################################################
     # GObject
     ############################################################################
@@ -547,15 +545,7 @@ class DockGroup(gtk.Container):
         The do_button_release_event() signal handler is executed when a mouse
         button is released.
         '''
-        #self.log.debug('%s' % event)
-
-        # Reset drag context
-        if event.button == self.dragcontext.source_button:
-                self.dragcontext.dragging = False
-                self.dragcontext.dragged_object = None
-                self.dragcontext.source_x = None
-                self.dragcontext.source_y = None
-                self.dragcontext.source_button = None
+        self.log.debug('%s' % event)
 
         # Did we click a tab?
         clicked_tab = self.get_tab_at_pos(event.x, event.y)
@@ -613,9 +603,9 @@ class DockGroup(gtk.Container):
                                           self.dragcontext.source_y)
 
                 if tab:
-                    self._dragged_tabs = [tab]
+                    self.dragcontext.dragged_object = [tab]
                 else:
-                    self._dragged_tabs = list(self._tabs)
+                    self.dragcontext.dragged_object = list(self._tabs)
 
                 self.drag_begin([DRAG_TARGET_ITEM_LIST], gdk.ACTION_MOVE,
                                 self.dragcontext.source_button, event)
@@ -694,13 +684,13 @@ class DockGroup(gtk.Container):
         #self.log.debug('%s, %s, %s' % (context, selection_data, info))
 
         # Free the item for transport.
-        for tab in self._dragged_tabs:
+        for tab in self.dragcontext.dragged_object:
             self._dragged_tab_index = self._tabs.index(tab)
             self.remove_item(self._dragged_tab_index, retain_item=True)
 
         # Set some data, so DnD process continues
         selection_data.set(gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0]), 8,
-                            '%d tabs' % len(self._dragged_tabs))
+                            '%d tabs' % len(self.dragcontext.dragged_object))
 
 
     def do_drag_data_delete(self, context):
@@ -743,9 +733,14 @@ class DockGroup(gtk.Container):
         completed. A typical reason to use this signal handler is to undo things
         done in the do_drag_begin() handler.
         '''
-        #self.log.debug('%s - %s', context, context.drag_drop_succeeded())
-        self._dragged_tabs = []
-        #self._drop_tab_index = None
+        self.log.debug('%s - %s', context, context.drag_drop_succeeded())
+
+        # Reset drag context
+        self.dragcontext.dragging = False
+        self.dragcontext.dragged_object = None
+        self.dragcontext.source_x = None
+        self.dragcontext.source_y = None
+        self.dragcontext.source_button = None
 
         self.queue_resize()
 
