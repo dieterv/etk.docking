@@ -267,11 +267,15 @@ def dock_group_expose_highlight(self, event):
     cr = self.window.cairo_create()
     cr.set_source_rgb(0, 0, 0)
     cr.set_line_width(1.0)
-    tab = self.visible_tabs[self._drop_tab_index]
-    if tab is self._current_tab:
+    try:
+        tab = self.visible_tabs[self._drop_tab_index]
+    except TypeError:
         a = event.area
     else:
-        a = tab.area
+        if tab is self._current_tab:
+            a = event.area
+        else:
+            a = tab.area
 
     cr.rectangle(a.x + 0.5, a.y + 0.5, a.width - 1, a.height - 1)
     cr.stroke()
