@@ -302,6 +302,8 @@ def dock_group_drag_motion(self, context, x, y, timestamp):
         self._drop_tab_index = self.visible_tabs.index(drop_tab)
     elif self._tabs:
         self._drop_tab_index = self.visible_tabs.index(self._current_tab)
+    else:
+        self._drop_tab_index = None
     target = self.drag_dest_find_target(context, ());
 
     dock_group_highlight(self)

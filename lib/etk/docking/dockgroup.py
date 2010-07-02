@@ -127,9 +127,7 @@ class DockGroup(gtk.Container):
         # Configure DnD
         self.dragcontext = DockDragContext()
 
-        self._drag_target = None
         self._dragged_tabs = []
-        self._drop_tab_index = None
 
     ############################################################################
     # GObject
@@ -602,24 +600,25 @@ class DockGroup(gtk.Container):
         # current tab's child widget
         if event.window is self.window:
             # Check if we are actually starting a DnD operation
-            if event.state & gdk.BUTTON1_MASK and self.dragcontext.source_button == 1:
-                if self.drag_check_threshold(int(self.dragcontext.source_x),
-                                             int(self.dragcontext.source_y),
-                                             int(event.x), int(event.y)):
-                    #self.log.debug('drag_begin')
-                    self.dragcontext.dragging = True
+            if event.state & gdk.BUTTON1_MASK and \
+                    self.dragcontext.source_button == 1 and \
+                    self.drag_check_threshold(int(self.dragcontext.source_x),
+                                              int(self.dragcontext.source_y),
+                                              int(event.x), int(event.y)):
+                #self.log.debug('drag_begin')
+                self.dragcontext.dragging = True
 
-                    # What are we dragging?
-                    tab = self.get_tab_at_pos(self.dragcontext.source_x,
-                                              self.dragcontext.source_y)
+                # What are we dragging?
+                tab = self.get_tab_at_pos(self.dragcontext.source_x,
+                                          self.dragcontext.source_y)
 
-                    if tab:
-                        self._dragged_tabs = [tab]
-                    else:
-                        self._dragged_tabs = list(self._tabs)
+                if tab:
+                    self._dragged_tabs = [tab]
+                else:
+                    self._dragged_tabs = list(self._tabs)
 
-                    self.drag_begin([DRAG_TARGET_ITEM_LIST], gdk.ACTION_MOVE,
-                                    self.dragcontext.source_button, event)
+                self.drag_begin([DRAG_TARGET_ITEM_LIST], gdk.ACTION_MOVE,
+                                self.dragcontext.source_button, event)
 
             # Update tab state
             for tab in self._visible_tabs:
