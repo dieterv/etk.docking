@@ -260,6 +260,8 @@ def drag_failed(widget, context, result):
 # DockGroup
 #
 # TODO: If cursor is near the border, propagate event to the parent
+# TODO: Put all methods in a generic "role" class. This instance should be used
+#       in motion, leave, etc. cases. Investigate.
 #
 ################################################################################
 
@@ -293,7 +295,7 @@ def dock_unhighlight(self):
         self.disconnect(self._expose_event_id)
         del self._expose_event_id
     except AttributeError, e:
-        print e
+        self.log.error(e)
     
 @drag_motion.when_type(DockGroup)
 def dock_group_drag_motion(self, context, x, y, timestamp):
@@ -323,7 +325,6 @@ def dock_group_drag_drop(self, context, x, y, timestamp):
     self.log.debug('%s, %s, %s, %s' % (context, x, y, timestamp))
 
     target = self.drag_dest_find_target(context, [DRAG_TARGET_ITEM_LIST])
-    # TODO: check if target is x-etk-docking/item|group
     item_target = gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0])
 
     if target == item_target:
@@ -374,7 +375,7 @@ def dock_paned_highlight(self):
     self.queue_resize()
 
 @drag_motion.when_type(DockPaned)
-def dock_group_drag_motion(self, context, x, y, timestamp):
+def dock_paned_drag_motion(self, context, x, y, timestamp):
     self.log.debug('%s, %s, %s, %s' % (context, x, y, timestamp))
 
     dock_paned_highlight(self)
@@ -386,14 +387,36 @@ def dock_paned_drag_leave(self, context, timestamp):
     dock_unhighlight(self)
 
 @drag_drop.when_type(DockPaned)
-def dock_group_drag_drop(self, context, x, y, timestamp):
-    # TODO: Find out where to add the items
+def dock_paned_drag_drop(self, context, x, y, timestamp):
+    self.log.debug('%s, %s, %s, %s' % (context, x, y, timestamp))
+
+    target = self.drag_dest_find_target(context, [DRAG_TARGET_ITEM_LIST])
+    item_target = gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0])
+
+    if target == item_target:
+        # Register location where to drop
+        self.log.debug('Dropping item-list with target %s' % (target,))
+        self.drag_get_data(context, target, timestamp)
+        return True
+
     return False
 
 @drag_data_received.when_type(DockPaned)
-def dock_group_drag_data_received(self, context, x, y, selection_data, info, timestamp):
+def dock_paned_drag_data_received(self, context, x, y, selection_data, info, timestamp):
     self.log.debug('%s, %s, %s, %s, %s, %s' % (context, x, y, selection_data, info, timestamp))
 
     source = context.get_source_widget()
-    assert source
 
+    # If on handle: create new DockGroup and add items
+    # If on side: add new DockGroup and add items
+
+
+################################################################################
+# DockFrame
+################################################################################
+
+# TODO: Deal with drop events that are not accepted by any Paned. Provided the
+# outermost n pixels are not used by the item itself, but propagate the event
+# to the parent widget. This means that sometimes the event ends up in the
+# "catch-all", the DockFrame.  The Frame should make sure a new DockPaned is
+# created with the proper orientation and whatever's needed.

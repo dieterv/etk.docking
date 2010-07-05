@@ -39,7 +39,7 @@ class DockFrame(gtk.EventBox):
         self.log.debug('')
 
         # Child containers:
-        self._floating_windows = []
+        #self._floating_windows = []
         #self.set_above_child(True)
 
     ############################################################################
