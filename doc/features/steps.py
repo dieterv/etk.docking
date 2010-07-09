@@ -1,6 +1,7 @@
 from freshen import Before, After, AfterStep, Given, When, Then, scc
 import gtk
 from etk.docking import DockPaned, DockGroup, DockLayout, DockFrame, DockItem
+from etk.docking.dockgroup import DRAG_TARGET_ITEM_LIST
 
 
 def event(widget, event_type, **kwargs):
@@ -118,14 +119,19 @@ def drop_item(name):
     #dest_win, prot = scc.drag_context.drag_find_window(drag_window.window, rx, ry)
     #print 'Drop', dest_win, prot
     #scc.drag_context.drag_motion(dest_win, prot, rx, ry, gtk.gdk.ACTION_MOVE, gtk.gdk.ACTION_MOVE, 0)
-    do_event(group, gtk.gdk.DRAG_MOTION, x_root=rx,
-             y_root=ry, send_event=False, time=0)
-    do_event(group, gtk.gdk.DROP_START, x_root=rx,
-             y_root=ry, send_event=False, time=0)
+    #do_event(group, gtk.gdk.DRAG_MOTION, x_root=rx,
+    #         y_root=ry, send_event=False, time=0)
+    #do_event(group, gtk.gdk.DROP_START, x_root=rx,
+    #         y_root=ry, send_event=False, time=0)
     #do_event(group, gtk.gdk.MOTION_NOTIFY, x=a.x + 10.,
     #         y=a.y + a.height - 15., state=gtk.gdk.BUTTON1_MASK)
     #do_event(group, gtk.gdk.BUTTON_RELEASE, x=a.x + 10.,
     #         y=a.y + a.height - 15., state=gtk.gdk.BUTTON1_MASK)
+
+    target = group.drag_dest_find_target(scc.drag_context, [DRAG_TARGET_ITEM_LIST])
+    scc.drag_context.is_source = True
+    group.drag_get_data(scc.drag_context, target, 0)
+
     print 'dropping item'
 
 @Then('item "([^"]+)" is part of "([^"]+)"')
