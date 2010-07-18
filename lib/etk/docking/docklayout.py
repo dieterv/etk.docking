@@ -266,9 +266,6 @@ def drag_failed(widget, context, result):
 ################################################################################
 
 def dock_group_expose_highlight(self, event):
-    cr = self.window.cairo_create()
-    cr.set_source_rgb(0, 0, 0)
-    cr.set_line_width(1.0)
     try:
         tab = self.visible_tabs[self._drop_tab_index]
     except TypeError:
@@ -279,6 +276,9 @@ def dock_group_expose_highlight(self, event):
         else:
             a = tab.area
 
+    cr = self.window.cairo_create()
+    cr.set_source_rgb(0, 0, 0)
+    cr.set_line_width(1.0)
     cr.rectangle(a.x + 0.5, a.y + 0.5, a.width - 1, a.height - 1)
     cr.stroke()
 
@@ -365,7 +365,20 @@ def dock_group_drag_failed(self, context, result):
 ################################################################################
 
 def dock_paned_expose_highlight(self, event):
-    self.log.debug('')
+    try:
+        handle = self.handles[self._drop_handle_index]
+    except (AttributeError, IndexError), e:
+        pass
+        print e
+        return
+    else:
+        a = handle.area
+
+    cr = self.window.cairo_create()
+    cr.set_source_rgb(0, 0, 0)
+    cr.set_line_width(1.0)
+    cr.rectangle(a.x + 0.5, a.y + 0.5, a.width - 1, a.height - 1)
+    cr.stroke()
 
 def dock_paned_highlight(self):
     if not hasattr(self, '_expose_event_id'):
@@ -382,7 +395,7 @@ def dock_paned_drag_motion(self, context, x, y, timestamp):
 
     handle = self.get_handle_at_pos(x, y)
     if handle:
-        self._drop_handle_index = self.handles.index(self.get_handle_at_pos(x, y)) + 1
+        self._drop_handle_index = self.handles.index(self.get_handle_at_pos(x, y))
     else:
         self._drop_handle_index = None
     
@@ -415,10 +428,10 @@ def dock_paned_drag_data_received(self, context, x, y, selection_data, info, tim
 
     if selection_data.target == gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0]):
         self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
-        if self._drop_handle_index:
+        if self._drop_handle_index is not None:
             # If on handle: create new DockGroup and add items
             dock_group = DockGroup()
-            self.insert_child(dock_group, self._drop_handle_index)
+            self.insert_child(dock_group, self._drop_handle_index + 1)
             dock_group.show()
             for tab in source.dragcontext.dragged_object:
                 dock_group.insert_item(tab.item)
