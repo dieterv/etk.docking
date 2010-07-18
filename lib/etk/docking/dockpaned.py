@@ -524,7 +524,7 @@ class DockPaned(gtk.Container):
 
         else:
             if len(self._children) >= 1:
-                self._children.append(position * 2, handle)
+                self._children.insert(position * 2, handle)
 
             self._children.insert(position * 2, item)
 
