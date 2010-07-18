@@ -380,6 +380,12 @@ def dock_paned_drag_motion(self, context, x, y, timestamp):
 
     dock_paned_highlight(self)
 
+    handle = self.get_handle_at_pos(x, y)
+    if handle:
+        self._drop_handle_index = self.handles.index(self.get_handle_at_pos(x, y))
+    else:
+        self._drop_handle_index = None
+    
     return True
 
 @drag_leave.when_type(DockPaned)
@@ -406,6 +412,20 @@ def dock_paned_drag_data_received(self, context, x, y, selection_data, info, tim
     self.log.debug('%s, %s, %s, %s, %s, %s' % (context, x, y, selection_data, info, timestamp))
 
     source = context.get_source_widget()
+
+    if selection_data.target == gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0]):
+        self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
+        if self._drop_handle_index:
+            dock_group = DockGroup()
+            self.insert_child(dock_group, self._drop_handle_index)
+            for tab in source.dragcontext.dragged_object:
+                dock_group.insert_item(tab.item)
+            context.finish(True, True, timestamp) # success, delete, time
+        else:
+            context.finish(False, False, timestamp) # success, delete, time
+    else:
+        context.finish(False, False, timestamp) # success, delete, time
+
 
     # If on handle: create new DockGroup and add items
     # If on side: add new DockGroup and add items
