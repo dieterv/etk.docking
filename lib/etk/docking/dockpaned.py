@@ -542,23 +542,21 @@ class DockPaned(gtk.Container):
     #TODO: def get_current_item(self):
     #TODO: def get_nth_item(self, item_num):
 
-    def get_handles(self):
-        return self._children[1::2]
+    handles = property(lambda s: s._children[1::2])
 
-    def get_items(self):
-        return self._children[::2]
+    items = property(lambda s: s._children[::2])
 
     def _get_n_handles(self):
         '''
         The _get_n_handles() method returns the number of handles in the DockPaned.
         '''
-        return int(len(self.get_handles()))
+        return int(len(self.handles))
 
     def get_n_items(self):
         '''
         The get_n_items() method returns the number of items in the DockPaned.
         '''
-        return int(len(self.get_items()))
+        return int(len(self.items))
 
     def get_handle_at_pos(self, x, y):
         '''
@@ -570,7 +568,7 @@ class DockPaned(gtk.Container):
         contains the position specified by x and y or None if no handle is at
         that position.
         '''
-        for h in self.get_handles():
+        for h in self.handles:
             if (x, y) in h:
                 return h
         else:
