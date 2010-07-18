@@ -1,13 +1,16 @@
 Feature: Drag and drop tabs.
 
   Background:
-    Given a window with 1 dockgroup each having 3 items
-    And another dockgroup to the left containing 2 items
+    Given a window with 2 dockgroups
+    And one containing 3 items
+    And another containing 2 items
+    And define dockgroup 2 as "to-group"
+    And define item 1 from dockgroup 1 as "drag-me"
 
   Scenario: Drag an item over a new group
-    Given I drag tab "somename"
-    When I drop it on the content section in group "somegroup"
-    Then tab "somename" is part of "somegroup"
+    Given I drag item "drag-me"
+    When I drop it on the content section in group "to-group"
+    Then item "drag-me" is part of "to-group"
     And it has the focus
 
   Scenario: Drag an item over the tabs of a new group.
