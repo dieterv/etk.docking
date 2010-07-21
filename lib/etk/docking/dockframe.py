@@ -38,10 +38,6 @@ class DockFrame(gtk.EventBox):
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
         self.log.debug('')
 
-        # Child containers:
-        #self._floating_windows = []
-        #self.set_above_child(True)
-
     ############################################################################
     # GtkWidget drag source
     ############################################################################

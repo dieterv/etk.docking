@@ -71,6 +71,7 @@ class DockLayout(object):
                                ('drag-leave', self.on_widget_drag_leave),
                                ('drag-drop', self.on_widget_drag_drop),
                                ('drag-data-received', self.on_widget_drag_data_received),
+                               ('drag-end', self.on_widget_drag_end),
                                ('drag-failed', self.on_widget_drag_failed)):
             signals.add(widget.connect(name, callback))
         self._signal_handlers[widget] = signals
@@ -109,6 +110,12 @@ class DockLayout(object):
             self.remove_signal_handlers(widget)
 
     def on_widget_drag_motion(self, widget, context, x, y, timestamp):
+        # TODO: Maybe find the ite we live in there and create a new context
+        # (based on the widget) if it does not exist yes (using a dict).
+        # This way we can create all motion/leave/drop/data_received stuff
+        # in one simple class. Clear the dict in leave events.
+        # Condition is it should be simpler to find the actual item to find the 
+        # context to work in. For example it may be simpler if 
         self.log.debug('on widget drag motion %s: %s %s', widget, x, y)
         return drag_motion(widget, context, x, y, timestamp)
 
@@ -123,6 +130,9 @@ class DockLayout(object):
     def on_widget_drag_data_received(self, widget, context, x, y, selection_data, info, timestamp):
         self.log.debug('on widget drag data recieved, %s, %s, %s, %s, %s, %s' % (context, x, y, selection_data, info, timestamp))
         return drag_data_received(widget, context, x, y, selection_data, info, timestamp)
+
+    def on_widget_drag_end(self, widget, context):
+        return drag_end(widget, context)
 
     def on_widget_drag_failed(self, widget, context, result):
         return drag_failed(widget, context, result)
@@ -241,6 +251,18 @@ def drag_data_received(widget, context, x, y, selection_data, info, timestamp):
         drag_data_received(parent, context, px + x, px + y, selection_data, info, timestamp)
 
 @generic
+def drag_end(widget, context):
+    '''
+    :param context: the gdk.DragContext
+
+    The do_drag_end() signal handler is executed when the drag operation is
+    completed. A typical reason to use this signal handler is to undo things
+    done in the do_drag_begin() handler.
+    '''
+    parent = widget.get_parent()
+    return parent and drag_end(parent, context)
+ 
+@generic
 def drag_failed(widget, context, result):
     '''
     :param context: the gdk.DragContext
@@ -262,7 +284,7 @@ def drag_failed(widget, context, result):
 # TODO: If cursor is near the border, propagate event to the parent
 # TODO: Put all methods in a generic "role" class. This instance should be used
 #       in motion, leave, etc. cases. Investigate.
-#
+# TODO: Deal with drag_end in order to clear destroy groups.
 ################################################################################
 
 def dock_group_expose_highlight(self, event):
@@ -349,6 +371,18 @@ def dock_group_drag_data_received(self, context, x, y, selection_data, info, tim
         context.finish(True, True, timestamp) # success, delete, time
     else:
         context.finish(False, False, timestamp) # success, delete, time
+
+# Attached to drag *source*
+@drag_end.when_type(DockGroup)
+def dock_group_drag_end(self, context):
+    self.log.debug('checking for removal')
+    if not self.tabs:
+        parent = self.get_parent()
+        self.log.debug('removing empty group')
+        self.destroy()
+        #drag_end.default(self, context)
+        return parent and drag_end(parent, context)
+
 
 # Attached to drag *source*
 @drag_failed.when_type(DockGroup)
@@ -443,6 +477,16 @@ def dock_paned_drag_data_received(self, context, x, y, selection_data, info, tim
             context.finish(False, False, timestamp) # success, delete, time
     else:
         context.finish(False, False, timestamp) # success, delete, time
+
+# Attached to drag *source*
+@drag_end.when_type(DockPaned)
+def dock_group_drag_end(self, context):
+    self.log.debug('checking for removal')
+    if not self.items:
+        parent = self.get_parent()
+        self.log.debug('removing empty paned')
+        self.destroy()
+        return parent and drag_end(parent, context)
 
 
 

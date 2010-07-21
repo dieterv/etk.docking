@@ -452,6 +452,7 @@ class DockPaned(gtk.Container):
 
     def do_remove(self, widget):
         # Get the _DockPanedItem associated with widget
+        self.log.debug('')
         for item in self._children:
             if isinstance(item, _DockPanedItem) and item.child is widget:
                 item.child.unparent()

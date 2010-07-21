@@ -767,6 +767,8 @@ class DockGroup(gtk.Container):
     # EtkDockGroup
     ############################################################################
 
+    tabs = property(lambda s: s._tabs)
+
     visible_tabs = property(lambda s: s._visible_tabs)
 
     def get_tab_at_pos(self, x, y):
@@ -810,6 +812,10 @@ class DockGroup(gtk.Container):
         :param item: a DockItem
         :param position: the index (starting at 0) at which to insert the item,
                          or None to append the item after all other item tabs.
+        :param visible_position: the index at which the newly inserted item should
+                         be displayed. This index is usually different from the
+                         position and is normally only used when dropping items on
+                         the group.
         :returns: the index number of the item tab in the DockGroup
 
         The insert_item() method inserts a DockItem into the DockGroup at the
