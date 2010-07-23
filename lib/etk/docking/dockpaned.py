@@ -27,7 +27,7 @@ import gtk
 import gtk.gdk as gdk
 
 from .dnd import DockDragContext
-from .util import rect_overlaps
+from .util import rect_contains, rect_overlaps
 
 
 class _DockPanedHandle(object):
@@ -107,8 +107,7 @@ class DockPaned(gtk.Container):
         self.set_handle_size(4)
 
         # Initialize attributes
-        # List contains both items and handles.
-        self._children = []
+        self._children = [] # Note: list contains both items and handles.
         self._reset_weights = True
         self._hcursor = None
         self._vcursor = None
