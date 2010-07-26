@@ -60,6 +60,9 @@ class DockLayout(object):
         """
         if self._signal_handlers.get(widget):
             return
+    
+        self.log.debug('Adding signal handlers for widget %s' % widget)
+
         signals = set()
         # TODO: Remove Highlight flag. Create it ourselves.
         widget.drag_dest_set(gtk.DEST_DEFAULT_MOTION,
@@ -91,6 +94,7 @@ class DockLayout(object):
         except KeyError:
             pass # No signals
         else:
+            self.log.debug('Removing signals for widget %s' % widget)
             for s in signals:
                 widget.disconnect(s)
             del self._signal_handlers[widget]
@@ -149,7 +153,7 @@ class DockLayout(object):
         '''
         self.log.debug('%s, %s, %s, %s, %s, %s' % (context, x, y, selection_data, info, timestamp))
         assert self._drag_data_received
-        self._drag_data_received(widget, context, x, y, selection_data, info, timestamp)
+        self._drag_data_received(selection_data, info)
         #else:
         #    context.finish(False, False, timestamp) # success, delete, time
 
@@ -357,7 +361,7 @@ def dock_group_drag_leave(self, context, timestamp):
 
 @drag_drop.when_type(DockGroup)
 def dock_group_drag_drop(self, context, x, y, timestamp):
-    def dock_group_drag_data_received(self, context, x, y, selection_data, info, timestamp):
+    def dock_group_drag_data_received(selection_data, info):
         self.log.debug('%s, %s, %s, %s, %s, %s' % (context, x, y, selection_data, info, timestamp))
 
         source = context.get_source_widget()
@@ -399,8 +403,7 @@ def dock_group_drag_failed(self, context, result):
 def dock_paned_expose_highlight(self, event):
     try:
         handle = self.handles[self._drop_handle_index]
-    except (AttributeError, IndexError), e:
-        pass
+    except (AttributeError, IndexError, TypeError), e:
         print e
         return
     else:
@@ -423,7 +426,6 @@ def dock_paned_highlight(self):
 def dock_paned_drag_motion(self, context, x, y, timestamp):
     self.log.debug('%s, %s, %s, %s' % (context, x, y, timestamp))
 
-    dock_paned_highlight(self)
 
     handle = self.get_handle_at_pos(x, y)
     if handle:
@@ -431,6 +433,8 @@ def dock_paned_drag_motion(self, context, x, y, timestamp):
     else:
         self._drop_handle_index = None
     
+    dock_paned_highlight(self)
+
     return True
 
 @drag_leave.when_type(DockPaned)
@@ -439,7 +443,7 @@ def dock_paned_drag_leave(self, context, timestamp):
 
 @drag_drop.when_type(DockPaned)
 def dock_paned_drag_drop(self, context, x, y, timestamp):
-    def dock_paned_drag_data_received(self, context, x, y, selection_data, info, timestamp):
+    def dock_paned_drag_data_received(selection_data, info):
         self.log.debug('%s, %s, %s, %s, %s, %s' % (context, x, y, selection_data, info, timestamp))
 
         source = context.get_source_widget()
