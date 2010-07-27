@@ -758,10 +758,12 @@ class DockGroup(gtk.Container):
             callback(tab.item, data)
 
     def do_add(self, widget):
-        self.insert_item(widget)
+        if widget not in (tab.item for tab in self._tabs):
+            self._insert_item(widget)
 
     def do_remove(self, widget):
-        self.remove_item(self.item_num(widget))
+        if widget in (tab.item for tab in self._tabs):
+            self._remove_item(self.item_num(widget))
 
     ############################################################################
     # EtkDockGroup
@@ -823,6 +825,13 @@ class DockGroup(gtk.Container):
         DockItem to insert. If position is None the item is appended to the
         DockGroup.
         '''
+        index = self._insert_item(item, position, visible_position)
+        self.emit('add', item)
+        return index
+
+
+    def _insert_item(self, item, position=None, visible_position=None):
+        # TODO: move this logic to a signal handler.
         if not isinstance(item, DockItem):
             raise TypeError('item should be of type "DockItem", got: "%s"' % type(item).__name__)
 
@@ -884,6 +893,19 @@ class DockGroup(gtk.Container):
 
         The remove_item() method removes the item at the location specified by
         item_num. The value of item_num starts from 0.
+        '''
+        if item_num is None:
+            tab = self._tabs[-1]
+        else:
+            tab = self._tabs[item_num]
+        item = tab.item
+
+        self._remove_item(item_num, retain_item)
+        self.emit('remove', item)
+
+    def _remove_item(self, item_num, retain_item=False):
+        '''
+        TODO: move logic to a signal handler.
         '''
         if item_num is None:
             tab = self._tabs[-1]

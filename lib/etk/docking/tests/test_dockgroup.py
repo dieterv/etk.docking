@@ -282,6 +282,78 @@ class TestDockGroup(unittest.TestCase):
         dockitem3.destroy()
         dockgroup.destroy()
 
+    def test_add_signal(self):
+        events = []
+        item_in = []
+        item_in_after = []
+        def event_handler(self, w):
+            events.append(w)
+            item_in.append(w in (tab.item for tab in self.tabs))
+
+        def event_handler_after(self, w):
+            item_in_after.append(w in (tab.item for tab in self.tabs))
+
+
+        dockgroup = DockGroup()
+        dockgroup.connect('add', event_handler)
+        dockgroup.connect_after('add', event_handler_after)
+
+        dockitem1 = DockItem()
+        dockgroup.add(dockitem1)
+        self.assertEquals([dockitem1], events)
+        self.assertEquals([True], item_in)
+        self.assertEquals([True], item_in_after)
+
+        dockitem2 = DockItem()
+        dockgroup.insert_item(dockitem2)
+        self.assertEquals([dockitem1, dockitem2], events)
+        self.assertEquals([True, True], item_in)
+        self.assertEquals([True, True], item_in_after)
+        
+        dockitem3 = DockItem()
+        dockgroup.append_item(dockitem3)
+        self.assertEquals([dockitem1, dockitem2, dockitem3], events)
+        self.assertEquals([True, True, True], item_in)
+        self.assertEquals([True, True, True], item_in_after)
+
+        dockitem4 = DockItem()
+        dockgroup.prepend_item(dockitem4)
+        self.assertEquals([dockitem1, dockitem2, dockitem3, dockitem4], events)
+        self.assertEquals([True, True, True, True], item_in)
+        self.assertEquals([True, True, True, True], item_in_after)
+
+    def test_remove_signal(self):
+        events = []
+        item_in = []
+        item_in_after = []
+        def event_handler(self, w):
+            print 'TRY', w
+            print [tab.item for tab in self.tabs]
+            events.append(w)
+            item_in.append(w in (tab.item for tab in self.tabs))
+
+        def event_handler_after(self, w):
+            item_in_after.append(w in (tab.item for tab in self.tabs))
+
+        dockgroup = DockGroup()
+        dockgroup.connect('remove', event_handler)
+        dockgroup.connect_after('remove', event_handler_after)
+
+        dockitem1 = DockItem()
+        dockitem2 = DockItem()
+        dockgroup.add(dockitem1)
+        dockgroup.add(dockitem2)
+
+        dockgroup.remove(dockitem1)
+        self.assertEquals([dockitem1], events)
+        self.assertEquals([False], item_in)
+        self.assertEquals([False], item_in_after)
+
+        dockgroup.remove_item(0)
+        self.assertEquals([dockitem1, dockitem2], events)
+        self.assertEquals([False, False], item_in)
+        self.assertEquals([False, False], item_in_after)
+
     def test_drag_begin(self):
         dockitem1 = DockItem()
         dockitem2 = DockItem()
