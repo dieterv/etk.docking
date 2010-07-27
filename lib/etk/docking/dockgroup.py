@@ -448,7 +448,7 @@ class DockGroup(gtk.Container):
                         self._decoration_area.height + self.border_width / 2,
                         self.allocation.width - (2 * self._frame_width) - self.border_width,
                         self.allocation.height - self._decoration_area.height - self._frame_width - self.border_width)
-            c.set_source_rgb(0.6, 0.72941176470588235294117647058824, 0.95294117647058823529411764705882)
+            c.set_source_rgb(0.6, 0.729, 0.952)
             c.stroke()
 
             # Draw tabs
@@ -480,8 +480,8 @@ class DockGroup(gtk.Container):
                         c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
                         c.line_to(tx + tw - 0.5, ty + th)
                         linear = cairo.LinearGradient(0.5, 0.5, 0.5, th)
-                        linear.add_color_stop_rgb(0, 0.87843137254901960784313725490196, 0.91764705882352941176470588235294, 0.98431372549019607843137254901961)
-                        linear.add_color_stop_rgb(1, 0.6, 0.72941176470588235294117647058824, 0.95294117647058823529411764705882)
+                        linear.add_color_stop_rgb(0, 0.878, 0.917, 0.984)
+                        linear.add_color_stop_rgb(1, 0.6, 0.729, 0.952)
                         c.set_source(linear)
                         c.fill_preserve()
                         c.set_source_rgb(*dark)
@@ -494,8 +494,8 @@ class DockGroup(gtk.Container):
                         c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
                         c.line_to(tx + tw - 0.5, ty + th)
                         linear = cairo.LinearGradient(0.5, 0.5, 0.5, th)
-                        linear.add_color_stop_rgb(0, 0.87843137254901960784313725490196, 0.91764705882352941176470588235294, 0.98431372549019607843137254901961)
-                        linear.add_color_stop_rgb(1, 0.6, 0.72941176470588235294117647058824, 0.95294117647058823529411764705882)
+                        linear.add_color_stop_rgb(0, 0.878, 0.917, 0.984)
+                        linear.add_color_stop_rgb(1, 0.6, 0.729, 0.952)
                         c.set_source(linear)
                         c.fill_preserve()
                         c.set_source_rgb(*dark)
