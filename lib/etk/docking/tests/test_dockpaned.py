@@ -131,3 +131,23 @@ class TestDockPaned(unittest.TestCase):
     ############################################################################
     # Test public api
     ############################################################################
+
+    def test_insert_child(self):
+        events = []
+        def add_handler(self, widget):
+            print 'added widget', widget
+            events.append(widget)
+
+        dockpaned = DockPaned()
+        dockpaned.connect('add', add_handler)
+        
+        dg1 = DockGroup()
+        dockpaned.add(dg1)
+        
+        assert dg1 in events, events
+
+        dg2 = DockGroup()
+        dockpaned.insert_child(dg2)
+
+        assert dg2 in events, events
+

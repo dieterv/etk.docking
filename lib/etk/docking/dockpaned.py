@@ -447,7 +447,8 @@ class DockPaned(gtk.Container):
             pass
 
     def do_add(self, widget):
-        self.insert_child(widget, expand=True)
+        if widget not in (item.child for item in self.items):
+            self._insert_child(widget, expand=True)
 
     def do_remove(self, widget):
         # Get the _DockPanedItem associated with widget
@@ -508,6 +509,13 @@ class DockPaned(gtk.Container):
                 break
 
     def insert_child(self, widget, position=-1, expand=True):
+        self._insert_child(widget, position, expand)
+        self.emit('add', widget)
+
+    def _insert_child(self, widget, position=-1, expand=True):
+        '''
+        Private logic, shared between public interface and add event handler.
+        '''
         #TODO: implement 'expand' child property...
         handle = _DockPanedHandle()
         item = _DockPanedItem()
