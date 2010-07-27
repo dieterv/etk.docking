@@ -301,7 +301,7 @@ def drag_failed(widget, context, result):
 # TODO: If cursor is near the border, propagate event to the parent
 # TODO: Put all methods in a generic "role" class. This instance should be used
 #       in motion, leave, etc. cases. Investigate.
-# TODO: Deal with drag_end in order to clear destroy groups.
+# TODO: Handlers are not connected to newly created groups.
 ################################################################################
 
 def dock_group_expose_highlight(self, event):
