@@ -44,6 +44,7 @@ class DockLayout(object):
         self._signal_handlers = {}
 
         self._drag_data_received = None
+        self._drag_leave = None, None # widget, callback
 
     def add(self, frame):
         assert isinstance(frame, DockFrame)
@@ -123,11 +124,21 @@ class DockLayout(object):
         # Condition is it should be simpler to find the actual item to find the 
         # context to work in. For example it may be simpler if 
         self.log.debug('on widget drag motion %s: %s %s', widget, x, y)
-        return drag_motion(widget, context, x, y, timestamp)
+        motion_widget, callback = drag_motion(widget, context, x, y, timestamp)
+        if motion_widget is not self._drag_leave[0]:
+            self.on_widget_drag_leave(widget, context, timestamp)
+            self._drag_leave = (motion_widget, callback)
+
 
     def on_widget_drag_leave(self, widget, context, timestamp):
         self.log.debug('on widget drag leave')
-        return drag_leave(widget, context, timestamp)
+        #drag_leave(widget, context, timestamp)
+        motion_widget, callback = self._drag_leave
+        try:
+            if callback:
+                callback(motion_widget)
+        finally:
+            self._drag_leave = None, None
 
     def on_widget_drag_drop(self, widget, context, x, y, timestamp):
         self.log.debug('%s %s %s %s', context, x, y, timestamp)
@@ -153,9 +164,10 @@ class DockLayout(object):
         '''
         self.log.debug('%s, %s, %s, %s, %s, %s' % (context, x, y, selection_data, info, timestamp))
         assert self._drag_data_received
-        self._drag_data_received(selection_data, info)
-        #else:
-        #    context.finish(False, False, timestamp) # success, delete, time
+        try:
+            self._drag_data_received(selection_data, info)
+        finally:
+            self._drag_data_received = None
 
     def on_widget_drag_end(self, widget, context):
         return drag_end(widget, context)
@@ -187,7 +199,8 @@ def drag_motion(widget, context, x, y, timestamp):
     :param x: the X position of the drop
     :param y: the Y position of the drop
     :param timestamp: the time of the drag event
-    :returns: True if the cursor is in a drop zone
+    :returns: a tuple (widget, callback) to be called when leaving the
+    item (drag_leave event) if the cursor is in a drop zone.
 
     The do_drag_motion() signal handler is executed when the drag operation
     moves over a drop target widget. The handler must determine if the
@@ -211,22 +224,11 @@ def drag_motion(widget, context, x, y, timestamp):
         highlight the drop site with the drag_highlight() method.
     '''
     parent, px, py = get_parent_info(widget)
-    return parent and drag_motion(parent, context, px + x, px + y, timestamp)
-
-@generic
-def drag_leave(widget, context, timestamp):
-    '''
-    :param context: the gdk.DragContext
-    :param timestamp: the time of the drag event
-
-    The do_drag_leave() signal handler is executed when the drag operation
-    moves off of a drop target widget. A typical reason to use this signal
-    handler is to undo things done in the do_drag_motion() handler, e.g. undo
-    highlighting with the drag_unhighlight() method.
-    '''
-    parent = widget.get_parent()
+    #return parent and drag_motion(parent, context, px + x, px + y, timestamp)
     if parent:
-        drag_leave(parent, context, timestamp)
+        return drag_motion(parent, context, px + x, px + y, timestamp)
+    else:
+        return None, None
 
 @generic
 def drag_drop(widget, context, x, y, timestamp):
@@ -353,10 +355,9 @@ def dock_group_drag_motion(self, context, x, y, timestamp):
 
     dock_group_highlight(self)
 
-    return True
+    return self, dock_group_drag_leave
 
-@drag_leave.when_type(DockGroup)
-def dock_group_drag_leave(self, context, timestamp):
+def dock_group_drag_leave(self):
     dock_unhighlight(self)
 
 @drag_drop.when_type(DockGroup)
@@ -435,10 +436,9 @@ def dock_paned_drag_motion(self, context, x, y, timestamp):
     
     dock_paned_highlight(self)
 
-    return True
+    return self, dock_paned_drag_leave
 
-@drag_leave.when_type(DockPaned)
-def dock_paned_drag_leave(self, context, timestamp):
+def dock_paned_drag_leave(self):
     dock_unhighlight(self)
 
 @drag_drop.when_type(DockPaned)
