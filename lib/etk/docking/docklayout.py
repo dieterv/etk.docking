@@ -30,6 +30,7 @@ from .dockframe import DockFrame
 from .dockgroup import DockGroup, DRAG_TARGET_ITEM_LIST
 from .dockpaned import DockPaned
 
+MAGIC_BORDER_SIZE = 10
 
 class DockLayout(object):
 
@@ -192,6 +193,40 @@ def get_parent_info(widget):
     px, py = w.get_position()
     return parent, px, py
 
+def with_magic_borders(func):
+    '''
+    decorator for handlers that have sensitive borders, as items may be dropped
+    on the parent item as well.
+    '''
+    def func_with_magic_borders(widget, *args):
+        parent = widget.get_parent()
+        handled = magic_borders(parent, *args)
+        if not handled[0]:
+            return func(widget, *args)
+        return handled
+
+    func_with_magic_borders.__doc__ = func.__doc__
+    return func_with_magic_borders
+
+@generic
+def magic_borders(widget, context, x, y, timestamp):
+    '''
+    :returns: True if the parent widget handled the event
+
+    This method is used to find out if (in case an item is dragged on the border of
+    a widget, the parent is eager to take that event instead. This, for example,
+    can be used to place items above or below each other in not-yet existing paned
+    sections.
+    '''
+    return None, None
+    #parent = widget.get_parent()
+    #return parent and magic_borders(parent, context, px + x, py + y, timestamp)
+    #parent, px, py = get_parent_info(widget)
+    #if parent:
+    #    return magic_borders(parent, context, x, y, timestamp)
+    #else:
+    #    return None, None
+
 @generic
 def drag_motion(widget, context, x, y, timestamp):
     '''
@@ -224,9 +259,9 @@ def drag_motion(widget, context, x, y, timestamp):
         highlight the drop site with the drag_highlight() method.
     '''
     parent, px, py = get_parent_info(widget)
-    #return parent and drag_motion(parent, context, px + x, px + y, timestamp)
     if parent:
-        return drag_motion(parent, context, px + x, px + y, timestamp)
+        print parent, px, py, x, y
+        return drag_motion(parent, context, px + x, py + y, timestamp)
     else:
         return None, None
 
@@ -265,7 +300,7 @@ def drag_drop(widget, context, x, y, timestamp):
     '''
     parent, px, py = get_parent_info(widget)
     if parent:
-        return drag_drop(parent, context, px + x, px + y, timestamp)
+        return drag_drop(parent, context, px + x, py + y, timestamp)
     else:
         return None, None
 
@@ -339,6 +374,7 @@ def dock_unhighlight(self):
         self.log.error(e)
     
 @drag_motion.when_type(DockGroup)
+@with_magic_borders
 def dock_group_drag_motion(self, context, x, y, timestamp):
     self.log.debug('%s, %s, %s, %s' % (context, x, y, timestamp))
 
@@ -472,7 +508,14 @@ def dock_group_drag_end(self, context):
         self.destroy()
         return parent and drag_end(parent, context)
 
-
+@magic_borders.when_type(DockPaned)
+def dock_paned_magic_borders(self, context, x, y, timestamp):
+    a = self.allocation
+    print 'MAGIC happens here', self, a, x, y, (map(abs, (a.x - x, a.y - y, a.x + a.width - x, a.y + a.height - y)))
+    if min(map(abs, (a.x - x, a.y - y, a.x + a.width - x, a.y + a.height - y))) < MAGIC_BORDER_SIZE:
+        print 'MAGIC happens here'
+        return self, None
+    return None, None
 
 
 ################################################################################
