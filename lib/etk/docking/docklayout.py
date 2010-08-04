@@ -71,6 +71,8 @@ class DockLayout(object):
                              [DRAG_TARGET_ITEM_LIST],
                              gdk.ACTION_MOVE)
 
+        # TODO: Deal with gtk.Container subclasses that do not issue add/remove
+        #       events on child addition/removal.
         # Use instance methods here, so layout can do additional bookkeeping
         for name, callback in (('add', self.on_widget_add),
                                ('remove', self.on_widget_remove),
@@ -118,12 +120,6 @@ class DockLayout(object):
             self.remove_signal_handlers(widget)
 
     def on_widget_drag_motion(self, widget, context, x, y, timestamp):
-        # TODO: Maybe find the ite we live in there and create a new context
-        # (based on the widget) if it does not exist yes (using a dict).
-        # This way we can create all motion/leave/drop/data_received stuff
-        # in one simple class. Clear the dict in leave events.
-        # Condition is it should be simpler to find the actual item to find the 
-        # context to work in. For example it may be simpler if 
         self.log.debug('on widget drag motion %s: %s %s', widget, x, y)
         motion_widget, callback = drag_motion(widget, context, x, y, timestamp)
         if motion_widget is not self._drag_leave[0]:
@@ -177,32 +173,28 @@ class DockLayout(object):
         return drag_failed(widget, context, result)
 
 
-def get_parent_info(widget):
+def _propagate_to_parent(func, widget, context, x, y, timestamp):
     '''
-    :param widget: the gtk.Widget to obtain parent info from
-    :returns: Tuple (parent widget, px, py), where px/py is the parent item offset
+    Common function to propagate calls to a parent widget.
     '''
     parent = widget.get_parent()
+    if parent:
+        px, py = parent.get_pointer()
+        return func(parent, context, px, py, timestamp)
+    else:
+        return None, None
 
-    # We can use gtk.Widget.get_window(widget) instead of special casing
-    # gtk.TextView.get_window (mapped to gtk_text_view_get_window in pygtk
-    # whereas get_window for other widgets is mapped to gtk_widget_get_window).
-    if isinstance(widget, gtk.Widget):
-        w = gtk.Widget.get_window(widget)
-
-    px, py = w.get_position()
-    return parent, px, py
 
 def with_magic_borders(func):
     '''
     decorator for handlers that have sensitive borders, as items may be dropped
     on the parent item as well.
     '''
-    def func_with_magic_borders(widget, *args):
-        parent = widget.get_parent()
-        handled = magic_borders(parent, *args)
+    def func_with_magic_borders(widget, context, x, y, timestamp):
+        # Always ensure we check the parent class:
+        handled = _propagate_to_parent(magic_borders, widget, context, x, y, timestamp)
         if not handled[0]:
-            return func(widget, *args)
+            return func(widget, context, x, y, timestamp)
         return handled
 
     func_with_magic_borders.__doc__ = func.__doc__
@@ -218,14 +210,7 @@ def magic_borders(widget, context, x, y, timestamp):
     can be used to place items above or below each other in not-yet existing paned
     sections.
     '''
-    return None, None
-    #parent = widget.get_parent()
-    #return parent and magic_borders(parent, context, px + x, py + y, timestamp)
-    #parent, px, py = get_parent_info(widget)
-    #if parent:
-    #    return magic_borders(parent, context, x, y, timestamp)
-    #else:
-    #    return None, None
+    pass
 
 @generic
 def drag_motion(widget, context, x, y, timestamp):
@@ -258,12 +243,7 @@ def drag_motion(widget, context, x, y, timestamp):
         "enter" signal. Upon an "enter", the handler will typically
         highlight the drop site with the drag_highlight() method.
     '''
-    parent, px, py = get_parent_info(widget)
-    if parent:
-        print parent, px, py, x, y
-        return drag_motion(parent, context, px + x, py + y, timestamp)
-    else:
-        return None, None
+    return _propagate_to_parent(drag_motion, widget, context, x, y, timestamp)
 
 @generic
 def drag_drop(widget, context, x, y, timestamp):
@@ -298,11 +278,7 @@ def drag_drop(widget, context, x, y, timestamp):
     and then call the gdk.DragContext.finish() method, setting the success
     parameter to True if the data was processed successfully.
     '''
-    parent, px, py = get_parent_info(widget)
-    if parent:
-        return drag_drop(parent, context, px + x, py + y, timestamp)
-    else:
-        return None, None
+    return _propagate_to_parent(drag_drop, widget, context, x, y, timestamp)
 
 @generic
 def drag_end(widget, context):
