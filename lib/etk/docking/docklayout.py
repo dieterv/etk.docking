@@ -193,9 +193,9 @@ def with_magic_borders(func):
     def func_with_magic_borders(widget, context, x, y, timestamp):
         # Always ensure we check the parent class:
         handled = _propagate_to_parent(magic_borders, widget, context, x, y, timestamp)
-        if not handled[0]:
-            return func(widget, context, x, y, timestamp)
-        return handled
+        if handled[0]:
+            return handled
+        return func(widget, context, x, y, timestamp)
 
     func_with_magic_borders.__doc__ = func.__doc__
     return func_with_magic_borders
@@ -478,19 +478,33 @@ def dock_paned_drag_drop(self, context, x, y, timestamp):
 @drag_end.when_type(DockPaned)
 def dock_group_drag_end(self, context):
     self.log.debug('checking for removal')
+    print 'Context:', dir(context)
     if not self.items:
         parent = self.get_parent()
         self.log.debug('removing empty paned')
         self.destroy()
         return parent and drag_end(parent, context)
 
+def dock_paned_magic_borders_leave(self):
+    self.window.set_cursor(None)
+
+
 @magic_borders.when_type(DockPaned)
 def dock_paned_magic_borders(self, context, x, y, timestamp):
     a = self.allocation
-    print 'MAGIC happens here', self, a, x, y, (map(abs, (a.x - x, a.y - y, a.x + a.width - x, a.y + a.height - y)))
-    if min(map(abs, (a.x - x, a.y - y, a.x + a.width - x, a.y + a.height - y))) < MAGIC_BORDER_SIZE:
-        print 'MAGIC happens here'
-        return self, None
+    #print 'MAGIC happens here', self, a, x, y, (map(abs, (a.x - x, a.y - y, a.x + a.width - x, a.y + a.height - y)))
+    if min(map(abs, (y, a.height - y))) < MAGIC_BORDER_SIZE:
+        if self.get_orientation() == gtk.ORIENTATION_HORIZONTAL:
+            print 'Add new DockPaned and add DockGroup'
+        elif self.get_orientation() == gtk.ORIENTATION_VERTICAL:
+            print 'Append or prepend group'
+        return self, dock_paned_magic_borders_leave
+    elif min(map(abs, (x, a.width - x))) < MAGIC_BORDER_SIZE:
+        if self.get_orientation() == gtk.ORIENTATION_HORIZONTAL:
+            print 'Append or prepend group'
+        elif self.get_orientation() == gtk.ORIENTATION_VERTICAL:
+            print 'Add new DockPaned and add DockGroup'
+        return self, dock_paned_magic_borders_leave
     return None, None
 
 
@@ -503,3 +517,9 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
 # to the parent widget. This means that sometimes the event ends up in the
 # "catch-all", the DockFrame.  The Frame should make sure a new DockPaned is
 # created with the proper orientation and whatever's needed.
+
+@magic_borders.when_type(DockFrame)
+def dock_frame_magic_borders(self, context, x, y, timestamp):
+    a = self.allocation
+    print 'LAYOUT MAGIC happens here', self, a, x, y, (map(abs, (a.x - x, a.y - y, a.x + a.width - x, a.y + a.height - y)))
+    return None, None
