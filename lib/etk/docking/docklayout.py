@@ -145,12 +145,10 @@ class DockLayout(object):
 
         if DRAG_TARGET_ITEM_LIST[0] in context.targets:
             drag_data = self._drag_data
-            print '*** Data is', drag_data
         else:
             drag_data = None
 
         if drag_data and drag_data.drop_widget:
-            print '*** fetching data ***', drag_data
             target = gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0])
             drag_data.drop_widget.drag_get_data(context, target, timestamp)
         return drag_data and drag_data.received
@@ -195,9 +193,7 @@ def with_magic_borders(func):
     def func_with_magic_borders(widget, context, x, y, timestamp):
         # Always ensure we check the parent class:
         handled = _propagate_to_parent(magic_borders, widget, context, x, y, timestamp)
-        if handled[0]:
-            return handled
-        return func(widget, context, x, y, timestamp)
+        return handled or func(widget, context, x, y, timestamp)
 
     func_with_magic_borders.__doc__ = func.__doc__
     return func_with_magic_borders
@@ -257,6 +253,7 @@ def drag_motion(widget, context, x, y, timestamp):
     and then call the gdk.DragContext.finish() method, setting the success
     parameter to True if the data was processed successfully.
     '''
+    print 'drag_motion'
     return _propagate_to_parent(drag_motion, widget, context, x, y, timestamp)
 
 @generic
@@ -340,7 +337,6 @@ def dock_group_drag_motion(self, context, x, y, timestamp):
         self._drop_tab_index = self.visible_tabs.index(self._current_tab)
     else:
         self._drop_tab_index = None
-    target = self.drag_dest_find_target(context, ());
 
     dock_group_highlight(self)
 
@@ -459,14 +455,14 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
         else:
             print 'Append group'
     a = self.allocation
-    #print 'MAGIC happens here', self, a, x, y, (map(abs, (a.x - x, a.y - y, a.x + a.width - x, a.y + a.height - y)))
+    print 'MAGIC happens here', self, a, x, y, (map(abs, (a.x - x, a.y - y, a.x + a.width - x, a.y + a.height - y)))
     if min(y, a.height - y) < MAGIC_BORDER_SIZE:
         handle(self.get_orientation() == gtk.ORIENTATION_HORIZONTAL)
-        return self, dock_paned_magic_borders_leave
+        return DragData(self, dock_paned_magic_borders_leave, None)
     elif min(x, a.width - x) < MAGIC_BORDER_SIZE:
         handle(self.get_orientation() == gtk.ORIENTATION_VERTICAL)
-        return self, dock_paned_magic_borders_leave
-    return None, None
+        return DragData(self, dock_paned_magic_borders_leave, None)
+    return None
 
 
 ################################################################################
@@ -496,4 +492,4 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
         pass
     elif a.height - y < MAGIC_BORDER_SIZE:
         pass
-    return None, None
+    return None

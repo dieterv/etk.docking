@@ -25,7 +25,7 @@ import gtk
 from etk.docking import DockLayout, DockFrame, DockPaned, DockGroup, DockItem
 
 
-class TestDockGroup(unittest.TestCase):
+class TestDockLayout(unittest.TestCase):
 
     def test_construction(self):
         win = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -83,3 +83,67 @@ class TestDockGroup(unittest.TestCase):
         assert frame in layout.frames
 
 
+class TestDockLayoutDnD(unittest.TestCase):
+    def setUp(self):
+        def drag_get_data(self, context, target, timestamp):
+            self.emit('drag-data-received', self, context, 0, 0, None, None, timestamp)
+
+        DockGroup.drag_get_data = drag_get_data
+        DockPaned.drag_get_data = drag_get_data
+        DockFrame.drag_get_data = drag_get_data
+
+    def tearDown(self):
+        del DockGroup.drag_get_data
+        del DockPaned.drag_get_data
+        del DockFrame.drag_get_data
+
+    def test_drag_drop_on_group(self):
+        win = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        frame = DockFrame()
+        paned = DockPaned()
+        group = DockGroup()
+        item = DockItem()
+
+        layout = DockLayout()
+
+        layout.add(frame)
+
+        win.add(frame)
+        frame.add(paned)
+        paned.add(group)
+        group.add(item)
+
+        win.set_default_size(200, 200)
+        win.show_all()
+
+
+        group.emit('drag-motion', None, 130, 130, 0)
+
+        assert layout._drag_data
+        assert layout._drag_data.drop_widget is group
+
+    def test_drag_drop_on_paned(self):
+        win = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        frame = DockFrame()
+        paned = DockPaned()
+        groups = (DockGroup(), DockGroup())
+        item = DockItem()
+
+        layout = DockLayout()
+
+        layout.add(frame)
+
+        win.add(frame)
+        frame.add(paned)
+        paned.add(groups[0])
+        paned.add(groups[1])
+        groups[0].add(item)
+
+        win.set_default_size(200, 200)
+        win.show_all()
+
+
+        paned.emit('drag-motion', None, 10, 10, 0)
+
+        assert layout._drag_data
+        assert layout._drag_data.drop_widget is paned
