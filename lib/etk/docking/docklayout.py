@@ -312,9 +312,7 @@ def drag_failed(widget, context, result):
 # DockGroup
 #
 # TODO: If cursor is near the border, propagate event to the parent
-# TODO: Put all methods in a generic "role" class. This instance should be used
-#       in motion, leave, etc. cases. Investigate.
-# TODO: Handlers are not connected to newly created groups.
+# TODO: To what extend is magic border logic usable to drag_motion and drag_drop?
 ################################################################################
 
 def dock_group_expose_highlight(self, event):
@@ -436,6 +434,7 @@ def dock_paned_highlight(self):
     self.queue_resize()
 
 @drag_motion.when_type(DockPaned)
+@with_magic_borders
 def dock_paned_drag_motion(self, context, x, y, timestamp):
     self.log.debug('%s, %s, %s, %s' % (context, x, y, timestamp))
 
@@ -476,7 +475,7 @@ def dock_paned_drag_drop(self, context, x, y, timestamp):
 
 # Attached to drag *source*
 @drag_end.when_type(DockPaned)
-def dock_group_drag_end(self, context):
+def dock_paned_drag_end(self, context):
     self.log.debug('checking for removal')
     print 'Context:', dir(context)
     if not self.items:
@@ -486,24 +485,24 @@ def dock_group_drag_end(self, context):
         return parent and drag_end(parent, context)
 
 def dock_paned_magic_borders_leave(self):
-    self.window.set_cursor(None)
-
+    pass
 
 @magic_borders.when_type(DockPaned)
 def dock_paned_magic_borders(self, context, x, y, timestamp):
+    def handle(create):
+        if create:
+            print 'Add new DockPaned and add DockGroup'
+        elif min(x, y) < MAGIC_BORDER_SIZE:
+            print 'Prepend group'
+        else:
+            print 'Append group'
     a = self.allocation
     #print 'MAGIC happens here', self, a, x, y, (map(abs, (a.x - x, a.y - y, a.x + a.width - x, a.y + a.height - y)))
-    if min(map(abs, (y, a.height - y))) < MAGIC_BORDER_SIZE:
-        if self.get_orientation() == gtk.ORIENTATION_HORIZONTAL:
-            print 'Add new DockPaned and add DockGroup'
-        elif self.get_orientation() == gtk.ORIENTATION_VERTICAL:
-            print 'Append or prepend group'
+    if min(y, a.height - y) < MAGIC_BORDER_SIZE:
+        handle(self.get_orientation() == gtk.ORIENTATION_HORIZONTAL)
         return self, dock_paned_magic_borders_leave
-    elif min(map(abs, (x, a.width - x))) < MAGIC_BORDER_SIZE:
-        if self.get_orientation() == gtk.ORIENTATION_HORIZONTAL:
-            print 'Append or prepend group'
-        elif self.get_orientation() == gtk.ORIENTATION_VERTICAL:
-            print 'Add new DockPaned and add DockGroup'
+    elif min(x, a.width - x) < MAGIC_BORDER_SIZE:
+        handle(self.get_orientation() == gtk.ORIENTATION_VERTICAL)
         return self, dock_paned_magic_borders_leave
     return None, None
 
@@ -512,14 +511,27 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
 # DockFrame
 ################################################################################
 
-# TODO: Deal with drop events that are not accepted by any Paned. Provided the
-# outermost n pixels are not used by the item itself, but propagate the event
-# to the parent widget. This means that sometimes the event ends up in the
-# "catch-all", the DockFrame.  The Frame should make sure a new DockPaned is
-# created with the proper orientation and whatever's needed.
 
 @magic_borders.when_type(DockFrame)
 def dock_frame_magic_borders(self, context, x, y, timestamp):
+    '''
+    Deal with drop events that are not accepted by any Paned. Provided the
+    outermost n pixels are not used by the item itself, but propagate the event
+    to the parent widget. This means that sometimes the event ends up in the
+    "catch-all", the DockFrame.  The Frame should make sure a new DockPaned is
+    created with the proper orientation and whatever's needed.
+    '''
     a = self.allocation
     print 'LAYOUT MAGIC happens here', self, a, x, y, (map(abs, (a.x - x, a.y - y, a.x + a.width - x, a.y + a.height - y)))
+    # Find out if child is a DockPaned. If so, determine orientation
+    # Based on position add Dockgroup with opposite orientation
+    # If it's a DockGroup, add based on side.
+    if x < MAGIC_BORDER_SIZE:
+        pass
+    elif a.width - x < MAGIC_BORDER_SIZE:
+        pass
+    elif y < MAGIC_BORDER_SIZE:
+        pass
+    elif a.height - y < MAGIC_BORDER_SIZE:
+        pass
     return None, None
