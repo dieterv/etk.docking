@@ -20,6 +20,7 @@
 
 from __future__ import absolute_import
 from logging import getLogger
+from collections import namedtuple
 
 import gtk
 import gtk.gdk as gdk
@@ -31,6 +32,8 @@ from .dockgroup import DockGroup, DRAG_TARGET_ITEM_LIST
 from .dockpaned import DockPaned
 
 MAGIC_BORDER_SIZE = 10
+
+DragData = namedtuple('DragData', 'drop_widget leave received')
 
 class DockLayout(object):
 
@@ -44,8 +47,7 @@ class DockLayout(object):
         # Map widget -> set([signals, ...])
         self._signal_handlers = {}
 
-        self._drag_data_received = None
-        self._drag_leave = None, None # widget, callback
+        self._drag_data = None
 
     def add(self, frame):
         assert isinstance(frame, DockFrame)
@@ -121,38 +123,37 @@ class DockLayout(object):
 
     def on_widget_drag_motion(self, widget, context, x, y, timestamp):
         self.log.debug('on widget drag motion %s: %s %s', widget, x, y)
-        motion_widget, callback = drag_motion(widget, context, x, y, timestamp)
-        if motion_widget is not self._drag_leave[0]:
+
+        drag_data = drag_motion(widget, context, x, y, timestamp)
+        old_drop_widget = self._drag_data and self._drag_data.drop_widget
+        new_drop_widget = drag_data and drag_data.drop_widget
+        if new_drop_widget is not old_drop_widget:
             self.on_widget_drag_leave(widget, context, timestamp)
-            self._drag_leave = (motion_widget, callback)
+            self._drag_data = drag_data
 
 
     def on_widget_drag_leave(self, widget, context, timestamp):
-        self.log.debug('on widget drag leave')
         #drag_leave(widget, context, timestamp)
-        motion_widget, callback = self._drag_leave
-        try:
-            if callback:
-                callback(motion_widget)
-        finally:
-            self._drag_leave = None, None
+        #motion_widget, callback, _ = self._drag_data
+        drag_data = self._drag_data
+        if drag_data and drag_data.leave:
+            self.log.debug('on widget drag leave %s' % drag_data.leave)
+            drag_data.leave(drag_data.drop_widget)
 
     def on_widget_drag_drop(self, widget, context, x, y, timestamp):
         self.log.debug('%s %s %s %s', context, x, y, timestamp)
 
         if DRAG_TARGET_ITEM_LIST[0] in context.targets:
-            drop_widget, self._drag_data_received = drag_drop(widget, context, x, y, timestamp)
+            drag_data = self._drag_data
+            print '*** Data is', drag_data
         else:
-            drop_widget, self._drag_data_received = None, None
+            drag_data = None
 
-        self.log.debug('Found received handler %s' % self._drag_data_received)
-        if drop_widget:
+        if drag_data and drag_data.drop_widget:
+            print '*** fetching data ***', drag_data
             target = gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0])
-            drop_widget.drag_get_data(context, target, timestamp)
-
-        self._drag_data_received = None
-
-        return bool(drop_widget)
+            drag_data.drop_widget.drag_get_data(context, target, timestamp)
+        return drag_data and drag_data.received
 
     def on_widget_drag_data_received(self, widget, context, x, y, selection_data, info, timestamp):
         '''
@@ -160,11 +161,12 @@ class DockLayout(object):
         drag_drop event handler.
         '''
         self.log.debug('%s, %s, %s, %s, %s, %s' % (context, x, y, selection_data, info, timestamp))
-        assert self._drag_data_received
+        drag_data = self._drag_data
+        assert drag_data.received
         try:
-            self._drag_data_received(selection_data, info)
+            drag_data.received(selection_data, info)
         finally:
-            self._drag_data_received = None
+            self._drag_data = None
 
     def on_widget_drag_end(self, widget, context):
         return drag_end(widget, context)
@@ -182,7 +184,7 @@ def _propagate_to_parent(func, widget, context, x, y, timestamp):
         px, py = parent.get_pointer()
         return func(parent, context, px, py, timestamp)
     else:
-        return None, None
+        return None
 
 
 def with_magic_borders(func):
@@ -242,29 +244,6 @@ def drag_motion(widget, context, x, y, timestamp):
         received after a do_drag_leave() signal should be treated as an
         "enter" signal. Upon an "enter", the handler will typically
         highlight the drop site with the drag_highlight() method.
-    '''
-    return _propagate_to_parent(drag_motion, widget, context, x, y, timestamp)
-
-@generic
-def drag_drop(widget, context, x, y, timestamp):
-    '''
-    :param context: the gdk.DragContext
-    :param x: the X position of the drop
-    :param y: the Y position of the drop
-    :param timestamp: the time of the drag event
-    :returns: A widget, drag_data_received function pair.
-
-    The do_drag_drop() signal handler is executed when the drag initiates a
-    drop operation on the destination widget. The signal handler must
-    determine whether the cursor position is in a drop zone or not. If it is
-    not in a drop zone, it returns False and no further processing is
-    necessary. Otherwise, the handler returns True. In this case, the handler
-    must ensure that the gdk.DragContext.finish() method is called to let
-    the source know that the drop is done. The call to the
-    gdk.DragContext.finish() method can be done either directly or in the
-    do_drag_data_received() handler that gets triggered by calling the
-    drag_get_data() method to receive the data for one or more of the
-    supported targets.
 
     drag_data_received(widget, context, x, y, selection_data, info, timestamp):
 
@@ -278,7 +257,7 @@ def drag_drop(widget, context, x, y, timestamp):
     and then call the gdk.DragContext.finish() method, setting the success
     parameter to True if the data was processed successfully.
     '''
-    return _propagate_to_parent(drag_drop, widget, context, x, y, timestamp)
+    return _propagate_to_parent(drag_motion, widget, context, x, y, timestamp)
 
 @generic
 def drag_end(widget, context):
@@ -365,13 +344,6 @@ def dock_group_drag_motion(self, context, x, y, timestamp):
 
     dock_group_highlight(self)
 
-    return self, dock_group_drag_leave
-
-def dock_group_drag_leave(self):
-    dock_unhighlight(self)
-
-@drag_drop.when_type(DockGroup)
-def dock_group_drag_drop(self, context, x, y, timestamp):
     def dock_group_drag_data_received(selection_data, info):
         self.log.debug('%s, %s, %s, %s, %s, %s' % (context, x, y, selection_data, info, timestamp))
 
@@ -383,7 +355,7 @@ def dock_group_drag_drop(self, context, x, y, timestamp):
             self.insert_item(tab.item, visible_position=self._drop_tab_index)
         context.finish(True, True, timestamp) # success, delete, time
 
-    return self, dock_group_drag_data_received
+    return DragData(self, dock_unhighlight, dock_group_drag_data_received)
 
 # Attached to drag *source*
 @drag_end.when_type(DockGroup)
@@ -447,13 +419,6 @@ def dock_paned_drag_motion(self, context, x, y, timestamp):
     
     dock_paned_highlight(self)
 
-    return self, dock_paned_drag_leave
-
-def dock_paned_drag_leave(self):
-    dock_unhighlight(self)
-
-@drag_drop.when_type(DockPaned)
-def dock_paned_drag_drop(self, context, x, y, timestamp):
     def dock_paned_drag_data_received(selection_data, info):
         self.log.debug('%s, %s, %s, %s, %s, %s' % (context, x, y, selection_data, info, timestamp))
 
@@ -468,10 +433,7 @@ def dock_paned_drag_drop(self, context, x, y, timestamp):
             dock_group.insert_item(tab.item)
         context.finish(True, True, timestamp) # success, delete, time
 
-    if self._drop_handle_index is not None:
-        return self, dock_paned_drag_data_received
-    else:
-        return None, None
+    return DragData(self, dock_unhighlight, dock_paned_drag_data_received)
 
 # Attached to drag *source*
 @drag_end.when_type(DockPaned)
