@@ -23,7 +23,8 @@ import unittest
 
 import gtk
 from etk.docking import DockLayout, DockFrame, DockPaned, DockGroup, DockItem
-
+from etk.docking.dockgroup import DockGroup, DRAG_TARGET_ITEM_LIST
+from etk.docking.dnd import DockDragContext
 
 class TestDockLayout(unittest.TestCase):
 
@@ -83,16 +84,44 @@ class TestDockLayout(unittest.TestCase):
         assert frame in layout.frames
 
 
+
+class StubContext(object):
+    def __init__(self, source_widget, tabs):
+        self.targets = [ DRAG_TARGET_ITEM_LIST[0] ]
+        self.source_widget = source_widget
+        # Set up dragcontext (nornally done in motion_notify event)
+        if tabs:
+            self.source_widget.dragcontext = dragcontext = DockDragContext()
+            dragcontext.dragged_object = tabs
+
+    def get_source_widget(self):
+        return self.source_widget
+
+    def finish(self, success, delete, timestamp):
+        self.finished = (success, delete)
+
+class StubSelectionData(object):
+    def set(self, atom, bytes, data):
+        print 'StubSelectionData.set(%s, %s, %s)' % (atom, bytes, data)
+
+
 class TestDockLayoutDnD(unittest.TestCase):
+
     def setUp(self):
-        def drag_get_data(self, context, target, timestamp):
-            self.emit('drag-data-received', self, context, 0, 0, None, None, timestamp)
+
+        self.layout = DockLayout()
+
+        def drag_get_data(widget, context, target, timestamp):
+            selection_data = StubSelectionData()
+            context.source_widget.do_drag_data_get(context, selection_data, None, timestamp)
+            self.layout.on_widget_drag_data_received(widget, context, 20, 20, selection_data, None, timestamp)
 
         DockGroup.drag_get_data = drag_get_data
         DockPaned.drag_get_data = drag_get_data
         DockFrame.drag_get_data = drag_get_data
 
     def tearDown(self):
+        del self.layout
         del DockGroup.drag_get_data
         del DockPaned.drag_get_data
         del DockFrame.drag_get_data
@@ -104,7 +133,7 @@ class TestDockLayoutDnD(unittest.TestCase):
         group = DockGroup()
         item = DockItem()
 
-        layout = DockLayout()
+        layout = self.layout
 
         layout.add(frame)
 
@@ -116,11 +145,17 @@ class TestDockLayoutDnD(unittest.TestCase):
         win.set_default_size(200, 200)
         win.show_all()
 
+        while gtk.events_pending():
+            gtk.main_iteration()
 
-        group.emit('drag-motion', None, 130, 130, 0)
+        x, y = 30, 30
+        context = StubContext(group, [group.tabs[0]])
+        layout.on_widget_drag_motion(group, context, x, y, 0)
 
         assert layout._drag_data
         assert layout._drag_data.drop_widget is group
+
+        layout.on_widget_drag_drop(group, context, x, y, 0)
 
     def test_drag_drop_on_paned(self):
         win = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -129,21 +164,23 @@ class TestDockLayoutDnD(unittest.TestCase):
         groups = (DockGroup(), DockGroup())
         item = DockItem()
 
-        layout = DockLayout()
+        layout = self.layout
 
         layout.add(frame)
 
         win.add(frame)
         frame.add(paned)
-        paned.add(groups[0])
-        paned.add(groups[1])
+        map(paned.add, groups)
         groups[0].add(item)
 
         win.set_default_size(200, 200)
         win.show_all()
 
 
-        paned.emit('drag-motion', None, 10, 10, 0)
+        x, y = 10, 10
+        context = StubContext(groups[0], [groups[0].tabs[0]])
+        layout.on_widget_drag_motion(paned, context, x, y, 0)
 
         assert layout._drag_data
         assert layout._drag_data.drop_widget is paned
+

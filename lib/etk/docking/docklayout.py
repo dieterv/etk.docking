@@ -68,7 +68,6 @@ class DockLayout(object):
         self.log.debug('Adding signal handlers for widget %s' % widget)
 
         signals = set()
-        # TODO: Remove Highlight flag. Create it ourselves.
         widget.drag_dest_set(gtk.DEST_DEFAULT_MOTION,
                              [DRAG_TARGET_ITEM_LIST],
                              gdk.ACTION_MOVE)
@@ -133,8 +132,7 @@ class DockLayout(object):
 
 
     def on_widget_drag_leave(self, widget, context, timestamp):
-        #drag_leave(widget, context, timestamp)
-        #motion_widget, callback, _ = self._drag_data
+        # Note: when dropping, drag-leave is invoked before drag-drop
         drag_data = self._drag_data
         if drag_data and drag_data.leave:
             self.log.debug('on widget drag leave %s' % drag_data.leave)
@@ -288,7 +286,6 @@ def drag_failed(widget, context, result):
 # DockGroup
 #
 # TODO: If cursor is near the border, propagate event to the parent
-# TODO: To what extend is magic border logic usable to drag_motion and drag_drop?
 ################################################################################
 
 def dock_group_expose_highlight(self, event):
@@ -456,10 +453,12 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
             print 'Append group'
     a = self.allocation
     print 'MAGIC happens here', self, a, x, y, (map(abs, (a.x - x, a.y - y, a.x + a.width - x, a.y + a.height - y)))
-    if min(y, a.height - y) < MAGIC_BORDER_SIZE:
+    if abs(min(y, a.height - y)) < MAGIC_BORDER_SIZE:
+        print 'HORIZONTAL', y, a.height, min(y, a.height - y) 
         handle(self.get_orientation() == gtk.ORIENTATION_HORIZONTAL)
         return DragData(self, dock_paned_magic_borders_leave, None)
-    elif min(x, a.width - x) < MAGIC_BORDER_SIZE:
+    elif abs(min(x, a.width - x)) < MAGIC_BORDER_SIZE:
+        print 'VERTICAL'
         handle(self.get_orientation() == gtk.ORIENTATION_VERTICAL)
         return DragData(self, dock_paned_magic_borders_leave, None)
     return None
