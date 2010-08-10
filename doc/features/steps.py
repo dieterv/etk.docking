@@ -2,22 +2,42 @@ from freshen import Before, After, AfterStep, Given, When, Then, scc
 import gtk
 from etk.docking import DockPaned, DockGroup, DockLayout, DockFrame, DockItem
 from etk.docking.dockgroup import DRAG_TARGET_ITEM_LIST
+from etk.docking.dnd import DockDragContext
 
 
-def event(widget, event_type, **kwargs):
-    e = gtk.gdk.Event(event_type)
-    for k, v in kwargs.items():
-        print e, k, v
-        setattr(e, k, v)
-    e.window = widget.window
-    #widget.event(e)
-    #_gtk.main_do_event(e)
-    return e
+#def event(widget, event_type, **kwargs):
+#    e = gtk.gdk.Event(event_type)
+#    for k, v in kwargs.items():
+#        print e, k, v
+#        setattr(e, k, v)
+#    e.window = widget.window
+#    #widget.event(e)
+#    #_gtk.main_do_event(e)
+#    return e
 
-def do_event(widget, event_type, **kwargs):
-    e = event(widget, event_type, **kwargs)
-    gtk.main_do_event(e)
+#def do_event(widget, event_type, **kwargs):
+#    e = event(widget, event_type, **kwargs)
+#    gtk.main_do_event(e)
 
+
+class StubContext(object):
+    def __init__(self, source_widget, tabs):
+        self.targets = [ DRAG_TARGET_ITEM_LIST[0] ]
+        self.source_widget = source_widget
+        # Set up dragcontext (nornally done in motion_notify event)
+        if tabs:
+            self.source_widget.dragcontext = dragcontext = DockDragContext()
+            dragcontext.dragged_object = tabs
+
+    def get_source_widget(self):
+        return self.source_widget
+
+    def finish(self, success, delete, timestamp):
+        self.finished = (success, delete)
+
+class StubSelectionData(object):
+    def set(self, atom, bytes, data):
+        print 'StubSelectionData.set(%s, %s, %s)' % (atom, bytes, data)
 
 @AfterStep
 def with_iteration(scc=None):
@@ -30,13 +50,23 @@ def with_iteration(scc=None):
 
 @Before
 def set_up(_):
-    pass
-    # DockGroup.drag_dest_find_target
-    # DockGroup.drag_get_data
+    def drag_get_data(widget, context, target, timestamp):
+        with_iteration()
+        selection_data = StubSelectionData()
+        context.source_widget.do_drag_data_get(context, selection_data, None, timestamp)
+        x, y = scc.drop_pos
+        scc.layout.on_widget_drag_data_received(widget, context, x, y, selection_data, None, timestamp)
+
+    DockGroup.drag_get_data = drag_get_data
+    DockPaned.drag_get_data = drag_get_data
+    DockFrame.drag_get_data = drag_get_data
 
 @After
 def tear_down(_):
     scc.window.destroy()
+    del DockGroup.drag_get_data
+    del DockPaned.drag_get_data
+    del DockFrame.drag_get_data
  
 
 @Given('a window with (\d+) dockgroups?')
@@ -80,7 +110,7 @@ def define_group_by_name(nth_group, name):
 def define_item_by_name(nth_item, nth_group, name):
     group = scc.groups[int(nth_group) - 1]
     item = group.get_children()[int(nth_item) - 1]
-    print 'Define tab', item, 'as', name
+    print 'Define item', item, 'as', name
     setattr(scc, name, (group, item))
 
 
@@ -89,65 +119,86 @@ def drag_item(name):
     group, item = getattr(scc, name)
     for tab in group.visible_tabs:
         if tab.item is item:
-            #do_event(group, gtk.gdk.BUTTON_RELEASE, x=tab.area.x + 1.,
-            #         y=tab.area.y + 1., button=1)
             group.dragcontext.source_x = 1
             group.dragcontext.source_y = 1
             group.dragcontext.source_button = 1
-            e = event(group, gtk.gdk.MOTION_NOTIFY, x=tab.area.x + 15.,
-                     y=tab.area.y + 15., state=gtk.gdk.BUTTON1_MASK)
-            scc.drag_context = group._start_dragging(e)
+            group.dragcontext.dragged_object = [ tab ]
+            scc.dragged_tabs = group, [tab]
             break
     else:
         assert 0, 'item not found'
     print 'start drag for item'
-    assert group.dragcontext.dragging
-    assert group.dragcontext.source_button == 1, group.dragcontext.source_button 
+
+def drop_item(dest_group, x, y):
+    source_group, tabs = scc.dragged_tabs
+
+    scc.drop_pos = x, y
+    dropped_items = [tab.item for tab in tabs]
+
+    context = StubContext(source_group, tabs)
+    scc.layout.on_widget_drag_motion(dest_group, context, x, y, 0)
+
+    scc.layout.on_widget_drag_drop(dest_group, context, x, y, 0)
+
+    del scc.dragged_tabs
+    scc.dropped_items = dropped_items
+    scc.dropped_on_group = dest_group
+    print 'dropping item'
 
 @When('I drop it on the content section in group "([^"]+)"')
-def drop_item(name):
-    group = getattr(scc, name)
-    a  = group.allocation
+def drop_item_on_content(name):
+    dest_group = getattr(scc, name)
+
+    a  = dest_group.allocation
     
-    # gdk.drag_find_window
-    # gdk.drag_motion
-    # gdk.drag_
-    rox, roy = group.window.get_root_origin()
-    rx, ry = rox + 40., roy + 100.
-    #drag_window = gtk.Window()
-    #drag_window.show()
-    #dest_win, prot = scc.drag_context.drag_find_window(drag_window.window, rx, ry)
-    #print 'Drop', dest_win, prot
-    #scc.drag_context.drag_motion(dest_win, prot, rx, ry, gtk.gdk.ACTION_MOVE, gtk.gdk.ACTION_MOVE, 0)
-    #do_event(group, gtk.gdk.DRAG_MOTION, x_root=rx,
-    #         y_root=ry, send_event=False, time=0)
-    #do_event(group, gtk.gdk.DROP_START, x_root=rx,
-    #         y_root=ry, send_event=False, time=0)
-    #do_event(group, gtk.gdk.MOTION_NOTIFY, x=a.x + 10.,
-    #         y=a.y + a.height - 15., state=gtk.gdk.BUTTON1_MASK)
-    #do_event(group, gtk.gdk.BUTTON_RELEASE, x=a.x + 10.,
-    #         y=a.y + a.height - 15., state=gtk.gdk.BUTTON1_MASK)
+    ox, oy = dest_group.window.get_root_origin()
+    x, y = ox + a.width / 2, oy + a.height / 2
+    drop_item(dest_group, x, y)
 
-    target = group.drag_dest_find_target(scc.drag_context, [DRAG_TARGET_ITEM_LIST])
-    scc.drag_context.is_source = True
-    group.drag_get_data(scc.drag_context, target, 0)
+@When('I drop it on tab "([^"]+)" in group "([^"]+)"')
+def drop_item_on_tab(tabname, groupname):
+    dest_group = getattr(scc, groupname)
+    dg2, item = getattr(scc, tabname) 
 
-    print 'dropping item'
+    assert dg2 is dest_group
+
+    for tab in dest_group.tabs:
+        if tab.item is item:
+            break
+    else:
+        assert 0, 'item not found'
+
+    ox, oy = dest_group.window.get_root_origin()
+    x, y = tab.area.x + tab.area.width - 2, tab.area.y + tab.area.height - 2
+    print 'Dropping on', tab.area, x, y
+    drop_item(dest_group, x, y)
+
 
 @Then('item "([^"]+)" is part of "([^"]+)"')
 def then_tab_on_group(item_name, group_name):
-    print 'tab is on group'
-    assert 0
     _, item = getattr(scc, item_name)
     group = getattr(scc, group_name)
-    for tab in group.visible_tabs:
+    print 'tab is on group', item
+    for tab in group.tabs:
+        print 'tab.item', tab.item
         if tab.item is item:
+            print 'Have the item'
             return
     else:
         assert 0, 'item not in group'
 
 @Then('it has the focus')
 def then_it_has_the_focus():
-    print 'it has the focus'
+    assert len(scc.dropped_items) == 1
+    assert scc.dropped_on_group._current_tab.item is scc.dropped_items[0]
+
+@Then('it has been placed in just before "([^"]+)"')
+def placed_before_tab(name):
+    newgroup, item = getattr(scc, name)
+    assert len(scc.dropped_items) == 1
+    items = [tab.item for tab in newgroup.visible_tabs]
+    print 'it has been placed in just before', items.index(scc.dropped_items[0]) , items.index(item) 
+    assert items.index(scc.dropped_items[0]) == items.index(item) - 1
+    
 
 # vim:sw=4:et:ai
