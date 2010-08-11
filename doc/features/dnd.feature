@@ -1,11 +1,13 @@
-Feature: Drag and drop tabs.
+Feature: Drag and drop tabs
 
   Background:
     Given a window with 2 dockgroups
     And one containing 3 items
     And another containing 2 items
+    And define dockgroup 1 as "some-group"
     And define dockgroup 2 as "to-group"
     And define item 1 from dockgroup 1 as "drag-me"
+    And define item 1 from dockgroup 2 as "sometab"
 
   Scenario: Drag an item over a new group
     Given I drag item "drag-me"
@@ -14,25 +16,23 @@ Feature: Drag and drop tabs.
     And it has the focus
 
   Scenario: Drag an item over the tabs of a new group.
-    The items should be inserted at the position the items are dropped.
-    Given I drag tab "somename"
-    When I drop it on tab "sometab" in group "somegroup"
-    Then tab "somename" is part of "somegroup"
+    Given I drag item "drag-me"
+    When I drop it on tab "sometab" in group "to-group"
+    Then item "drag-me" is part of "to-group"
     And it has the focus
     And it has been placed in just before "sometab"
 
   Scenario: Drag an item and drop it between two existing groups.
-    Given I drag tab "somename"
-    When I drop it between groups "somegroup" and "someothergroup"
+    Given I drag item "drag-me"
+    When I drop it between groups "some-group" and "to-group"
     Then a new group should have been created
-    And it should contain the tab
+    And it should contain the item
 
   Scenario: Drag an item to the end of a group of DockGroups.
-    A new group should appear at that end containing the items
-    Given I drag tab "somename"
-    When I drop it before the first groups
+    Given I drag item "drag-me"
+    When I drop it before the first group
     Then a new group should have been created
-    And it should contain the tab
+    And it should contain the item
 
   Scenario: Drag an item at the begin/end of the intersection between groups
     The paned widget should get a new parent with opposite orientation,
@@ -44,8 +44,8 @@ Feature: Drag and drop tabs.
     it should also be removed (recursively)
 
   Scenario: If an item is dragged ourside the scope of the dock frame.
-    Given I drag tab "sometab"
+    Given I drag item "drag-me"
     When I drop it outside of the frame
     Then a new window should be created
-    And it should contain a new group with the tab
+    And it should contain a new group with the item
 

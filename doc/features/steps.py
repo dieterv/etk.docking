@@ -129,20 +129,20 @@ def drag_item(name):
         assert 0, 'item not found'
     print 'start drag for item'
 
-def drop_item(dest_group, x, y):
+def drop_item(dest, x, y):
     source_group, tabs = scc.dragged_tabs
 
     scc.drop_pos = x, y
     dropped_items = [tab.item for tab in tabs]
 
     context = StubContext(source_group, tabs)
-    scc.layout.on_widget_drag_motion(dest_group, context, x, y, 0)
+    scc.layout.on_widget_drag_motion(dest, context, x, y, 0)
 
-    scc.layout.on_widget_drag_drop(dest_group, context, x, y, 0)
+    scc.layout.on_widget_drag_drop(dest, context, x, y, 0)
 
     del scc.dragged_tabs
     scc.dropped_items = dropped_items
-    scc.dropped_on_group = dest_group
+    scc.dropped_on_dest = dest
     print 'dropping item'
 
 @When('I drop it on the content section in group "([^"]+)"')
@@ -173,6 +173,30 @@ def drop_item_on_tab(tabname, groupname):
     print 'Dropping on', tab.area, x, y
     drop_item(dest_group, x, y)
 
+@When('I drop it between groups "([^"]+)" and "([^"]+)"')
+def drop_between_groups(group1name, group2name):
+    group1 = getattr(scc, group1name)
+    group2 = getattr(scc, group2name)
+    paned = group1.get_parent()
+
+    # Test is restricted to two groups having the same DockPaned as parent
+    assert paned is group2.get_parent()
+
+    index = [i.child for i in paned.items].index(group1)
+    assert index == [i.child for i in paned.items].index(group2) - 1
+    handle = paned.handles[index]
+
+    x, y = handle.area.x + handle.area.width / 2, handle.area.y + handle.area.height / 2
+    drop_item(paned, x, y)
+
+    groups = [i.child for i in scc.dropped_on_dest.items]
+    scc.new_groups = list(set(groups).difference(scc.groups))
+    scc.groups = groups
+
+@When('I drop it before the first group')
+def drop_before_first_group():
+    raise NotImplemented, 'needs implementation'
+
 
 @Then('item "([^"]+)" is part of "([^"]+)"')
 def then_tab_on_group(item_name, group_name):
@@ -190,7 +214,7 @@ def then_tab_on_group(item_name, group_name):
 @Then('it has the focus')
 def then_it_has_the_focus():
     assert len(scc.dropped_items) == 1
-    assert scc.dropped_on_group._current_tab.item is scc.dropped_items[0]
+    assert scc.dropped_on_dest._current_tab.item is scc.dropped_items[0]
 
 @Then('it has been placed in just before "([^"]+)"')
 def placed_before_tab(name):
@@ -200,5 +224,15 @@ def placed_before_tab(name):
     print 'it has been placed in just before', items.index(scc.dropped_items[0]) , items.index(item) 
     assert items.index(scc.dropped_items[0]) == items.index(item) - 1
     
+@Then('a new group should have been created')
+def then_new_group():
+    assert len(scc.new_groups) == 1
+
+@Then('it should contain the item')
+def then_contains_item():
+    items = [t.item for t in scc.new_groups[0].tabs]
+    assert set(scc.dropped_items).issubset(items), (scc.dropped_items, items)
+
+
 
 # vim:sw=4:et:ai

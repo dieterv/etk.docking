@@ -184,3 +184,27 @@ class TestDockLayoutDnD(unittest.TestCase):
         assert layout._drag_data
         assert layout._drag_data.drop_widget is paned
 
+    def test_remove_empty_groups_recursively(self):
+        win = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        frame = DockFrame()
+        paneds = (DockPaned(), DockPaned(), DockPaned())
+        group = DockGroup()
+        item = DockItem()
+
+        layout = self.layout
+
+        layout.add(frame)
+
+        win.add(frame)
+        frame.add(paneds[0])
+        paneds[0].add(paneds[1])
+        paneds[1].add(paneds[2])
+        paneds[2].add(group)
+
+        win.set_default_size(200, 200)
+        win.show_all()
+
+        layout.on_widget_drag_end(group, None) # omit Context
+
+        # TODO: check is paned[0]
+        assert not paneds[0].get_parent()
