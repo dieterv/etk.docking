@@ -431,13 +431,25 @@ def dock_paned_drag_motion(self, context, x, y, timestamp):
 # Attached to drag *source*
 @drag_end.when_type(DockPaned)
 def dock_paned_drag_end(self, context):
-    self.log.debug('checking for removal')
-    print 'Context:', dir(context)
     if not self.items:
         parent = self.get_parent()
-        self.log.debug('removing empty paned')
         self.destroy()
         return parent and drag_end(parent, context)
+    if len(self.items) == 1:
+        parent = self.get_parent()
+        child = self.items[0].child
+        if isinstance(parent, DockPaned):
+            position = [i.child for i in parent.items].index(self)
+            child.unparent()
+            parent.remove(self)
+            parent.insert_child(child, position)
+            assert child.get_parent() is parent, (child.het_parent(), parent)
+        else:
+            child.unparent()
+            parent.remove(self)
+            parent.add(child)
+        # TODO: attach child to parent in place of self
+        pass
 
 def dock_paned_magic_borders_leave(self):
     pass

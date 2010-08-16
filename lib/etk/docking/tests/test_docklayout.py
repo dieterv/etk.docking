@@ -184,6 +184,59 @@ class TestDockLayoutDnD(unittest.TestCase):
         assert layout._drag_data
         assert layout._drag_data.drop_widget is paned
 
+    def test_remove_paned_with_one_child(self):
+        win = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        frame = DockFrame()
+        paned = DockPaned()
+        groups = (DockGroup(), DockGroup())
+        item = DockItem()
+
+        layout = self.layout
+
+        layout.add(frame)
+
+        win.add(frame)
+        frame.add(paned)
+        map(paned.add, groups)
+        #groups[0].add(item)
+
+        win.set_default_size(200, 200)
+        win.show_all()
+
+        # simulate end of DnD on group
+        layout.on_widget_drag_end(groups[0], None)
+
+        assert not paned.get_parent()
+        assert groups[1].get_parent() is frame
+
+    def test_remove_nested_paned_with_one_child(self):
+        win = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        frame = DockFrame()
+        paneds = (DockPaned(), DockPaned())
+        groups = (DockGroup(), DockGroup())
+        item = DockItem()
+
+        layout = self.layout
+
+        layout.add(frame)
+
+        win.add(frame)
+        frame.add(paneds[0])
+        paneds[0].add(groups[0])
+        paneds[0].add(paneds[1])
+        paneds[1].add(groups[1])
+        #groups[0].add(item)
+
+        win.set_default_size(200, 200)
+        win.show_all()
+
+        # simulate end of DnD on group, where group is removed and only one
+        # paned remains.
+        layout.on_widget_drag_end(paneds[1], None)
+
+        assert not paneds[1].get_parent()
+        assert groups[1].get_parent() is paneds[0], (paneds, groups[1].get_parent())
+
     def test_remove_empty_groups_recursively(self):
         win = gtk.Window(gtk.WINDOW_TOPLEVEL)
         frame = DockFrame()
