@@ -39,7 +39,11 @@ Feature: Drag and drop tabs
     containing the items in a new group.
 
   Scenario: If the last item from a group is moved to somewhere else,
-    the group should be removed.
+    Given I drag all items in group 'somegroup'
+    When I drop it on the content section in group "to-group"
+    Then the group "somegroup" should have been removed
+
+  Scenario: Remove last item from DockGroup and containing DockPaned is also empty
     If there is a parent paned that contains only one item after the removal,
     it should also be removed (recursively)
 

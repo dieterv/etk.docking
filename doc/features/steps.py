@@ -195,7 +195,7 @@ def drop_between_groups(group1name, group2name):
 
 @When('I drop it before the first group')
 def drop_before_first_group():
-    raise NotImplemented, 'needs implementation'
+    raise NotImplemented('needs implementation')
 
 
 @Then('item "([^"]+)" is part of "([^"]+)"')
