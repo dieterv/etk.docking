@@ -520,6 +520,9 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
 ################################################################################
 
 
+def dock_frame_magic_borders_leave(self):
+    pass
+
 @magic_borders.when_type(DockFrame)
 def dock_frame_magic_borders(self, context, x, y, timestamp):
     '''
@@ -531,15 +534,39 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
     '''
     a = self.allocation
     print 'LAYOUT MAGIC happens here', self, a, x, y, (map(abs, (a.x - x, a.y - y, a.x + a.width - x, a.y + a.height - y)))
-    # Find out if child is a DockPaned. If so, determine orientation
-    # Based on position add Dockgroup with opposite orientation
-    # If it's a DockGroup, add based on side.
+    position = None
     if x < MAGIC_BORDER_SIZE:
-        pass
+        orientation = gtk.ORIENTATION_HORIZONTAL
+        position = 0
     elif a.width - x < MAGIC_BORDER_SIZE:
-        pass
+        orientation = gtk.ORIENTATION_HORIZONTAL
+        position = -1
     elif y < MAGIC_BORDER_SIZE:
-        pass
+        orientation = gtk.ORIENTATION_VERTICAL
+        position = 0
     elif a.height - y < MAGIC_BORDER_SIZE:
-        pass
+        orientation = gtk.ORIENTATION_VERTICAL
+        position = -1
+    if position is not None:
+        def new_paned_and_group_receiver(selection_data, info):
+            source = context.get_source_widget()
+            assert source
+            new_paned = DockPaned()
+            new_paned.set_orientation(orientation)
+            current_child = self.get_children()[0]
+            print 'Frame: current group', current_child
+            assert current_child
+            self.remove(current_child)
+            self.add(new_paned)
+            new_group = DockGroup()
+            new_paned.insert_child(current_child)
+            new_paned.insert_child(new_group, position=position)
+            new_paned.show()
+            new_group.show()
+            self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
+            for tab in source.dragcontext.dragged_object:
+                new_group.append_item(tab.item)
+            context.finish(True, True, timestamp) # success, delete, time
+        return DragData(self, dock_frame_magic_borders_leave, new_paned_and_group_receiver)
+
     return None

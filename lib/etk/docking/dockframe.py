@@ -38,14 +38,3 @@ class DockFrame(gtk.EventBox):
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
         self.log.debug('')
 
-    ############################################################################
-    # GtkWidget drag source
-    ############################################################################
-    def do_drag_begin(self, context):
-        self.log.debug('%s' % context)
-
-    ############################################################################
-    # GtkWidget drag destination
-    ############################################################################
-    def do_drag_motion(self, context, x, y, timestamp):
-        self.log.debug('%s, %s, %s, %s' % (context, x, y, timestamp))
