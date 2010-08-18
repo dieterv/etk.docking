@@ -582,6 +582,18 @@ class DockPaned(gtk.Container):
         else:
             return None
 
+    def get_item_at_pos(self, x, y):
+        '''
+        :param x: the x coordinate of the position
+        :param y: the y coordinate of the position
+        :returns: the item at the position specified by x and y or None
+        '''
+        for i in self.items:
+            if (x, y) in i:
+                return i
+        else:
+            return None
+
     #TODO: def item_num(self, item):
     #TODO: def set_current_item(self, item_num):
     #TODO: def next_item()

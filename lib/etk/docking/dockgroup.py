@@ -912,6 +912,8 @@ class DockGroup(gtk.Container):
         tab.item.disconnect(tab.item_title_handler)
         tab.item.disconnect(tab.item_title_tooltip_text_handler)
         tab.item.unparent()
+
+        # TODO: Fix DockPaned does not destroy the child on remove. DockGroup does
         if not retain_item:
             tab.item.destroy()
 

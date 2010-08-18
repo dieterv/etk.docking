@@ -448,8 +448,6 @@ def dock_paned_drag_end(self, context):
             child.unparent()
             parent.remove(self)
             parent.add(child)
-        # TODO: attach child to parent in place of self
-        pass
 
 def dock_paned_magic_borders_leave(self):
     pass
@@ -459,20 +457,61 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
     def handle(create):
         if create:
             print 'Add new DockPaned and add DockGroup'
+            def new_paned_and_group_receiver(selection_data, info):
+                source = context.get_source_widget()
+                assert source
+                new_paned = DockPaned()
+                if self.get_orientation() == gtk.ORIENTATION_HORIZONTAL:
+                    new_paned.set_orientation(gtk.ORIENTATION_VERTICAL)
+                else:
+                    new_paned.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+                current_group = self.get_item_at_pos(x, y)
+                assert current_group
+                position = self.items.index(current_group)
+                self.remove(current_group.child)
+                self.insert_child(new_paned, position=position)
+                new_group = DockGroup()
+                if min(x, y) < MAGIC_BORDER_SIZE:
+                    new_paned.insert_child(new_group)
+                    new_paned.insert_child(current_group.child)
+                else:
+                    new_paned.insert_child(current_group.child)
+                    new_paned.insert_child(new_group)
+                new_paned.show()
+                new_group.show()
+                self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
+                for tab in source.dragcontext.dragged_object:
+                    new_group.append_item(tab.item)
+                context.finish(True, True, timestamp) # success, delete, time
+            return new_paned_and_group_receiver
         elif min(x, y) < MAGIC_BORDER_SIZE:
             print 'Prepend group'
+            position = 0
         else:
             print 'Append group'
+            position = -1
+        def add_group_receiver(selection_data, info):
+            source = context.get_source_widget()
+            assert source
+            new_group = DockGroup()
+            self.insert_child(new_group, position=position)
+            new_group.show()
+            self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
+            for tab in source.dragcontext.dragged_object:
+                new_group.append_item(tab.item)
+            context.finish(True, True, timestamp) # success, delete, time
+        return add_group_receiver
+
     a = self.allocation
     print 'MAGIC happens here', self, a, x, y, (map(abs, (a.x - x, a.y - y, a.x + a.width - x, a.y + a.height - y)))
     if abs(min(y, a.height - y)) < MAGIC_BORDER_SIZE:
         print 'HORIZONTAL', y, a.height, min(y, a.height - y) 
-        handle(self.get_orientation() == gtk.ORIENTATION_HORIZONTAL)
-        return DragData(self, dock_paned_magic_borders_leave, None)
+        received = handle(self.get_orientation() == gtk.ORIENTATION_HORIZONTAL)
+        return DragData(self, dock_paned_magic_borders_leave, received)
     elif abs(min(x, a.width - x)) < MAGIC_BORDER_SIZE:
         print 'VERTICAL'
-        handle(self.get_orientation() == gtk.ORIENTATION_VERTICAL)
-        return DragData(self, dock_paned_magic_borders_leave, None)
+        received = handle(self.get_orientation() == gtk.ORIENTATION_VERTICAL)
+        return DragData(self, dock_paned_magic_borders_leave, received)
     return None
 
 
