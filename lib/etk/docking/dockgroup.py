@@ -634,7 +634,12 @@ class DockGroup(gtk.Container):
         '''
         #self.log.debug('%s' % context)
 
-        #TODO: Set drag icon to be empty
+        # Free the item for transport.
+        for tab in self.dragcontext.dragged_object:
+            self._dragged_tab_index = self._tabs.index(tab)
+            self.remove_item(self._dragged_tab_index, retain_item=True)
+
+         #TODO: Set drag icon to be empty
         #TODO: Set drag cursor -> will most likely not (only) happen here...
         # Can be any of the following, depending on the selected drag destination:
         #   - gdk.DIAMOND_CROSS    "stacking" a dockitem into a dockgroup
@@ -675,12 +680,7 @@ class DockGroup(gtk.Container):
         #TODO: Fill selection_data with the right data (set() or set_text())
         #self.log.debug('%s, %s, %s' % (context, selection_data, info))
 
-        # Free the item for transport.
-        for tab in self.dragcontext.dragged_object:
-            self._dragged_tab_index = self._tabs.index(tab)
-            self.remove_item(self._dragged_tab_index, retain_item=True)
-
-        # Set some data, so DnD process continues
+       # Set some data, so DnD process continues
         selection_data.set(gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0]), 8,
                             '%d tabs' % len(self.dragcontext.dragged_object))
 

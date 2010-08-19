@@ -123,6 +123,7 @@ class DockLayout(object):
     def on_widget_drag_motion(self, widget, context, x, y, timestamp):
         self.log.debug('on widget drag motion %s: %s %s', widget, x, y)
 
+        context.docklayout = self
         drag_data = drag_motion(widget, context, x, y, timestamp)
         old_drop_widget = self._drag_data and self._drag_data.drop_widget
         new_drop_widget = drag_data and drag_data.drop_widget
@@ -165,9 +166,11 @@ class DockLayout(object):
             self._drag_data = None
 
     def on_widget_drag_end(self, widget, context):
+        context.docklayout = self
         return drag_end(widget, context)
 
     def on_widget_drag_failed(self, widget, context, result):
+        context.docklayout = self
         return drag_failed(widget, context, result)
 
 
@@ -366,8 +369,29 @@ def dock_group_drag_end(self, context):
 @drag_failed.when_type(DockGroup)
 def dock_group_drag_failed(self, context, result):
     self.log.debug('%s, %s' % (context, result))
-    for tab in self.dragcontext.dragged_object:
-        if not tab.item.get_parent():
+    if result == 1: #gtk.DRAG_RESULT_NO_TARGET
+        print 'Create new window', int(result)
+        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window.set_transient_for(self.get_toplevel())
+        frame = DockFrame()
+        window.add(frame)
+        group = DockGroup()
+        frame.add(group)
+        window.show()
+        frame.show()
+        group.show()
+        context.docklayout.add(frame)
+
+        #source = context.get_source_widget()
+        #assert source
+
+        for tab in self.dragcontext.dragged_object:
+            #dragged_tab_index = source.tabs.index(tab)
+            #source.remove_item(dragged_tab_index, retain_item=True)
+            group.append_item(tab.item)
+    else:
+        for tab in self.dragcontext.dragged_object:
+            #if not tab.item.get_parent():
             self.insert_item(tab.item, position=self._dragged_tab_index)
     #context.drop_finish(False, 0)
     return True
@@ -443,7 +467,7 @@ def dock_paned_drag_end(self, context):
             child.unparent()
             parent.remove(self)
             parent.insert_child(child, position)
-            assert child.get_parent() is parent, (child.het_parent(), parent)
+            assert child.get_parent() is parent, (child.get_parent(), parent)
         else:
             child.unparent()
             parent.remove(self)
@@ -519,6 +543,17 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
 # DockFrame
 ################################################################################
 
+@drag_end.when_type(DockFrame)
+def dock_frame_drag_end(self, context):
+    if not self.get_children():
+        parent = self.get_parent()
+        self.destroy()
+        try:
+            parent.get_transient_for()
+        except AttributeError:
+            print ' Not a transient top level widget'
+        else:
+            parent.destroy()
 
 def dock_frame_magic_borders_leave(self):
     pass
@@ -560,6 +595,7 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
             self.add(new_paned)
             new_group = DockGroup()
             new_paned.insert_child(current_child)
+            current_child.queue_resize()
             new_paned.insert_child(new_group, position=position)
             new_paned.show()
             new_group.show()
