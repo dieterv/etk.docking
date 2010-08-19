@@ -107,6 +107,10 @@ def main():
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s\t%(levelname)s\t%(name)s\t%(funcName)s\t%(message)s')
 
+    # Uncomment to enable log filtering
+    #for handler in logging.getLogger('').handlers:
+    #    handler.addFilter(logging.Filter('EtkDockGroup'))
+
     # Initialize mainloop
     gobject.threads_init()
     mainloop = gobject.MainLoop()
