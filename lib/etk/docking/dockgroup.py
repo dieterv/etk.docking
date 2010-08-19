@@ -1071,18 +1071,6 @@ class DockGroup(gtk.Container):
         self._tabs.remove(tab)
         self._tabs.insert(position, tab)
 
-
-    def merge_items_from_group(self, group, position=0):
-        """
-        Merge the items in group with the current item
-        """
-        while group._tabs:
-            tab = group._tabs[0]
-            group.remove_item(0, retain_item=True)
-            self.insert_item(tab.item, position)
-            position += 1
-
-
     ############################################################################
     # Property notification signal handlers
     ############################################################################
