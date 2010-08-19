@@ -68,32 +68,9 @@ class MainWindow(gtk.Window):
         self.dg1 = DockGroup()
         self.dp1.add(self.dg1)
 
-        self.dp2 = DockPaned()
-        self.dp2.set_orientation(gtk.ORIENTATION_VERTICAL)
-        self.dp1.add(self.dp2)
-
-        self.dg2 = DockGroup()
-        self.dp2.add(self.dg2)
-
-        self.dg3 = DockGroup()
-        self.dp2.add(self.dg3)
-
-        self.dg4 = DockGroup()
-        self.dp1.add(self.dg4)
-
         ########################################################################
         # Testing Tools
         ########################################################################
-        adddgbutton = gtk.Button('Create docked group')
-        adddgbutton.child.set_ellipsize(pango.ELLIPSIZE_MIDDLE)
-        adddgbutton.connect('clicked', self._on_add_dg_button_clicked)
-        vbox.pack_start(adddgbutton, False, False)
-
-        rmdgbutton = gtk.Button('Remove docked group')
-        rmdgbutton.child.set_ellipsize(pango.ELLIPSIZE_MIDDLE)
-        rmdgbutton.connect('clicked', self._on_remove_dg_button_clicked)
-        vbox.pack_start(rmdgbutton, False, False)
-
         adddibutton = gtk.Button('Create docked items')
         adddibutton.child.set_ellipsize(pango.ELLIPSIZE_MIDDLE)
         adddibutton.connect('clicked', self._on_add_di_button_clicked)
@@ -105,18 +82,6 @@ class MainWindow(gtk.Window):
         vbox.pack_start(orientationbutton, False, False)
 
         self.show_all()
-
-    def _on_add_dg_button_clicked(self, button):
-        dg = DockGroup()
-        dg.show()
-        self.dp1.add(dg)
-
-        dg = DockGroup()
-        dg.show()
-        self.dp2.add(dg)
-
-    def _on_remove_dg_button_clicked(self, button):
-        self.dp.remove(self.dp.get_children()[-1])
 
     def _on_add_di_button_clicked(self, button):
         for child in self.dp1:
