@@ -55,6 +55,7 @@ class DockDragContext(object):
         self.source_button = None
         self.dragged_object = None
 
+
 class HighlightWindow(gtk.Window):
     '''
     The etk.dnd.HighlightWindow widget is a gtk.Window that can highlight an

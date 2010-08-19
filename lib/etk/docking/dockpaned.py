@@ -40,7 +40,7 @@ class _DockPanedHandle(object):
         self.area = gdk.Rectangle()
 
     def __contains__(self, pos):
-        return rect_overlaps(self.area, pos[0], pos[1])
+        return rect_overlaps(self.area, *pos)
 
 
 class _DockPanedItem(object):
