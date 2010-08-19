@@ -100,7 +100,7 @@ class DockPaned(gtk.Container):
 
         # Initialize logging
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
-        #self.log.debug('')
+        self.log.debug('')
 
         # Initialize properties
         self.set_orientation(gtk.ORIENTATION_HORIZONTAL)
@@ -150,7 +150,7 @@ class DockPaned(gtk.Container):
     # GtkWidget
     ############################################################################
     def do_realize(self):
-        #self.log.debug('')
+        self.log.debug('')
 
         # Internal housekeeping
         self.set_flags(self.flags() | gtk.REALIZED)
@@ -180,7 +180,7 @@ class DockPaned(gtk.Container):
         self._vcursor = gtk.gdk.Cursor(self.get_display(), gdk.SB_V_DOUBLE_ARROW)
 
     def do_unrealize(self):
-        #self.log.debug('')
+        self.log.debug('')
         self._hcursor = None
         self._vcursor = None
         self.window.set_user_data(None)
@@ -188,19 +188,19 @@ class DockPaned(gtk.Container):
         gtk.Container.do_unrealize(self)
 
     def do_map(self):
-        #self.log.debug('')
+        self.log.debug('')
 
         gtk.Container.do_map(self)
         self.window.show()
 
     def do_unmap(self):
-        #self.log.debug('')
+        self.log.debug('')
 
         self.window.hide()
         gtk.Container.do_unmap(self)
 
     def do_size_request(self, requisition):
-        #self.log.debug('%s' % requisition)
+        self.log.debug('%s' % requisition)
 
         # Compute total size request
         width = height = 0
@@ -227,7 +227,7 @@ class DockPaned(gtk.Container):
         requisition.height = height
 
     def do_size_allocate(self, allocation):
-        #self.log.debug('%s' % allocation)
+        self.log.debug('%s' % allocation)
 
         # Compute old and new total weight
         if self._orientation == gtk.ORIENTATION_HORIZONTAL:
@@ -307,7 +307,7 @@ class DockPaned(gtk.Container):
                     item.child.size_allocate(item.area)
 
     def do_expose_event(self, event):
-        #self.log.debug('%s' % event)
+        self.log.debug('%s' % event)
 
         for item in self._children[1::2]:
             #TODO: render themed handle if not using compact layout
@@ -316,7 +316,7 @@ class DockPaned(gtk.Container):
         return False
 
     def do_leave_notify_event(self, event):
-        #self.log.debug('%s' % event)
+        self.log.debug('%s' % event)
 
         # Reset cursor
         self.window.set_cursor(None)
@@ -330,7 +330,7 @@ class DockPaned(gtk.Container):
         The do_button_press_event() signal handler is executed when a mouse
         button is pressed.
         '''
-        #self.log.debug('%s' % event)
+        self.log.debug('%s' % event)
 
         # We might start a drag operation, or we could simply be starting
         # a click somewhere. Store information from this event in self.dragcontext
@@ -355,7 +355,7 @@ class DockPaned(gtk.Container):
         The do_button_release_event() signal handler is executed when a mouse
         button is released.
         '''
-        #self.log.debug('%s' % event)
+        self.log.debug('%s' % event)
 
         # Reset drag context
         if event.button == self.dragcontext.source_button:
@@ -370,7 +370,7 @@ class DockPaned(gtk.Container):
         The do_motion-notify-event() signal handler is executed when the mouse
         pointer moves while over this widget.
         '''
-        #self.log.debug('%s' % event)
+        self.log.debug('%s' % event)
 
         cursor = None
 

@@ -88,7 +88,7 @@ class DockGroup(gtk.Container):
 
         # Initialize logging
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
-        #self.log.debug('')
+        self.log.debug('')
 
         # Internal housekeeping
         self.set_border_width(2)
@@ -145,7 +145,7 @@ class DockGroup(gtk.Container):
     # GtkWidget
     ############################################################################
     def do_realize(self):
-        #self.log.debug('')
+        self.log.debug('')
 
         # Internal housekeeping
         self.set_flags(self.flags() | gtk.REALIZED)
@@ -176,14 +176,14 @@ class DockGroup(gtk.Container):
         self._max_button.set_parent_window(self.window)
 
     def do_unrealize(self):
-        #self.log.debug('')
+        self.log.debug('')
 
         self.window.set_user_data(None)
         self.window.destroy()
         gtk.Container.do_unrealize(self)
 
     def do_map(self):
-        #self.log.debug('')
+        self.log.debug('')
 
         gtk.Container.do_map(self)
         self._list_button.show()
@@ -192,7 +192,7 @@ class DockGroup(gtk.Container):
         self.window.show()
 
     def do_unmap(self):
-        #self.log.debug('')
+        self.log.debug('')
 
         self._list_button.hide()
         self._min_button.hide()
@@ -201,7 +201,7 @@ class DockGroup(gtk.Container):
         gtk.Container.do_unmap(self)
 
     def do_size_request(self, requisition):
-        #self.log.debug('%s' % requisition)
+        self.log.debug('%s' % requisition)
         gtk.Container.do_size_request(self, requisition)
 
         # Start with a zero sized decoration area
@@ -258,7 +258,7 @@ class DockGroup(gtk.Container):
         requisition.height = dh + ih
 
     def do_size_allocate(self, allocation):
-        #self.log.debug('%s' % allocation)
+        self.log.debug('%s' % allocation)
 
         self.allocation = allocation
 
@@ -405,7 +405,7 @@ class DockGroup(gtk.Container):
             self._current_tab.item.size_allocate(gdk.Rectangle(ix, iy, iw, ih))
 
     def do_expose_event(self, event):
-        #self.log.debug('%s' % event)
+        self.log.debug('%s' % event)
 
         # Prepare colors
         bg = self.style.bg[self.state]
@@ -512,7 +512,7 @@ class DockGroup(gtk.Container):
         The do_button_press_event() signal handler is executed when a mouse
         button is pressed.
         '''
-        #self.log.debug('%s' % event)
+        self.log.debug('%s' % event)
 
         # We might start a DnD operation, or we could simply be starting
         # a click on a tab. Store information from this event in self.dragcontext
@@ -570,7 +570,7 @@ class DockGroup(gtk.Container):
         The do_motion-notify-event() signal handler is executed when the mouse
         pointer moves while over this widget.
         '''
-        #self.log.debug('%s' % event)
+        self.log.debug('%s' % event)
 
         # Reset tooltip text
         self.set_tooltip_text(None)
@@ -584,7 +584,7 @@ class DockGroup(gtk.Container):
                     self.drag_check_threshold(int(self.dragcontext.source_x),
                                               int(self.dragcontext.source_y),
                                               int(event.x), int(event.y)):
-                #self.log.debug('drag_begin')
+                self.log.debug('drag_begin')
                 self.dragcontext.dragging = True
 
                 # What are we dragging?
@@ -629,7 +629,7 @@ class DockGroup(gtk.Container):
         handler is to set up a custom drag icon with the drag_source_set_icon()
         method.
         '''
-        #self.log.debug('%s' % context)
+        self.log.debug('%s' % context)
 
         # Free the item for transport.
         for tab in self.dragcontext.dragged_object:
@@ -675,7 +675,7 @@ class DockGroup(gtk.Container):
         For group movement, no special action is taken.
         '''
         #TODO: Fill selection_data with the right data (set() or set_text())
-        #self.log.debug('%s, %s, %s' % (context, selection_data, info))
+        self.log.debug('%s, %s, %s' % (context, selection_data, info))
 
        # Set some data, so DnD process continues
         selection_data.set(gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0]), 8,
@@ -693,7 +693,7 @@ class DockGroup(gtk.Container):
         For groups, the group is deleted, for tabs the group is destroyed
         of there are no more tabs left (see do_drag_data_get()).
         '''
-        #self.log.debug('%s' % context)
+        self.log.debug('%s' % context)
         pass
         # Let this be handled by the DockLayout
 
@@ -709,7 +709,7 @@ class DockGroup(gtk.Container):
         failure has been already handled (not showing the default
         "drag operation failed" animation), otherwise it returns False.
         '''
-        #self.log.debug('%s, %s' % (context, result))
+        self.log.debug('%s, %s' % (context, result))
         # Put back the item removed in do_drag_data_get()
         #context.drop_finish(False, 0)
         return True
