@@ -26,6 +26,9 @@ import gtk
 import gtk.gdk as gdk
 
 
+DRAG_TARGET_ITEM_LIST = ('x-etk-docking/item-list', gtk.TARGET_SAME_APP, 0)
+
+
 class DockDragContext(object):
     '''
     As we can't reliably use drag_source_set to initiate a drag operation

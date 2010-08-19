@@ -27,8 +27,9 @@ import gtk.gdk as gdk
 
 from simplegeneric import generic
 
+from .dnd import DRAG_TARGET_ITEM_LIST
 from .dockframe import DockFrame
-from .dockgroup import DockGroup, DRAG_TARGET_ITEM_LIST
+from .dockgroup import DockGroup
 from .dockpaned import DockPaned
 
 MAGIC_BORDER_SIZE = 10
@@ -64,7 +65,7 @@ class DockLayout(object):
         """
         if self._signal_handlers.get(widget):
             return
-    
+
         self.log.debug('Adding signal handlers for widget %s' % widget)
 
         signals = set()
@@ -268,7 +269,7 @@ def drag_end(widget, context):
     '''
     parent = widget.get_parent()
     return parent and drag_end(parent, context)
- 
+
 @generic
 def drag_failed(widget, context, result):
     '''
@@ -322,7 +323,7 @@ def dock_unhighlight(self):
         del self._expose_event_id
     except AttributeError, e:
         self.log.error(e)
-    
+
 @drag_motion.when_type(DockGroup)
 @with_magic_borders
 def dock_group_drag_motion(self, context, x, y, timestamp):
@@ -433,7 +434,7 @@ def dock_paned_drag_motion(self, context, x, y, timestamp):
         self._drop_handle_index = self.handles.index(self.get_handle_at_pos(x, y))
     else:
         self._drop_handle_index = None
-    
+
     dock_paned_highlight(self)
 
     def dock_paned_drag_data_received(selection_data, info):
@@ -529,7 +530,7 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
     a = self.allocation
     print 'MAGIC happens here', self, a, x, y, (map(abs, (a.x - x, a.y - y, a.x + a.width - x, a.y + a.height - y)))
     if abs(min(y, a.height - y)) < MAGIC_BORDER_SIZE:
-        print 'HORIZONTAL', y, a.height, min(y, a.height - y) 
+        print 'HORIZONTAL', y, a.height, min(y, a.height - y)
         received = handle(self.get_orientation() == gtk.ORIENTATION_HORIZONTAL)
         return DragData(self, dock_paned_magic_borders_leave, received)
     elif abs(min(x, a.width - x)) < MAGIC_BORDER_SIZE:

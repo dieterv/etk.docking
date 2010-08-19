@@ -33,11 +33,8 @@ import gtk.gdk as gdk
 from . import _
 from .compactbutton import CompactButton
 from .dockitem import DockItem
-from .dnd import DockDragContext
+from .dnd import DockDragContext, DRAG_TARGET_ITEM_LIST
 from .util import rect_contains
-
-
-DRAG_TARGET_ITEM_LIST = ('x-etk-docking/item-list', gtk.TARGET_SAME_APP, 0)
 
 
 class _DockGroupTab(object):
