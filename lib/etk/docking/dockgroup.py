@@ -58,7 +58,7 @@ class _DockGroupTab(object):
     def __str__(self):
         return "<%s object at 0x%x with label '%s' on %s>" % (self.__class__.__name__,
                                                               hex(id(self)),
-                                                              self.label.get_text(),
+                                                              self.item.get_title(),
                                                               self.area)
 
 
@@ -95,22 +95,18 @@ class DockGroup(gtk.Container):
         self.set_group_id(0)
         self._frame_width = 1
         self._spacing = 3
-        self._current_tab = None
-
-        # Decoration area
         self._decoration_area = gdk.Rectangle()
+
         self._tabs = []
         self._visible_tabs = []
+        self._current_tab = None
+        self.dragcontext = DockDragContext()
 
         gtk.widget_push_composite_child()
-        self._tab_menu = gtk.Menu()
-        self._tab_menu.attach_to_widget(self, None)
         self._list_button = CompactButton('compact-list')
         self._list_button.set_tooltip_text(_('Show list'))
         self._list_button.connect('clicked', self._on_list_button_clicked)
         self._list_button.set_parent(self)
-        self._list_menu = gtk.Menu()
-        self._list_menu.attach_to_widget(self._list_button, None)
         self._min_button = CompactButton('compact-minimize')
         self._min_button.set_tooltip_text(_('Minimize'))
         self._min_button.connect('clicked', self._on_min_button_clicked)
@@ -119,9 +115,11 @@ class DockGroup(gtk.Container):
         self._max_button.set_tooltip_text(_('Maximize'))
         self._max_button.connect('clicked', self._on_max_button_clicked)
         self._max_button.set_parent(self)
+        self._tab_menu = gtk.Menu()
+        self._tab_menu.attach_to_widget(self, None)
+        self._list_menu = gtk.Menu()
+        self._list_menu.attach_to_widget(self._list_button, None)
         gtk.widget_pop_composite_child()
-
-        self.dragcontext = DockDragContext()
 
     ############################################################################
     # GObject
