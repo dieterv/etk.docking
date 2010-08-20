@@ -279,8 +279,6 @@ class DockGroup(gtk.Container):
         if not self._tabs:
             del self._visible_tabs[:]
         else:
-            current_tab_index = self._tabs.index(self._current_tab)
-
             # Compute available tab area width
             available_width = (allocation.width - self._frame_width - self._spacing -
                                max_w - min_w - list_w - self._spacing -
@@ -468,19 +466,18 @@ class DockGroup(gtk.Container):
                     c.set_source_rgb(*dark)
                     c.stroke()
                 elif index == visible_index:
+                    c.move_to(tx + 0.5, ty + th)
+
                     if visible_index == 0:
-                        c.move_to(tx + 0.5, ty + th)
                         c.line_to(tx + 0.5, ty + 0.5)
                         c.line_to(tx + tw - 8.5, ty + 0.5)
-                        c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
-                        c.line_to(tx + tw - 0.5, ty + th)
                     else:
-                        c.move_to(tx + 0.5, ty + th)
                         c.line_to(tx + 0.5, ty + 8.5)
                         c.arc(tx + 8.5, 8.5, 8, 180 * (pi / 180), 270 * (pi / 180))
                         c.line_to(tx + tw - 8.5, ty + 0.5)
-                        c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
-                        c.line_to(tx + tw - 0.5, ty + th)
+
+                    c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
+                    c.line_to(tx + tw - 0.5, ty + th)
                     linear = cairo.LinearGradient(0.5, 0.5, 0.5, th)
                     linear.add_color_stop_rgb(0, 0.878, 0.917, 0.984)
                     linear.add_color_stop_rgb(1, 0.6, 0.729, 0.952)
@@ -489,8 +486,7 @@ class DockGroup(gtk.Container):
                     c.set_source_rgb(*dark)
                     c.stroke()
 
-                    self.propagate_expose(self._current_tab.item, event)
-
+                self.propagate_expose(tab.item, event)
                 self.propagate_expose(tab.image, event)
                 self.propagate_expose(tab.label, event)
                 self.propagate_expose(tab.button, event)
@@ -634,7 +630,7 @@ class DockGroup(gtk.Container):
             self._dragged_tab_index = self._tabs.index(tab)
             self.remove_item(self._dragged_tab_index, retain_item=True)
 
-         #TODO: Set drag icon to be empty
+        #TODO: Set drag icon to be empty
         #TODO: Set drag cursor -> will most likely not (only) happen here...
         # Can be any of the following, depending on the selected drag destination:
         #   - gdk.DIAMOND_CROSS    "stacking" a dockitem into a dockgroup
