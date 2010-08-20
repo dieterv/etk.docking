@@ -487,7 +487,8 @@ class DockGroup(gtk.Container):
                     c.set_source_rgb(*dark)
                     c.stroke()
 
-                self.propagate_expose(tab.item, event)
+                    self.propagate_expose(self._current_tab.item, event)
+
                 self.propagate_expose(tab.image, event)
                 self.propagate_expose(tab.label, event)
                 self.propagate_expose(tab.button, event)
