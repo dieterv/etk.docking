@@ -23,6 +23,8 @@ def rect_contains(rect, x, y):
     '''
     The rect_contains function checks if a point, defined by x and y falls
     within the gdk.Rectangle defined by rect.
+
+    Note: Unlike rect_overlaps defined below, this function ignores a 1 pixel border.
     '''
     if x > rect.x and x < rect.x + rect.width and y > rect.y and y < rect.y + rect.height:
         return True
@@ -33,6 +35,8 @@ def rect_overlaps(rect, x, y):
     '''
     The rect_overlaps function checks if a point, defined by x and y overlaps
     the gdk.Rectangle defined by rect.
+
+    Note: Unlike rect_contains defined above, this function does not ignore a 1 pixel border.
     '''
     if x >= rect.x and x <= rect.x + rect.width and y >= rect.y and y <= rect.y + rect.height:
         return True
