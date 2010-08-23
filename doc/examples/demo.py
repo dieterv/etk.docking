@@ -25,6 +25,9 @@ from __future__ import absolute_import
 import logging
 import random
 
+import pygtk
+pygtk.require('2.0')
+
 import gobject
 import gtk
 import gtk.gdk as gdk
