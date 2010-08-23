@@ -27,6 +27,9 @@ to stdout.
 
 from __future__ import absolute_import
 
+import pygtk
+pygtk.require('2.0')
+
 import gtk
 
 
