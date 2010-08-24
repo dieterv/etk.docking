@@ -557,7 +557,27 @@ def dock_frame_drag_end(self, context):
             parent.destroy()
 
 def dock_frame_magic_borders_leave(self):
-    pass
+    self.set_placeholder(None)
+
+class Placeholder(gtk.DrawingArea):
+    __gtype_name__ = 'EtkDockPlaceholder'
+
+    def do_expose_event(self, expose):
+        print '*' * 60, 'do expose'
+        a = self.allocation
+        c = self.window.cairo_create()
+        c.set_source_rgb(0, 0, 0)
+        c.set_line_width(1.0)
+        c.rectangle(0.5, 0.5, a.width - 1, a.height - 1)
+        #c.set_source_rgba(0, 0, 0, 0)
+        #c.fill()
+        c.stroke()
+
+def make_placeholder(frame, allocation):
+    placeholder = Placeholder()
+    frame.set_placeholder(placeholder)
+    placeholder.size_allocate(allocation)
+    placeholder.show()
 
 @magic_borders.when_type(DockFrame)
 def dock_frame_magic_borders(self, context, x, y, timestamp):
@@ -574,15 +594,19 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
     if x < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_HORIZONTAL
         position = 0
+        make_placeholder(self, (0, 0, MAGIC_BORDER_SIZE, a.height))
     elif a.width - x < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_HORIZONTAL
         position = -1
+        make_placeholder(self, (a.width - MAGIC_BORDER_SIZE, 0, MAGIC_BORDER_SIZE, a.height))
     elif y < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_VERTICAL
         position = 0
+        make_placeholder(self, (0, 0, a.width, MAGIC_BORDER_SIZE))
     elif a.height - y < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_VERTICAL
         position = -1
+        make_placeholder(self, (0, a.height - MAGIC_BORDER_SIZE, a.width, MAGIC_BORDER_SIZE))
     if position is not None:
         def new_paned_and_group_receiver(selection_data, info):
             source = context.get_source_widget()

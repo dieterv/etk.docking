@@ -39,6 +39,7 @@ class DockFrame(gtk.Container):
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
         self.log.debug('')
         self.child = None
+        self.placeholder = None
 
     ############################################################################
     # GtkWidget
@@ -60,8 +61,6 @@ class DockFrame(gtk.Container):
                                                gdk.BUTTON_PRESS_MASK |
                                                gdk.BUTTON_RELEASE_MASK))
         self.window.set_user_data(self)
-        #self.style.attach(self.window)
-        #self.style.set_background(self.window, gtk.STATE_NORMAL)
 
         if self.child:
             self.child.set_parent_window(self.window)
@@ -93,12 +92,17 @@ class DockFrame(gtk.Container):
             bw = self.props.border_width
             self.child.size_allocate((0, 0,
                     allocation.width - 2*bw, allocation.height - 2*bw))
+        #if self.placeholder:
+        #    self.placeholder.size_allocate((0, 0, 200, 200))
 
     def do_forall(self, internals, callback, data):
         # Is also called for map and expose events.
         self.log.debug('%s' % self.child)
         if self.child:
             callback(self.child, data)
+        self.log.debug('placeholder: %s %s' % (internals, self.placeholder))
+        if internals and self.placeholder:
+            callback(self.placeholder, data)
 
     def do_add(self, widget):
         self.log.debug('')
@@ -111,4 +115,12 @@ class DockFrame(gtk.Container):
         assert self.child
         self.child.unparent()
         self.child = None
+
+    def set_placeholder(self, placeholder):
+        if self.placeholder:
+            self.placeholder.unparent()
+            self.placeholder = None
+        if placeholder:
+            self.placeholder = placeholder
+            self.placeholder.set_parent(self)
 
