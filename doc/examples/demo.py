@@ -95,12 +95,16 @@ class MainWindow(gtk.Window):
                     self._add_dockitems(child)
 
     def _on_orientation_button_clicked(self, button):
-        if self.dp1.get_orientation() == gtk.ORIENTATION_HORIZONTAL:
-            self.dp1.set_orientation(gtk.ORIENTATION_VERTICAL)
-            self.dp2.set_orientation(gtk.ORIENTATION_HORIZONTAL)
-        else:
-            self.dp1.set_orientation(gtk.ORIENTATION_HORIZONTAL)
-            self.dp2.set_orientation(gtk.ORIENTATION_VERTICAL)
+        def switch_orientation(paned):
+            if isinstance(paned, DockPaned):
+                if paned.get_orientation() == gtk.ORIENTATION_HORIZONTAL:
+                    paned.set_orientation(gtk.ORIENTATION_VERTICAL)
+                else:
+                    paned.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+                for child in paned.get_children():
+                    switch_orientation(child)
+        paned = self.dockframe.get_children()[0]
+        switch_orientation(paned)
 
     def _add_dockitems(self, dockgroup):
         examples = [('calc', 'calculator', '#!/usr/bin/env python\n\nprint \'Hello!\''),
