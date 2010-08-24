@@ -421,16 +421,13 @@ class DockGroup(gtk.Container):
         c.fill()
 
         # Draw frame
+        a = self.allocation
         c.set_line_width(self._frame_width)
-        c.move_to(0.5, 0.5)
-        c.line_to(self.allocation.width - 0.5, 0.5)
-        c.line_to(self.allocation.width - 0.5, self.allocation.height - 0.5)
-        c.line_to(0.5, self.allocation.height - 0.5)
-        c.line_to(0.5, 0.5)
+        c.rectangle(a.x + 0.5, a.y + 0.5, a.width - 1, a.height - 1)
         c.set_source_rgb(*dark)
         c.stroke()
         c.move_to(0.5, self._decoration_area.height - 0.5)
-        c.line_to(self.allocation.width + 0.5, self._decoration_area.height - 0.5)
+        c.line_to(a.width + 0.5, self._decoration_area.height - 0.5)
         c.set_source_rgb(*dark)
         c.stroke()
 
@@ -439,8 +436,8 @@ class DockGroup(gtk.Container):
             c.set_line_width(self.border_width)
             c.rectangle(self._frame_width + self.border_width / 2,
                         self._decoration_area.height + self.border_width / 2,
-                        self.allocation.width - (2 * self._frame_width) - self.border_width,
-                        self.allocation.height - self._decoration_area.height - self._frame_width - self.border_width)
+                        a.width - (2 * self._frame_width) - self.border_width,
+                        a.height - self._decoration_area.height - self._frame_width - self.border_width)
             c.set_source_rgb(0.6, 0.729, 0.952)
             c.stroke()
 
