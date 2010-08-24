@@ -64,12 +64,7 @@ class MainWindow(gtk.Window):
         self.docklayout.add(self.dockframe)
         vbox.pack_start(self.dockframe)
 
-        self.dp1 = DockPaned()
-        self.dp1.set_orientation(gtk.ORIENTATION_HORIZONTAL)
-        self.dockframe.add(self.dp1)
-
-        self.dg1 = DockGroup()
-        self.dp1.add(self.dg1)
+        self.dockframe.add(DockGroup())
 
         ########################################################################
         # Testing Tools
@@ -87,12 +82,15 @@ class MainWindow(gtk.Window):
         self.show_all()
 
     def _on_add_di_button_clicked(self, button):
-        for child in self.dp1:
+        def add_dockitems(child):
             if isinstance(child, DockGroup):
                 self._add_dockitems(child)
             elif isinstance(child, DockPaned):
                 for child in child:
-                    self._add_dockitems(child)
+                    add_dockitems(child)
+
+        for child in self.dockframe:
+            add_dockitems(child)
 
     def _on_orientation_button_clicked(self, button):
         def switch_orientation(paned):
