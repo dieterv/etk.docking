@@ -187,6 +187,21 @@ def _propagate_to_parent(func, widget, context, x, y, timestamp):
         return None
 
 
+def make_placeholder(widget, allocation):
+    """
+    Create a Placeholder widget and connect it to the DockFrame.
+    """
+    placeholder = Placeholder()
+    if isinstance(widget, DockFrame):
+        frame = widget
+    else:
+        frame = widget.get_ancestor(DockFrame)
+        fx, fy = widget.translate_coordinates(frame, allocation[0], allocation[1])
+        allocation = (fx, fy, allocation[2], allocation[3])
+    frame.set_placeholder(placeholder)
+    placeholder.size_allocate(allocation)
+    placeholder.show()
+
 def with_magic_borders(func):
     '''
     decorator for handlers that have sensitive borders, as items may be dropped
@@ -203,7 +218,7 @@ def with_magic_borders(func):
 @generic
 def magic_borders(widget, context, x, y, timestamp):
     '''
-    :returns: True if the parent widget handled the event
+    :returns: DragData if the parent widget handled the event
 
     This method is used to find out if (in case an item is dragged on the border of
     a widget, the parent is eager to take that event instead. This, for example,
@@ -288,8 +303,6 @@ def drag_failed(widget, context, result):
 
 ################################################################################
 # DockGroup
-#
-# TODO: If cursor is near the border, propagate event to the parent
 ################################################################################
 
 def dock_group_expose_highlight(self, event):
@@ -475,11 +488,23 @@ def dock_paned_drag_end(self, context):
             parent.add(child)
 
 def dock_paned_magic_borders_leave(self):
-    pass
+    self.get_ancestor(DockFrame).set_placeholder(None)
+
+def dock_paned_make_placeholder(self, x, y, a, ca):
+    if x < MAGIC_BORDER_SIZE:
+        make_placeholder(self, (ca.x, ca.y, MAGIC_BORDER_SIZE, ca.height))
+    elif a.width - x < MAGIC_BORDER_SIZE:
+        make_placeholder(self, (a.width - MAGIC_BORDER_SIZE, ca.y, MAGIC_BORDER_SIZE, ca.height))
+    elif y < MAGIC_BORDER_SIZE:
+        make_placeholder(self, (ca.x, ca.y, ca.width, MAGIC_BORDER_SIZE))
+    elif a.height - y < MAGIC_BORDER_SIZE:
+        make_placeholder(self, (ca.x, a.height - MAGIC_BORDER_SIZE, ca.width, MAGIC_BORDER_SIZE))
 
 @magic_borders.when_type(DockPaned)
 def dock_paned_magic_borders(self, context, x, y, timestamp):
     def handle(create):
+        current_group = self.get_item_at_pos(x, y)
+        assert current_group
         if create:
             print 'Add new DockPaned and add DockGroup'
             def new_paned_and_group_receiver(selection_data, info):
@@ -490,8 +515,6 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
                     new_paned.set_orientation(gtk.ORIENTATION_VERTICAL)
                 else:
                     new_paned.set_orientation(gtk.ORIENTATION_HORIZONTAL)
-                current_group = self.get_item_at_pos(x, y)
-                assert current_group
                 position = self.items.index(current_group)
                 self.remove(current_group.child)
                 self.insert_child(new_paned, position=position)
@@ -508,13 +531,17 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
                 for tab in source.dragcontext.dragged_object:
                     new_group.append_item(tab.item)
                 context.finish(True, True, timestamp) # success, delete, time
+
+            dock_paned_make_placeholder(self, x, y, self.allocation, current_group.area)
             return new_paned_and_group_receiver
         elif min(x, y) < MAGIC_BORDER_SIZE:
-            print 'Prepend group'
             position = 0
+            dock_paned_make_placeholder(self, x, y, self.allocation, current_group.area)
+            # TODO: create placeholder: if horizontal/if vertical
         else:
-            print 'Append group'
             position = -1
+            dock_paned_make_placeholder(self, x, y, self.allocation, current_group.area)
+            # TODO: create placeholder
         def add_group_receiver(selection_data, info):
             source = context.get_source_widget()
             assert source
@@ -528,13 +555,10 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
         return add_group_receiver
 
     a = self.allocation
-    print 'MAGIC happens here', self, a, x, y, (map(abs, (a.x - x, a.y - y, a.x + a.width - x, a.y + a.height - y)))
     if abs(min(y, a.height - y)) < MAGIC_BORDER_SIZE:
-        print 'HORIZONTAL', y, a.height, min(y, a.height - y)
         received = handle(self.get_orientation() == gtk.ORIENTATION_HORIZONTAL)
         return DragData(self, dock_paned_magic_borders_leave, received)
     elif abs(min(x, a.width - x)) < MAGIC_BORDER_SIZE:
-        print 'VERTICAL'
         received = handle(self.get_orientation() == gtk.ORIENTATION_VERTICAL)
         return DragData(self, dock_paned_magic_borders_leave, received)
     return None
@@ -573,12 +597,6 @@ class Placeholder(gtk.DrawingArea):
         #c.fill()
         c.stroke()
 
-def make_placeholder(frame, allocation):
-    placeholder = Placeholder()
-    frame.set_placeholder(placeholder)
-    placeholder.size_allocate(allocation)
-    placeholder.show()
-
 @magic_borders.when_type(DockFrame)
 def dock_frame_magic_borders(self, context, x, y, timestamp):
     '''
@@ -589,7 +607,6 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
     created with the proper orientation and whatever's needed.
     '''
     a = self.allocation
-    print 'LAYOUT MAGIC happens here', self, a, x, y, (map(abs, (a.x - x, a.y - y, a.x + a.width - x, a.y + a.height - y)))
     position = None
     if x < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_HORIZONTAL
@@ -614,7 +631,6 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
             new_paned = DockPaned()
             new_paned.set_orientation(orientation)
             current_child = self.get_children()[0]
-            print 'Frame: current group', current_child
             assert current_child
             self.remove(current_child)
             self.add(new_paned)
