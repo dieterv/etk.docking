@@ -423,7 +423,7 @@ class DockGroup(gtk.Container):
         # Draw frame
         a = self.allocation
         c.set_line_width(self._frame_width)
-        c.rectangle(a.x + 0.5, a.y + 0.5, a.width - 1, a.height - 1)
+        c.rectangle(0.5, 0.5, a.width - 1, a.height - 1)
         c.set_source_rgb(*dark)
         c.stroke()
         c.move_to(0.5, self._decoration_area.height - 0.5)
