@@ -50,17 +50,15 @@ class _DockPanedItem(object):
     __slots__ = ['child',      # child widget
                  'min_weight', # minimum relative weight
                  'weight',     # relative weight, used to calculate width/height
-                 'area',       # area, used to calculate allocation (gdk.Rectangle)
                  'expand']     # used to store the 'expand' child property
 
     def __init__(self):
         self.child = None
         self.min_weight = None
         self.weight = None
-        self.area = gdk.Rectangle()
 
     def __contains__(self, pos):
-        return rect_contains(self.area, *pos)
+        return rect_contains(self.child.allocation, *pos)
 
 
 class DockPaned(gtk.Container):
@@ -272,39 +270,42 @@ class DockPaned(gtk.Container):
             cx = cy = 0  # current x and y counters
 
             for item in self._children:
+                area = gdk.Rectangle()
                 if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-                    item.area.x = cx
-                    item.area.y = cy
-                    item.area.height = allocation.height
+                    area.x = cx
+                    area.y = cy
+                    area.height = allocation.height
 
                     if isinstance(item, _DockPanedItem):
-                        item.area.width = item.weight * 1000 >> 16
+                        area.width = item.weight * 1000 >> 16
                     else:
-                        item.area.width = self._handle_size
+                        area.width = self._handle_size
 
-                    cx += item.area.width
+                    cx += area.width
                 else:
-                    item.area.x = cx
-                    item.area.y = cy
-                    item.area.width = allocation.width
+                    area.x = cx
+                    area.y = cy
+                    area.width = allocation.width
 
                     if isinstance(item, _DockPanedItem):
-                        item.area.height = item.weight * 1000 >> 16
+                        area.height = item.weight * 1000 >> 16
                     else:
-                        item.area.height = self._handle_size
+                        area.height = self._handle_size
 
-                    cy += item.area.height
+                    cy += area.height
 
-            # Give any extra space left to the last item in the list
-            if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-                self._children[-1].area.width += allocation.width - cx
-            else:
-                self._children[-1].area.height += allocation.height - cy
-
-            # Allocate child sizes
-            for item in self._children:
+                # Allocate child sizes
                 if isinstance(item, _DockPanedItem):
-                    item.child.size_allocate(item.area)
+                    if item is self._children[-1]:
+                        # Give any extra space left to the last item in the list
+                        if self._orientation == gtk.ORIENTATION_HORIZONTAL:
+                            area.width += allocation.width - cx
+                        else:
+                            area.height += allocation.height - cy
+
+                    item.child.size_allocate(area)
+                else:
+                    item.area = area
 
     def do_expose_event(self, event):
         self.log.debug('%s' % event)
