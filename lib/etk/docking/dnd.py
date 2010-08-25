@@ -56,6 +56,21 @@ class DockDragContext(object):
         self.dragged_object = None
 
 
+class Placeholder(gtk.DrawingArea):
+    __gtype_name__ = 'EtkDockPlaceholder'
+
+    def do_expose_event(self, expose):
+        print '*' * 60, 'do expose'
+        a = self.allocation
+        c = self.window.cairo_create()
+        c.set_source_rgb(0, 0, 0)
+        c.set_line_width(1.0)
+        c.rectangle(0.5, 0.5, a.width - 1, a.height - 1)
+        #c.set_source_rgba(0, 0, 0, 0)
+        #c.fill()
+        c.stroke()
+
+
 class HighlightWindow(gtk.Window):
     '''
     The etk.dnd.HighlightWindow widget is a gtk.Window that can highlight an

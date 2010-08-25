@@ -27,7 +27,7 @@ import gtk.gdk as gdk
 
 from simplegeneric import generic
 
-from .dnd import DRAG_TARGET_ITEM_LIST
+from .dnd import DRAG_TARGET_ITEM_LIST, Placeholder
 from .dockframe import DockFrame
 from .dockgroup import DockGroup
 from .dockpaned import DockPaned
@@ -186,11 +186,21 @@ def _propagate_to_parent(func, widget, context, x, y, timestamp):
     else:
         return None
 
-
-def make_placeholder(widget, allocation):
+def make_placeholder(widget, x, y, a, ca=None):
     """
     Create a Placeholder widget and connect it to the DockFrame.
     """
+    if ca is None:
+        ca = a
+
+    if x < MAGIC_BORDER_SIZE:
+        allocation = (ca.x, ca.y, MAGIC_BORDER_SIZE, ca.height)
+    elif a.width - x < MAGIC_BORDER_SIZE:
+        allocation = (a.width - MAGIC_BORDER_SIZE, ca.y, MAGIC_BORDER_SIZE, ca.height)
+    elif y < MAGIC_BORDER_SIZE:
+        allocation = (ca.x, ca.y, ca.width, MAGIC_BORDER_SIZE)
+    elif a.height - y < MAGIC_BORDER_SIZE:
+        allocation = (ca.x, a.height - MAGIC_BORDER_SIZE, ca.width, MAGIC_BORDER_SIZE)
     placeholder = Placeholder()
     if isinstance(widget, DockFrame):
         frame = widget
@@ -201,6 +211,7 @@ def make_placeholder(widget, allocation):
     frame.set_placeholder(placeholder)
     placeholder.size_allocate(allocation)
     placeholder.show()
+
 
 def with_magic_borders(func):
     '''
@@ -490,16 +501,6 @@ def dock_paned_drag_end(self, context):
 def dock_paned_magic_borders_leave(self):
     self.get_ancestor(DockFrame).set_placeholder(None)
 
-def dock_paned_make_placeholder(self, x, y, a, ca):
-    if x < MAGIC_BORDER_SIZE:
-        make_placeholder(self, (ca.x, ca.y, MAGIC_BORDER_SIZE, ca.height))
-    elif a.width - x < MAGIC_BORDER_SIZE:
-        make_placeholder(self, (a.width - MAGIC_BORDER_SIZE, ca.y, MAGIC_BORDER_SIZE, ca.height))
-    elif y < MAGIC_BORDER_SIZE:
-        make_placeholder(self, (ca.x, ca.y, ca.width, MAGIC_BORDER_SIZE))
-    elif a.height - y < MAGIC_BORDER_SIZE:
-        make_placeholder(self, (ca.x, a.height - MAGIC_BORDER_SIZE, ca.width, MAGIC_BORDER_SIZE))
-
 @magic_borders.when_type(DockPaned)
 def dock_paned_magic_borders(self, context, x, y, timestamp):
     def handle(create):
@@ -532,15 +533,15 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
                     new_group.append_item(tab.item)
                 context.finish(True, True, timestamp) # success, delete, time
 
-            dock_paned_make_placeholder(self, x, y, self.allocation, current_group.area)
+            make_placeholder(self, x, y, self.allocation, current_group.child.allocation)
             return new_paned_and_group_receiver
         elif min(x, y) < MAGIC_BORDER_SIZE:
             position = 0
-            dock_paned_make_placeholder(self, x, y, self.allocation, current_group.area)
+            make_placeholder(self, x, y, self.allocation, current_group.child.allocation)
             # TODO: create placeholder: if horizontal/if vertical
         else:
             position = -1
-            dock_paned_make_placeholder(self, x, y, self.allocation, current_group.area)
+            make_placeholder(self, x, y, self.allocation, current_group.child.allocation)
             # TODO: create placeholder
         def add_group_receiver(selection_data, info):
             source = context.get_source_widget()
@@ -583,20 +584,6 @@ def dock_frame_drag_end(self, context):
 def dock_frame_magic_borders_leave(self):
     self.set_placeholder(None)
 
-class Placeholder(gtk.DrawingArea):
-    __gtype_name__ = 'EtkDockPlaceholder'
-
-    def do_expose_event(self, expose):
-        print '*' * 60, 'do expose'
-        a = self.allocation
-        c = self.window.cairo_create()
-        c.set_source_rgb(0, 0, 0)
-        c.set_line_width(1.0)
-        c.rectangle(0.5, 0.5, a.width - 1, a.height - 1)
-        #c.set_source_rgba(0, 0, 0, 0)
-        #c.fill()
-        c.stroke()
-
 @magic_borders.when_type(DockFrame)
 def dock_frame_magic_borders(self, context, x, y, timestamp):
     '''
@@ -611,20 +598,18 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
     if x < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_HORIZONTAL
         position = 0
-        make_placeholder(self, (0, 0, MAGIC_BORDER_SIZE, a.height))
     elif a.width - x < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_HORIZONTAL
         position = -1
-        make_placeholder(self, (a.width - MAGIC_BORDER_SIZE, 0, MAGIC_BORDER_SIZE, a.height))
     elif y < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_VERTICAL
         position = 0
-        make_placeholder(self, (0, 0, a.width, MAGIC_BORDER_SIZE))
     elif a.height - y < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_VERTICAL
         position = -1
-        make_placeholder(self, (0, a.height - MAGIC_BORDER_SIZE, a.width, MAGIC_BORDER_SIZE))
     if position is not None:
+        print 'allocation', a
+        make_placeholder(self, x, y, gdk.Rectangle(0, 0, a.width, a.height))
         def new_paned_and_group_receiver(selection_data, info):
             source = context.get_source_widget()
             assert source
