@@ -396,6 +396,9 @@ def dock_group_drag_failed(self, context, result):
     if result == 1: #gtk.DRAG_RESULT_NO_TARGET
         #print 'Create new window', int(result)
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window.move(*self.get_pointer())
+        window.set_size_request(self.allocation.width, self.allocation.height)
+        window.set_policy(True, True, True) # allow_shrink, allow_grow, auto_shrink
         window.set_transient_for(self.get_toplevel())
         frame = DockFrame()
         window.add(frame)
