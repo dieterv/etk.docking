@@ -60,7 +60,6 @@ class Placeholder(gtk.DrawingArea):
     __gtype_name__ = 'EtkDockPlaceholder'
 
     def do_expose_event(self, expose):
-        print '*' * 60, 'do expose'
         a = self.allocation
         c = self.window.cairo_create()
         c.set_source_rgb(0, 0, 0)

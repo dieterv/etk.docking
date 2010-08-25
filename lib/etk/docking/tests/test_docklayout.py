@@ -182,7 +182,7 @@ class TestDockLayoutDnD(unittest.TestCase):
         layout.on_widget_drag_motion(paned, context, x, y, 0)
 
         assert layout._drag_data
-        assert layout._drag_data.drop_widget is paned
+        assert layout._drag_data.drop_widget is paned, '%s != %s' % (layout._drag_data.drop_widget, paned)
 
     def test_remove_paned_with_one_child(self):
         win = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -204,7 +204,8 @@ class TestDockLayoutDnD(unittest.TestCase):
         win.show_all()
 
         # simulate end of DnD on group
-        layout.on_widget_drag_end(groups[0], None)
+        context = StubContext(groups[0], None)
+        layout.on_widget_drag_end(groups[0], context)
 
         assert not paned.get_parent()
         assert groups[1].get_parent() is frame
@@ -232,7 +233,8 @@ class TestDockLayoutDnD(unittest.TestCase):
 
         # simulate end of DnD on group, where group is removed and only one
         # paned remains.
-        layout.on_widget_drag_end(paneds[1], None)
+        context = StubContext(groups[0], None)
+        layout.on_widget_drag_end(paneds[1], context)
 
         assert not paneds[1].get_parent()
         assert groups[1].get_parent() is paneds[0], (paneds, groups[1].get_parent())
@@ -257,7 +259,8 @@ class TestDockLayoutDnD(unittest.TestCase):
         win.set_default_size(200, 200)
         win.show_all()
 
-        layout.on_widget_drag_end(group, None) # omit Context
+        context = StubContext(group, None)
+        layout.on_widget_drag_end(group, context)
 
         # TODO: check is paned[0]
         assert not paneds[0].get_parent()

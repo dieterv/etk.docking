@@ -97,10 +97,9 @@ class DockFrame(gtk.Container):
 
     def do_forall(self, internals, callback, data):
         # Is also called for map and expose events.
-        self.log.debug('%s' % self.child)
         if self.child:
             callback(self.child, data)
-        self.log.debug('placeholder: %s %s' % (internals, self.placeholder))
+
         if internals and self.placeholder:
             callback(self.placeholder, data)
 

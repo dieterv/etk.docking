@@ -122,8 +122,6 @@ class DockLayout(object):
             self.remove_signal_handlers(widget)
 
     def on_widget_drag_motion(self, widget, context, x, y, timestamp):
-        self.log.debug('on widget drag motion %s: %s %s', widget, x, y)
-
         context.docklayout = self
         drag_data = drag_motion(widget, context, x, y, timestamp)
         old_drop_widget = self._drag_data and self._drag_data.drop_widget
@@ -181,7 +179,9 @@ def _propagate_to_parent(func, widget, context, x, y, timestamp):
     '''
     parent = widget.get_parent()
     if parent:
-        px, py = parent.get_pointer()
+        # Should not use get_pointer as it's not testable.
+        #px, py = widget.get_pointer()
+        px, py = widget.translate_coordinates(parent, x, y)
         return func(parent, context, px, py, timestamp)
     else:
         return None
@@ -592,6 +592,7 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
     "catch-all", the DockFrame.  The Frame should make sure a new DockPaned is
     created with the proper orientation and whatever's needed.
     '''
+    self.log.debug('Magic borders')
     a = self.allocation
     position = None
     if x < MAGIC_BORDER_SIZE:
@@ -607,6 +608,8 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
         orientation = gtk.ORIENTATION_VERTICAL
         position = -1
     if position is not None:
+        self.log.debug('Found %s %s' % (orientation, position))
+        self.log.debug('%s %s %s' % (x, y, str(a)))
         make_placeholder(self, x, y, gdk.Rectangle(0, 0, a.width, a.height))
         def new_paned_and_group_receiver(selection_data, info):
             source = context.get_source_widget()
