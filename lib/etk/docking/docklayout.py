@@ -281,7 +281,6 @@ def drag_motion(widget, context, x, y, timestamp):
     and then call the gdk.DragContext.finish() method, setting the success
     parameter to True if the data was processed successfully.
     '''
-    print 'drag_motion'
     return _propagate_to_parent(drag_motion, widget, context, x, y, timestamp)
 
 @generic
@@ -395,7 +394,7 @@ def dock_group_drag_end(self, context):
 def dock_group_drag_failed(self, context, result):
     self.log.debug('%s, %s' % (context, result))
     if result == 1: #gtk.DRAG_RESULT_NO_TARGET
-        print 'Create new window', int(result)
+        #print 'Create new window', int(result)
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_transient_for(self.get_toplevel())
         frame = DockFrame()
@@ -429,7 +428,7 @@ def dock_paned_expose_highlight(self, event):
     try:
         handle = self.handles[self._drop_handle_index]
     except (AttributeError, IndexError, TypeError), e:
-        print e
+        self.log.error(e)
         return
     else:
         a = handle.area
@@ -507,7 +506,7 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
         current_group = self.get_item_at_pos(x, y)
         assert current_group
         if create:
-            print 'Add new DockPaned and add DockGroup'
+            #print 'Add new DockPaned and add DockGroup'
             def new_paned_and_group_receiver(selection_data, info):
                 source = context.get_source_widget()
                 assert source
@@ -577,7 +576,7 @@ def dock_frame_drag_end(self, context):
         try:
             parent.get_transient_for()
         except AttributeError:
-            print ' Not a transient top level widget'
+            self.log.error(' Not a transient top level widget')
         else:
             parent.destroy()
 
@@ -608,7 +607,6 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
         orientation = gtk.ORIENTATION_VERTICAL
         position = -1
     if position is not None:
-        print 'allocation', a
         make_placeholder(self, x, y, gdk.Rectangle(0, 0, a.width, a.height))
         def new_paned_and_group_receiver(selection_data, info):
             source = context.get_source_widget()
