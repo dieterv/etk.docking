@@ -22,6 +22,7 @@ from __future__ import absolute_import
 from logging import getLogger
 from collections import namedtuple
 
+import gobject
 import gtk
 import gtk.gdk as gdk
 
@@ -36,10 +37,30 @@ MAGIC_BORDER_SIZE = 10
 
 DragData = namedtuple('DragData', 'drop_widget leave received')
 
-class DockLayout(object):
+class DockLayout(gobject.GObject):
+    """
+    Manage a dock layout.
+
+    For this to work the toplevel widget in the layout hierarchy should be a
+    DockFrame. The DockFrame is registered with the DockLayout. After that
+    sophisticated drag-and-drop fnctionality is present.
+
+    Signals
+    =======
+
+    item-closed ( group, item ): event forwarded from the DockGroup on which
+    the item was removed. This makes for easy central maintenance of how to deal
+    with closed items (e.g. if the items should be destroyed or not).
+    """
+
+    __gtype_name__ = 'EtkDockLayout'
+    __gsignals__ = {
+        'item-closed': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
+                      (gobject.TYPE_OBJECT, gobject.TYPE_OBJECT)),
+    }
 
     def __init__(self):
-
+        gobject.GObject.__init__(self)
         # Initialize logging
         self.log = getLogger('%s.%s' % (self.__class__.__name__, hex(id(self))))
         self.log.debug('')
@@ -85,6 +106,8 @@ class DockLayout(object):
                                ('drag-end', self.on_widget_drag_end),
                                ('drag-failed', self.on_widget_drag_failed)):
             signals.add(widget.connect(name, callback))
+        if isinstance(widget, DockGroup):
+            signals.add(widget.connect('item-closed', self.on_dockgroup_item_closed))
         self._signal_handlers[widget] = signals
 
         # TODO: Should we limit this to only Dock* instances?
@@ -173,6 +196,8 @@ class DockLayout(object):
         context.docklayout = self
         return drag_failed(widget, context, result)
 
+    def on_dockgroup_item_closed(self, group, item):
+        self.emit('item-closed', group, item)
 
 def _propagate_to_parent(func, widget, context, x, y, timestamp):
     '''

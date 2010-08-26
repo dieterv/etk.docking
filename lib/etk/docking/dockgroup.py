@@ -82,6 +82,10 @@ class DockGroup(gtk.Container):
                             gobject.G_MAXUINT,
                             0,
                             gobject.PARAM_READWRITE)}
+    __gsignals__ = {
+        'item-closed': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
+                      (gobject.TYPE_OBJECT,)),
+    }
 
     def __init__(self):
         gtk.Container.__init__(self)
@@ -1070,7 +1074,7 @@ class DockGroup(gtk.Container):
     ############################################################################
     def _on_tab_button_clicked(self, button, item):
         self.remove(item)
-        item.destroy()
+        self.emit('item-closed', item)
 
     def _on_list_button_clicked(self, button):
         def _menu_position(menu):

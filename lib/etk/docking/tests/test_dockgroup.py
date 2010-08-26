@@ -395,4 +395,21 @@ class TestDockGroup(unittest.TestCase):
 
         self.assertEquals(dockitem3, dockgroup._current_tab.item)
 
+    def test_item_closed_event_is_emited_on_close(self):
+        dockitem = DockItem()
+        dockgroup = DockGroup()
+        dockgroup.add(dockitem)
+
+        tab = dockgroup._tabs[0]
+        
+        item_closed = []
+        def item_closed_handler(group, item):
+            item_closed.append((group, item))
+
+        dockgroup.connect('item-closed', item_closed_handler)
+
+        # Simulate clicking the close button
+        tab.button.emit('clicked')
+
+        assert [(dockgroup, dockitem)] == item_closed
 

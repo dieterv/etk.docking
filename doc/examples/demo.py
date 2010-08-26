@@ -66,6 +66,8 @@ class MainWindow(gtk.Window):
 
         self.dockframe.add(DockGroup())
 
+        self.docklayout.connect('item-closed', lambda g, i: i.destroy())
+
         ########################################################################
         # Testing Tools
         ########################################################################
