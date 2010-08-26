@@ -625,7 +625,7 @@ class DockGroup(gtk.Container):
         # Free the item for transport.
         for tab in self.dragcontext.dragged_object:
             self._dragged_tab_index = self._tabs.index(tab)
-            self.remove_item(self._dragged_tab_index, retain_item=True)
+            self.remove_item(self._dragged_tab_index)
 
         #TODO: Set drag icon to be empty
         #TODO: Set drag cursor -> will most likely not (only) happen here...
@@ -744,7 +744,7 @@ class DockGroup(gtk.Container):
 
     def do_remove(self, widget):
         if widget in (tab.item for tab in self._tabs):
-            self._remove_item(self.item_num(widget))
+            self._remove_item(widget)
 
     ############################################################################
     # EtkDockGroup
@@ -867,7 +867,7 @@ class DockGroup(gtk.Container):
         self.set_current_item(item_num)
         return item_num
 
-    def remove_item(self, item_num, retain_item=False):
+    def remove_item(self, item_num):
         '''
         :param item_num: the index of an item tab, starting from 0. If None,
                          the last item will be removed.
@@ -881,13 +881,14 @@ class DockGroup(gtk.Container):
             tab = self._tabs[item_num]
         item = tab.item
 
-        self._remove_item(item_num, retain_item)
+        #self._remove_item(item)
         self.emit('remove', item)
 
-    def _remove_item(self, item_num, retain_item=False):
+    def _remove_item(self, item):
         '''
         TODO: move logic to a signal handler.
         '''
+        item_num = self.item_num(item)
         if item_num is None:
             tab = self._tabs[-1]
         else:
@@ -900,10 +901,6 @@ class DockGroup(gtk.Container):
         tab.item.disconnect(tab.item_title_handler)
         tab.item.disconnect(tab.item_title_tooltip_text_handler)
         tab.item.unparent()
-
-        # TODO: Fix DockPaned does not destroy the child on remove. DockGroup does
-        if not retain_item:
-            tab.item.destroy()
 
         # Remove child widgets
         tab.image.unparent()
@@ -936,8 +933,7 @@ class DockGroup(gtk.Container):
         for tab in self._tabs:
             if tab.item is item:
                 return self._tabs.index(tab)
-        else:
-            return None
+        return None
 
     def get_n_items(self):
         '''
