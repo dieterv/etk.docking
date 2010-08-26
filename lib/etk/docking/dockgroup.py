@@ -743,8 +743,38 @@ class DockGroup(gtk.Container):
             self._insert_item(widget)
 
     def do_remove(self, widget):
-        if widget in (tab.item for tab in self._tabs):
-            self._remove_item(widget)
+        assert widget in (tab.item for tab in self._tabs)
+
+        item_num = self.item_num(widget)
+        tab = self._tabs[item_num]
+
+        # We need this to reset the current item below
+        old_tab_index = self._tabs.index(self._current_tab)
+
+        # Remove tab item
+        tab.item.disconnect(tab.item_title_handler)
+        tab.item.disconnect(tab.item_title_tooltip_text_handler)
+        tab.item.unparent()
+
+        # Remove child widgets
+        tab.image.unparent()
+        tab.image.destroy()
+        tab.label.unparent()
+        tab.label.destroy()
+        tab.button.unparent()
+        tab.button.destroy()
+        self._list_menu.remove(tab.menu_item)
+        tab.menu_item.destroy()
+        self._tabs.remove(tab)
+
+        # Refresh ourselves
+        current_tab_index = old_tab_index
+
+        if item_num < current_tab_index:
+            item_num = current_tab_index - 1
+
+        self.set_current_item(item_num)
+
 
     ############################################################################
     # EtkDockGroup
@@ -881,45 +911,7 @@ class DockGroup(gtk.Container):
             tab = self._tabs[item_num]
         item = tab.item
 
-        #self._remove_item(item)
         self.emit('remove', item)
-
-    def _remove_item(self, item):
-        '''
-        TODO: move logic to a signal handler.
-        '''
-        item_num = self.item_num(item)
-        if item_num is None:
-            tab = self._tabs[-1]
-        else:
-            tab = self._tabs[item_num]
-
-        # We need this to reset the current item below
-        old_tab_index = self._tabs.index(self._current_tab)
-
-        # Remove tab item
-        tab.item.disconnect(tab.item_title_handler)
-        tab.item.disconnect(tab.item_title_tooltip_text_handler)
-        tab.item.unparent()
-
-        # Remove child widgets
-        tab.image.unparent()
-        tab.image.destroy()
-        tab.label.unparent()
-        tab.label.destroy()
-        tab.button.unparent()
-        tab.button.destroy()
-        self._list_menu.remove(tab.menu_item)
-        tab.menu_item.destroy()
-        self._tabs.remove(tab)
-
-        # Refresh ourselves
-        current_tab_index = old_tab_index
-
-        if item_num < current_tab_index:
-            item_num = current_tab_index - 1
-
-        self.set_current_item(item_num)
 
     def item_num(self, item):
         '''
