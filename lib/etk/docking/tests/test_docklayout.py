@@ -86,13 +86,13 @@ class TestDockLayout(unittest.TestCase):
 
 
 class StubContext(object):
-    def __init__(self, source_widget, tabs):
+    def __init__(self, source_widget, items):
         self.targets = [ DRAG_TARGET_ITEM_LIST[0] ]
         self.source_widget = source_widget
         # Set up dragcontext (nornally done in motion_notify event)
-        if tabs:
+        if items:
             self.source_widget.dragcontext = dragcontext = DockDragContext()
-            dragcontext.dragged_object = tabs
+            dragcontext.dragged_object = items
 
     def get_source_widget(self):
         return self.source_widget
@@ -149,7 +149,7 @@ class TestDockLayoutDnD(unittest.TestCase):
             gtk.main_iteration()
 
         x, y = 30, 30
-        context = StubContext(group, [group.tabs[0]])
+        context = StubContext(group, [group.items[0]])
         layout.on_widget_drag_motion(group, context, x, y, 0)
 
         assert layout._drag_data
@@ -178,7 +178,7 @@ class TestDockLayoutDnD(unittest.TestCase):
 
 
         x, y = 10, 10
-        context = StubContext(groups[0], [groups[0].tabs[0]])
+        context = StubContext(groups[0], [groups[0].items[0]])
         layout.on_widget_drag_motion(paned, context, x, y, 0)
 
         assert layout._drag_data

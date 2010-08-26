@@ -120,6 +120,7 @@ class DockLayout(object):
         """
         if isinstance(widget, gtk.Container):
             self.remove_signal_handlers(widget)
+        # TODO: In case of DockGroup or DockPaned: remove empty items
 
     def on_widget_drag_motion(self, widget, context, x, y, timestamp):
         context.docklayout = self
@@ -317,7 +318,7 @@ def drag_failed(widget, context, result):
 
 def dock_group_expose_highlight(self, event):
     try:
-        tab = self.visible_tabs[self._drop_tab_index]
+        tab = self._visible_tabs[self._drop_tab_index]
     except TypeError:
         a = event.area
     else:
@@ -356,9 +357,9 @@ def dock_group_drag_motion(self, context, x, y, timestamp):
     drop_tab = self.get_tab_at_pos(x, y)
 
     if drop_tab:
-        self._drop_tab_index = self.visible_tabs.index(drop_tab)
+        self._drop_tab_index = self._visible_tabs.index(drop_tab)
     elif self._tabs:
-        self._drop_tab_index = self.visible_tabs.index(self._current_tab)
+        self._drop_tab_index = self._visible_tabs.index(self._current_tab)
     else:
         self._drop_tab_index = None
 
@@ -371,8 +372,8 @@ def dock_group_drag_motion(self, context, x, y, timestamp):
         assert source
 
         self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
-        for tab in reversed(source.dragcontext.dragged_object):
-            self.insert_item(tab.item, visible_position=self._drop_tab_index)
+        for item in reversed(source.dragcontext.dragged_object):
+            self.insert_item(item, visible_position=self._drop_tab_index)
         context.finish(True, True, timestamp) # success, delete, time
 
     return DragData(self, dock_unhighlight, dock_group_drag_data_received)
@@ -380,8 +381,8 @@ def dock_group_drag_motion(self, context, x, y, timestamp):
 # Attached to drag *source*
 @drag_end.when_type(DockGroup)
 def dock_group_drag_end(self, context):
-    self.log.debug('checking for removal')
-    if not self.tabs:
+    self.log.debug('checking for removal', self.items)
+    if not self.items:
         parent = self.get_parent()
         self.log.debug('removing empty group')
         self.destroy()
@@ -412,14 +413,14 @@ def dock_group_drag_failed(self, context, result):
         #source = context.get_source_widget()
         #assert source
 
-        for tab in self.dragcontext.dragged_object:
+        for item in self.dragcontext.dragged_object:
             #dragged_tab_index = source.tabs.index(tab)
             #source.remove_item(dragged_tab_index, retain_item=True)
-            group.append_item(tab.item)
+            group.append_item(item)
     else:
-        for tab in self.dragcontext.dragged_object:
+        for item in self.dragcontext.dragged_object:
             #if not tab.item.get_parent():
-            self.insert_item(tab.item, position=self._dragged_tab_index)
+            self.insert_item(item, position=self._dragged_tab_index)
     #context.drop_finish(False, 0)
     return True
 
@@ -473,8 +474,8 @@ def dock_paned_drag_motion(self, context, x, y, timestamp):
         dock_group = DockGroup()
         self.insert_child(dock_group, self._drop_handle_index + 1)
         dock_group.show()
-        for tab in source.dragcontext.dragged_object:
-            dock_group.insert_item(tab.item)
+        for item in source.dragcontext.dragged_object:
+            dock_group.insert_item(item)
         context.finish(True, True, timestamp) # success, delete, time
 
     return DragData(self, dock_unhighlight, dock_paned_drag_data_received)
@@ -531,8 +532,8 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
                 new_paned.show()
                 new_group.show()
                 self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
-                for tab in source.dragcontext.dragged_object:
-                    new_group.append_item(tab.item)
+                for item in source.dragcontext.dragged_object:
+                    new_group.append_item(item)
                 context.finish(True, True, timestamp) # success, delete, time
 
             make_placeholder(self, x, y, self.allocation, current_group.child.allocation)
@@ -552,8 +553,8 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
             self.insert_child(new_group, position=position)
             new_group.show()
             self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
-            for tab in source.dragcontext.dragged_object:
-                new_group.append_item(tab.item)
+            for item in source.dragcontext.dragged_object:
+                new_group.append_item(item)
             context.finish(True, True, timestamp) # success, delete, time
         return add_group_receiver
 
@@ -630,8 +631,8 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
             new_paned.show()
             new_group.show()
             self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
-            for tab in source.dragcontext.dragged_object:
-                new_group.append_item(tab.item)
+            for item in source.dragcontext.dragged_object:
+                new_group.append_item(item)
             context.finish(True, True, timestamp) # success, delete, time
         return DragData(self, dock_frame_magic_borders_leave, new_paned_and_group_receiver)
 

@@ -583,9 +583,9 @@ class DockGroup(gtk.Container):
                                           self.dragcontext.source_y)
 
                 if tab:
-                    self.dragcontext.dragged_object = [tab]
+                    self.dragcontext.dragged_object = [tab.item]
                 else:
-                    self.dragcontext.dragged_object = list(self._tabs)
+                    self.dragcontext.dragged_object = [t.item for t in self._tabs]
 
                 self.drag_begin([DRAG_TARGET_ITEM_LIST], gdk.ACTION_MOVE,
                                 self.dragcontext.source_button, event)
@@ -623,8 +623,8 @@ class DockGroup(gtk.Container):
         self.log.debug('%s' % context)
 
         # Free the item for transport.
-        for tab in self.dragcontext.dragged_object:
-            self._dragged_tab_index = self._tabs.index(tab)
+        for item in self.dragcontext.dragged_object:
+            self._dragged_tab_index = [t.item for t in self._tabs].index(item)
             self.remove_item(self._dragged_tab_index)
 
         #TODO: Set drag icon to be empty
@@ -745,6 +745,7 @@ class DockGroup(gtk.Container):
     def do_remove(self, widget):
         assert widget in (tab.item for tab in self._tabs)
 
+        self.log.debug('Removing widget %s ' % widget)
         item_num = self.item_num(widget)
         tab = self._tabs[item_num]
 
@@ -780,9 +781,9 @@ class DockGroup(gtk.Container):
     # EtkDockGroup
     ############################################################################
 
-    tabs = property(lambda s: s._tabs)
+    items = property(lambda s: [t.item for t in s._tabs])
 
-    visible_tabs = property(lambda s: s._visible_tabs)
+    visible_items = property(lambda s: [t.item for t in s._visible_tabs])
 
     def get_tab_at_pos(self, x, y):
         '''
@@ -1047,6 +1048,9 @@ class DockGroup(gtk.Container):
         self._tabs.remove(tab)
         self._tabs.insert(position, tab)
 
+    def __contains__(self, item):
+        return item in self.items
+
     ############################################################################
     # Property notification signal handlers
     ############################################################################
@@ -1066,6 +1070,7 @@ class DockGroup(gtk.Container):
     ############################################################################
     def _on_tab_button_clicked(self, button, item):
         self.remove(item)
+        item.destroy()
 
     def _on_list_button_clicked(self, button):
         def _menu_position(menu):

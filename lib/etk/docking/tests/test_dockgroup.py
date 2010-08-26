@@ -76,14 +76,39 @@ class TestDockGroup(unittest.TestCase):
         dockgroup.destroy()
 
     def test_remove(self):
+        win = gtk.Window()
         dockitem = DockItem()
         dockgroup = DockGroup()
         dockgroup.add(dockitem)
+        win.add(dockgroup)
+        win.show_all()
+
+        assert dockitem.flags() & gtk.REALIZED
+
         dockgroup.remove(dockitem)
 
         self.assertTrue(dockitem not in dockgroup)
 
+        win.destroy()
+
+        assert not dockitem.flags() & gtk.REALIZED
+        assert not dockgroup.flags() & gtk.REALIZED
+
+    def test_item_destroy(self):
+        win = gtk.Window()
+        dockitem = DockItem()
+        dockgroup = DockGroup()
+        dockgroup.add(dockitem)
+        win.add(dockgroup)
+        win.show_all()
+
+        assert len(dockgroup.items) == 1
         dockitem.destroy()
+
+        self.assertTrue(dockitem not in dockgroup)
+        assert len(dockgroup.items) == 0
+
+        win.destroy()
         dockgroup.destroy()
 
     def test_append_item(self):
@@ -288,10 +313,10 @@ class TestDockGroup(unittest.TestCase):
         item_in_after = []
         def event_handler(self, w):
             events.append(w)
-            item_in.append(w in (tab.item for tab in self.tabs))
+            item_in.append(w in self.items)
 
         def event_handler_after(self, w):
-            item_in_after.append(w in (tab.item for tab in self.tabs))
+            item_in_after.append(w in self.items)
 
 
         dockgroup = DockGroup()
@@ -328,12 +353,12 @@ class TestDockGroup(unittest.TestCase):
         item_in_after = []
         def event_handler(self, w):
             print 'TRY', w
-            print [tab.item for tab in self.tabs]
+            print w in self.items
             events.append(w)
-            item_in.append(w in (tab.item for tab in self.tabs))
+            item_in.append(w in self.items)
 
         def event_handler_after(self, w):
-            item_in_after.append(w in (tab.item for tab in self.tabs))
+            item_in_after.append(w in self.items)
 
         dockgroup = DockGroup()
         dockgroup.connect('remove', event_handler)
@@ -345,6 +370,7 @@ class TestDockGroup(unittest.TestCase):
         dockgroup.add(dockitem2)
 
         dockgroup.remove(dockitem1)
+        self.assertTrue(dockitem1 not in dockgroup)
         self.assertEquals([dockitem1], events)
         self.assertEquals([False], item_in)
         self.assertEquals([False], item_in_after)
