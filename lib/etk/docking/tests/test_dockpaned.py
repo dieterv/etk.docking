@@ -128,6 +128,17 @@ class TestDockPaned(unittest.TestCase):
         dockgroup2.destroy()
         dockpaned.destroy()
 
+    def test_group_removal(self):
+        paned = DockPaned()
+        group = DockGroup()
+        paned.add(group)
+
+        assert len(paned.items) == 1
+
+        group.destroy()
+
+        assert len(paned.items) == 0
+        
     ############################################################################
     # Test public api
     ############################################################################
