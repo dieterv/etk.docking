@@ -94,8 +94,6 @@ class DockLayout(gobject.GObject):
                              [DRAG_TARGET_ITEM_LIST],
                              gdk.ACTION_MOVE)
 
-        # TODO: Deal with gtk.Container subclasses that do not issue add/remove
-        #       events on child addition/removal.
         # Use instance methods here, so layout can do additional bookkeeping
         for name, callback in (('add', self.on_widget_add),
                                ('remove', self.on_widget_remove),
@@ -106,11 +104,11 @@ class DockLayout(gobject.GObject):
                                ('drag-end', self.on_widget_drag_end),
                                ('drag-failed', self.on_widget_drag_failed)):
             signals.add(widget.connect(name, callback))
+
         if isinstance(widget, DockGroup):
             signals.add(widget.connect('item-closed', self.on_dockgroup_item_closed))
         self._signal_handlers[widget] = signals
 
-        # TODO: Should we limit this to only Dock* instances?
         if isinstance(widget, gtk.Container):
             widget.foreach(self.add_signal_handlers)
 
@@ -130,6 +128,12 @@ class DockLayout(gobject.GObject):
             if isinstance(widget, gtk.Container):
                 widget.foreach(self.remove_signal_handlers)
 
+    def do_item_closed(self, group, item):
+        """
+        If an item is closed, perform maintenance cleanup.
+        """
+        cleanup(group)
+
     def on_widget_add(self, container, widget):
         """
         Deal with new elements being added to the layout or it's children.
@@ -143,7 +147,6 @@ class DockLayout(gobject.GObject):
         """
         if isinstance(widget, gtk.Container):
             self.remove_signal_handlers(widget)
-        # TODO: In case of DockGroup or DockPaned: remove empty items
 
     def on_widget_drag_motion(self, widget, context, x, y, timestamp):
         context.docklayout = self
@@ -310,6 +313,17 @@ def drag_motion(widget, context, x, y, timestamp):
     return _propagate_to_parent(drag_motion, widget, context, x, y, timestamp)
 
 @generic
+def cleanup(widget):
+    '''
+    :param widget: widget that may require cleanup.
+
+    Perform cleanup action for a widget. For example after a drag-and-drop
+    operation or when a dock-item is closed.
+    '''
+    parent = widget.get_parent()
+    return parent and cleanup(parent)
+
+@generic
 def drag_end(widget, context):
     '''
     :param context: the gdk.DragContext
@@ -403,17 +417,19 @@ def dock_group_drag_motion(self, context, x, y, timestamp):
 
     return DragData(self, dock_unhighlight, dock_group_drag_data_received)
 
-# Attached to drag *source*
-@drag_end.when_type(DockGroup)
-def dock_group_drag_end(self, context):
+@cleanup.when_type(DockGroup)
+def dock_group_cleanup(self):
     self.log.debug('checking for removal', self.items)
     if not self.items:
         parent = self.get_parent()
         self.log.debug('removing empty group')
         self.destroy()
-        #drag_end.default(self, context)
-        return parent and drag_end(parent, context)
+        return parent and cleanup(parent)
 
+# Attached to drag *source*
+@drag_end.when_type(DockGroup)
+def dock_group_drag_end(self, context):
+    cleanup(self)
 
 # Attached to drag *source*
 @drag_failed.when_type(DockGroup)
@@ -505,13 +521,12 @@ def dock_paned_drag_motion(self, context, x, y, timestamp):
 
     return DragData(self, dock_unhighlight, dock_paned_drag_data_received)
 
-# Attached to drag *source*
-@drag_end.when_type(DockPaned)
-def dock_paned_drag_end(self, context):
+@cleanup.when_type(DockPaned)
+def dock_paned_cleanup(self):
     if not self.items:
         parent = self.get_parent()
         self.destroy()
-        return parent and drag_end(parent, context)
+        return parent and cleanup(parent)
     if len(self.items) == 1:
         parent = self.get_parent()
         child = self.items[0].child
@@ -525,6 +540,11 @@ def dock_paned_drag_end(self, context):
             child.unparent()
             parent.remove(self)
             parent.add(child)
+
+# Attached to drag *source*
+@drag_end.when_type(DockPaned)
+def dock_paned_drag_end(self, context):
+    cleanup(self)
 
 def dock_paned_magic_borders_leave(self):
     self.get_ancestor(DockFrame).set_placeholder(None)
@@ -597,17 +617,20 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
 # DockFrame
 ################################################################################
 
-@drag_end.when_type(DockFrame)
-def dock_frame_drag_end(self, context):
+@cleanup.when_type(DockFrame)
+def dock_frame_cleanup(self):
     if not self.get_children():
         parent = self.get_parent()
         self.destroy()
         try:
-            parent.get_transient_for()
+            if parent.get_transient_for():
+                parent.destroy()
         except AttributeError:
             self.log.error(' Not a transient top level widget')
-        else:
-            parent.destroy()
+
+@drag_end.when_type(DockFrame)
+def dock_frame_drag_end(self, context):
+    cleanup(self)
 
 def dock_frame_magic_borders_leave(self):
     self.set_placeholder(None)
