@@ -1,33 +1,22 @@
+
+import pygtk
+pygtk.require('2.0')
+
 from freshen import Before, After, AfterStep, Given, When, Then, scc
 import gtk
 from etk.docking import DockPaned, DockGroup, DockLayout, DockFrame, DockItem
-from etk.docking.dockgroup import DRAG_TARGET_ITEM_LIST
-from etk.docking.dnd import DockDragContext
-
-
-#def event(widget, event_type, **kwargs):
-#    e = gtk.gdk.Event(event_type)
-#    for k, v in kwargs.items():
-#        print e, k, v
-#        setattr(e, k, v)
-#    e.window = widget.window
-#    #widget.event(e)
-#    #_gtk.main_do_event(e)
-#    return e
-
-#def do_event(widget, event_type, **kwargs):
-#    e = event(widget, event_type, **kwargs)
-#    gtk.main_do_event(e)
+from etk.docking.dnd import DRAG_TARGET_ITEM_LIST, DockDragContext
 
 
 class StubContext(object):
-    def __init__(self, source_widget, tabs):
+    def __init__(self, source_widget, items):
         self.targets = [ DRAG_TARGET_ITEM_LIST[0] ]
         self.source_widget = source_widget
         # Set up dragcontext (nornally done in motion_notify event)
-        if tabs:
+
+        if items:
             self.source_widget.dragcontext = dragcontext = DockDragContext()
-            dragcontext.dragged_object = tabs
+            dragcontext.dragged_object = items
 
     def get_source_widget(self):
         return self.source_widget
@@ -79,12 +68,15 @@ def default_window(n_groups):
     scc.layout.add(scc.frame)
     paned = DockPaned()
     scc.frame.add(paned)
+    scc.window.show()
+    scc.frame.show()
+    paned.show()
     scc.groups = []
     for i in range(int(n_groups)):
         group = DockGroup()
         paned.add(group)
+        group.show()
         scc.groups.append(group)
-    scc.window.show_all()
 
 @Given('(one|another) containing (\d+) items')
 def setup_items(one_other, n_items):
@@ -96,7 +88,7 @@ def setup_items(one_other, n_items):
         button = gtk.Button()
         item = DockItem(icon_name='file', title='Item %s' % n, title_tooltip_text='')
         item.add(button)
-        item.show_all()
+        item.show()
         scc.groups[index].add(item)
     scc.item_index = index
 
@@ -117,41 +109,41 @@ def define_item_by_name(nth_item, nth_group, name):
 @Given('I drag item "([^"]+)"')
 def drag_item(name):
     group, item = getattr(scc, name)
-    for tab in group.visible_tabs:
-        if tab.item is item:
-            group.dragcontext.source_x = 1
-            group.dragcontext.source_y = 1
-            group.dragcontext.source_button = 1
-            group.dragcontext.dragged_object = [ tab ]
-            scc.dragged_tabs = group, [tab]
-            break
-    else:
-        assert 0, 'item not found'
+    assert item in group.items
+    group.dragcontext.source_x = 1
+    group.dragcontext.source_y = 1
+    group.dragcontext.source_button = 1
+    group.dragcontext.dragged_object = [ item ]
+    scc.dragged_items = group, [ item ]
+    group.do_drag_begin(context=None)
     print 'start drag for item'
 
 def drop_item(dest, x, y):
-    source_group, tabs = scc.dragged_tabs
+    source_group, items = scc.dragged_items
 
     scc.drop_pos = x, y
-    dropped_items = [tab.item for tab in tabs]
 
+    print 'drop item', dest, x, y
     context = StubContext(source_group, tabs)
+    print 'moving\n\n'
     scc.layout.on_widget_drag_motion(dest, context, x, y, 0)
 
+    print 'dropping item'
     scc.layout.on_widget_drag_drop(dest, context, x, y, 0)
 
-    del scc.dragged_tabs
-    scc.dropped_items = dropped_items
+    del scc.dragged_items
+    scc.dropped_items = items
     scc.dropped_on_dest = dest
-    print 'dropping item'
+    print 'dropped item'
 
 @When('I drop it on the content section in group "([^"]+)"')
 def drop_item_on_content(name):
+    print 'dropping item on', name
     dest_group = getattr(scc, name)
 
     a  = dest_group.allocation
     
-    ox, oy = dest_group.window.get_root_origin()
+    ox, oy = 0, 0 #dest_group.window.get_root_origin()
     x, y = ox + a.width / 2, oy + a.height / 2
     drop_item(dest_group, x, y)
 
