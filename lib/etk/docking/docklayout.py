@@ -586,11 +586,9 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
         elif min(x, y) < MAGIC_BORDER_SIZE:
             position = 0
             make_placeholder(self, x, y, self.allocation, current_group.child.allocation)
-            # TODO: create placeholder: if horizontal/if vertical
         else:
             position = -1
             make_placeholder(self, x, y, self.allocation, current_group.child.allocation)
-            # TODO: create placeholder
         def add_group_receiver(selection_data, info):
             source = context.get_source_widget()
             assert source
