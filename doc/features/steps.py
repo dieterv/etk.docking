@@ -124,7 +124,7 @@ def drop_item(dest, x, y):
     scc.drop_pos = x, y
 
     print 'drop item', dest, x, y
-    context = StubContext(source_group, tabs)
+    context = StubContext(source_group, items)
     print 'moving\n\n'
     scc.layout.on_widget_drag_motion(dest, context, x, y, 0)
 
@@ -154,15 +154,12 @@ def drop_item_on_tab(tabname, groupname):
 
     assert dg2 is dest_group
 
-    for tab in dest_group.tabs:
-        if tab.item is item:
-            break
-    else:
-        assert 0, 'item not found'
+    assert item in dest_group.items
 
     ox, oy = dest_group.window.get_root_origin()
-    x, y = tab.area.x + tab.area.width - 2, tab.area.y + tab.area.height - 2
-    print 'Dropping on', tab.area, x, y
+    a = item.allocation
+    x, y = a.x + a.width - 2, a.y + a.height - 2
+    print 'Dropping on', a, x, y
     drop_item(dest_group, x, y)
 
 @When('I drop it between groups "([^"]+)" and "([^"]+)"')
@@ -195,13 +192,7 @@ def then_tab_on_group(item_name, group_name):
     _, item = getattr(scc, item_name)
     group = getattr(scc, group_name)
     print 'tab is on group', item
-    for tab in group.tabs:
-        print 'tab.item', tab.item
-        if tab.item is item:
-            print 'Have the item'
-            return
-    else:
-        assert 0, 'item not in group'
+    assert item in group.items
 
 @Then('it has the focus')
 def then_it_has_the_focus():
@@ -212,7 +203,7 @@ def then_it_has_the_focus():
 def placed_before_tab(name):
     newgroup, item = getattr(scc, name)
     assert len(scc.dropped_items) == 1
-    items = [tab.item for tab in newgroup.visible_tabs]
+    items = newgroup.visible_items
     print 'it has been placed in just before', items.index(scc.dropped_items[0]) , items.index(item) 
     assert items.index(scc.dropped_items[0]) == items.index(item) - 1
     
@@ -222,7 +213,7 @@ def then_new_group():
 
 @Then('it should contain the item')
 def then_contains_item():
-    items = [t.item for t in scc.new_groups[0].tabs]
+    items = scc.new_groups[0].items
     assert set(scc.dropped_items).issubset(items), (scc.dropped_items, items)
 
 
