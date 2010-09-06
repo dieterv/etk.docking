@@ -60,7 +60,6 @@ class _DockPanedItem(object):
     def __contains__(self, pos):
         return rect_contains(self.child.allocation, *pos)
 
-
 class DockPaned(gtk.Container):
     '''
     The etk.DockPaned class groups it's children in panes, either
@@ -200,6 +199,10 @@ class DockPaned(gtk.Container):
     def do_size_request(self, requisition):
         self.log.debug('%s' % requisition)
 
+        def _weight(size):
+            return size
+            #return ((size << 16) + 999) / 1000
+
         # Compute total size request
         width = height = 0
 
@@ -208,11 +211,11 @@ class DockPaned(gtk.Container):
                 w, h = item.child.size_request()
 
                 if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-                    item.min_weight = ((w << 16) + 999) / 1000
+                    item.min_weight = _weight(w)
                     width += w
                     height = max(height, h)
                 else:
-                    item.min_weight = ((h << 16) + 999) / 1000
+                    item.min_weight = _weight(h)
                     width = max(width, w)
                     height += h
             else:
@@ -227,13 +230,17 @@ class DockPaned(gtk.Container):
     def do_size_allocate(self, allocation):
         self.log.debug('%s' % allocation)
 
+        def _weight(size):
+            return size - (self._get_n_handles() * self._handle_size)
+            #return (((size - (self._get_n_handles() * self._handle_size)) << 16) + 999) / 1000
+
         # Compute old and new total weight
         if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-            old_weight = (((self.allocation.width - (self._get_n_handles() * self._handle_size)) << 16) + 999) / 1000
-            new_weight = (((allocation.width - (self._get_n_handles() * self._handle_size)) << 16) + 999) / 1000
+            old_weight = _weight(self.allocation.width)
+            new_weight = _weight(allocation.width)
         else:
-            old_weight = (((self.allocation.height - (self._get_n_handles() * self._handle_size)) << 16) + 999) / 1000
-            new_weight = (((allocation.height - (self._get_n_handles() * self._handle_size)) << 16) + 999) / 1000
+            old_weight = _weight(self.allocation.height)
+            new_weight = _weight(allocation.height)
 
         # Compute delta if we have been resized
         if self._reset_weights:
@@ -241,7 +248,7 @@ class DockPaned(gtk.Container):
             requested_weights = 0
 
             for item in self._children[::2]:
-                self.log.debug('Setting weight for %s' % item)
+                print 'reset weight', item.weight, item.min_weight
                 item.weight = item.min_weight
                 requested_weights += item.min_weight
 
@@ -278,7 +285,8 @@ class DockPaned(gtk.Container):
                     area.height = allocation.height
 
                     if isinstance(item, _DockPanedItem):
-                        area.width = item.weight * 1000 >> 16
+                        #area.width = item.weight * 1000 >> 16
+                        area.width = item.weight
                     else:
                         area.width = self._handle_size
 
@@ -289,7 +297,8 @@ class DockPaned(gtk.Container):
                     area.width = allocation.width
 
                     if isinstance(item, _DockPanedItem):
-                        area.height = item.weight * 1000 >> 16
+                        #area.height = item.weight * 1000 >> 16
+                        area.height = item.weight
                     else:
                         area.height = self._handle_size
 
@@ -391,8 +400,6 @@ class DockPaned(gtk.Container):
         if self.dragcontext.dragging:
             children = self._children[::2]
             handle_index = self._children.index(self.dragcontext.dragged_object)
-            item_before = self._children[handle_index - 1]
-            item_after = self._children[handle_index + 1]
 
             if self._orientation == gtk.ORIENTATION_HORIZONTAL:
                 cursor = self._hcursor
@@ -401,7 +408,9 @@ class DockPaned(gtk.Container):
                 cursor = self._vcursor
                 delta_size = int(self.get_pointer()[1] - self.dragcontext.source_y)
 
-            delta_weight = ((delta_size << 16) + 999) / 1000
+            delta_weight = delta_size #((delta_size << 16) + 999) / 1000
+
+            item_after = self._children[handle_index + 1]
 
             if delta_weight < 0:
                 # Enlarge the item after and shrink the items before the handle
@@ -410,7 +419,7 @@ class DockPaned(gtk.Container):
                 shrink = reversed(children[:children.index(item_after)])
             elif delta_weight > 0:
                 # Enlarge the item before and shrink the items after the handle
-                enlarge = item_before
+                enlarge = self._children[handle_index - 1]
                 shrink = children[children.index(item_after):]
             else:
                 enlarge = None
@@ -520,7 +529,6 @@ class DockPaned(gtk.Container):
         Private logic, shared between public interface and add event handler.
         '''
         #TODO: implement 'expand' child property...
-        handle = _DockPanedHandle()
         item = _DockPanedItem()
         item.expand = expand
         item.child = widget
@@ -529,13 +537,13 @@ class DockPaned(gtk.Container):
 
         if position == -1:
             if len(self._children) >= 1:
-                self._children.append(handle)
+                self._children.append(_DockPanedHandle())
 
             self._children.append(item)
 
         else:
             if len(self._children) >= 1:
-                self._children.insert(position * 2, handle)
+                self._children.insert(position * 2, _DockPanedHandle())
 
             self._children.insert(position * 2, item)
 
