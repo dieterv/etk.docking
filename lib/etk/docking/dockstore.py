@@ -69,8 +69,6 @@ def parent_attributes(widget):
     if isinstance(container, DockPaned):
         paned_item = [i for i in container.items if i.child is widget][0]
         d = { 'expand': str(paned_item.expand).lower() }
-        if paned_item.min_weight:
-            d['minweight'] = str(paned_item.min_weight)
         print 'saving weight', paned_item.weight
         if paned_item.weight:
             d['weight'] = str(paned_item.weight)
@@ -120,31 +118,32 @@ def dock_item(parent, icon, name, title, tooltip, pos=None, vispos=None, current
     return item
 
 @factory('dockgroup')
-def dock_paned_factory(parent, expand=None, weight=None, minweight=None):
+def dock_paned_factory(parent, expand=None, weight=None):
     group = DockGroup()
     if expand is not None:
-        item = parent.insert_child(group, expand=expand)
-        item.weight = weight
-        item.min_weight = minweight
+        item = parent.insert_child(group, expand=(expand == 'true'))
+        item.weight = float(weight)
     else:
         parent.add(group)
+    if isinstance(parent, DockPaned):
+        parent._reset_weights = False
     return group
 
 @factory('dockpaned')
-def dock_paned_factory(parent, orientation, expand=None, weight=None, minweight=None):
+def dock_paned_factory(parent, orientation, expand=None, weight=None):
     paned = DockPaned()
     if orientation == 'horizontal':
         paned.set_orientation(gtk.ORIENTATION_HORIZONTAL)
     else:
         paned.set_orientation(gtk.ORIENTATION_VERTICAL)
-    paned._reset_weights = False
     print 'set orientation to', orientation, paned.get_orientation()
     if expand is not None:
-        item = parent.insert_child(paned, expand=expand)
-        item.weight = weight
-        item.min_weight = minweight
+        item = parent.insert_child(paned, expand=(expand == 'true'))
+        item.weight = float(weight)
     else:
         parent.add(paned)
+    if isinstance(parent, DockPaned):
+        parent._reset_weights = False
     return paned
     
 @factory('dockframe')
