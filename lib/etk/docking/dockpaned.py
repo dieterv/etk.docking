@@ -106,7 +106,7 @@ class DockPaned(gtk.Container):
 
         # Initialize attributes
         self._children = [] # Note: list contains both items and handles.
-        self._reset_weights = True
+        self._reset_weights = False
         self._hcursor = None
         self._vcursor = None
 
@@ -241,6 +241,7 @@ class DockPaned(gtk.Container):
             requested_weights = 0
 
             for item in self._children[::2]:
+                self.log.debug('Setting weight for %s' % item)
                 item.weight = item.min_weight
                 requested_weights += item.min_weight
 
@@ -510,8 +511,9 @@ class DockPaned(gtk.Container):
                 break
 
     def insert_child(self, widget, position=-1, expand=True):
-        self._insert_child(widget, position, expand)
+        item = self._insert_child(widget, position, expand)
         self.emit('add', widget)
+        return item
 
     def _insert_child(self, widget, position=-1, expand=True):
         '''
@@ -543,6 +545,8 @@ class DockPaned(gtk.Container):
         #TODO: this is a hack! remove it!
         self._reset_weights = True
         self.queue_resize()
+
+        return item
 
     #TODO: def append_item(self, item):
     #TODO: def prepend_item(item, tab_label=None)

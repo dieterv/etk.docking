@@ -42,15 +42,17 @@ except ImportError:
     from etk.docking import DockLayout, DockFrame, DockPaned, DockGroup, DockItem
     del os, sys
 
+from etk.docking import dockstore
 
 class MainWindow(gtk.Window):
-    def __init__(self):
+    def __init__(self, docklayout=None):
         gtk.Window.__init__(self)
 
         self.set_default_size(500, 150)
         self.set_title('etk.docking demo')
         self.set_border_width(4)
         self.file_counter = 1
+        self.subwindows = []
 
         vbox = gtk.VBox()
         vbox.set_spacing(4)
@@ -59,13 +61,16 @@ class MainWindow(gtk.Window):
         ########################################################################
         # Docking
         ########################################################################
-        self.dockframe = DockFrame()
-        self.docklayout = DockLayout()
-        self.docklayout.add(self.dockframe)
+        if docklayout:
+            self.dockframe = iter(docklayout.frames).next()
+            self.docklayout = docklayout
+        else:
+            self.dockframe = DockFrame()
+            self.dockframe.add(DockGroup())
+            self.docklayout = DockLayout()
+            self.docklayout.add(self.dockframe)
+
         vbox.pack_start(self.dockframe)
-
-        self.dockframe.add(DockGroup())
-
         self.docklayout.connect('item-closed', lambda g, i: i.destroy())
 
         ########################################################################
@@ -81,6 +86,20 @@ class MainWindow(gtk.Window):
         orientationbutton.connect('clicked', self._on_orientation_button_clicked)
         vbox.pack_start(orientationbutton, False, False)
 
+        hbox = gtk.HBox()
+
+        savebutton = gtk.Button('Save layout')
+        savebutton.child.set_ellipsize(pango.ELLIPSIZE_MIDDLE)
+        savebutton.connect('clicked', self._on_save_button_clicked)
+        hbox.pack_start(savebutton, True, True)
+
+        loadbutton = gtk.Button('Load layout')
+        loadbutton.child.set_ellipsize(pango.ELLIPSIZE_MIDDLE)
+        loadbutton.connect('clicked', self._on_load_button_clicked)
+        hbox.pack_start(loadbutton, True, True)
+
+        vbox.pack_start(hbox, False, False)
+        
         self.show_all()
 
     def _on_add_di_button_clicked(self, button):
@@ -106,6 +125,31 @@ class MainWindow(gtk.Window):
         paned = self.dockframe.get_children()[0]
         switch_orientation(paned)
 
+    def _on_save_button_clicked(self, button):
+        file = 'demo.sav'
+        s = dockstore.serialize(self.docklayout)
+        with open(file, 'w') as f:
+            f.write(s)
+
+
+    def _on_load_button_clicked(self, button):
+        
+        file = 'demo.sav'
+        with open(file) as f:
+            s = f.read()
+        newlayout = dockstore.deserialize(s, self._create_content)
+        subwindow = MainWindow(newlayout)
+        self.subwindows.append(subwindow)
+
+    def _create_content(self, text=None):
+        # Create a TextView and set some example text
+        scrolledwindow = gtk.ScrolledWindow()
+        scrolledwindow.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        textview = gtk.TextView()
+        textview.get_buffer().set_text(text)
+        scrolledwindow.add(textview)
+        return scrolledwindow
+
     def _add_dockitems(self, dockgroup):
         examples = [('calc', 'calculator', '#!/usr/bin/env python\n\nprint \'Hello!\''),
                     ('file-manager', 'Hi!', 'Hello!'),
@@ -115,18 +159,14 @@ class MainWindow(gtk.Window):
                     ('date', 'today', '9876543210')]
 
         for i in range(random.randrange(1, 10, 1)):
+
             icon_name, tooltip_text, text = random.choice(examples)
 
-            # Create a TextView and set some example text
-            scrolledwindow = gtk.ScrolledWindow()
-            scrolledwindow.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-            textview = gtk.TextView()
-            textview.get_buffer().set_text(text)
-            scrolledwindow.add(textview)
+            child = self._create_content(text)
 
             # Create a DockItem and add our TextView
             di = DockItem(icon_name=icon_name, title='New %s' % self.file_counter, title_tooltip_text=tooltip_text)
-            di.add(scrolledwindow)
+            di.add(child)
             di.show_all()
 
             # Add out DockItem to the DockGroup
