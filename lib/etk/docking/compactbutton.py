@@ -255,17 +255,19 @@ class CompactButton(gtk.Widget):
     def do_enter_notify_event(self, event):
         self._entered = True
         self.set_state(gtk.STATE_PRELIGHT)
-        self.queue_resize()
+        self.queue_draw()
         return True
 
     def do_leave_notify_event(self, event):
         self._entered = False
         self.set_state(gtk.STATE_NORMAL)
+        self.queue_draw()
         return True
 
     def do_button_press_event(self, event):
         if event.button == 1:
             self.set_state(gtk.STATE_ACTIVE)
+            self.queue_draw()
 
         return True
 
