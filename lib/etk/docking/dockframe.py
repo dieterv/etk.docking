@@ -61,6 +61,8 @@ class DockFrame(gtk.Container):
                                                gdk.BUTTON_PRESS_MASK |
                                                gdk.BUTTON_RELEASE_MASK))
         self.window.set_user_data(self)
+        self.style.attach(self.window)
+        self.style.set_background(self.window, gtk.STATE_NORMAL)
 
         if self.child:
             self.child.set_parent_window(self.window)
