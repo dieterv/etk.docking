@@ -40,7 +40,7 @@ def main():
     colors1 = ['fg', 'bg', 'base', 'light', 'mid', 'dark', 'text', 'text_aa']
     colors2 = ['white', 'black']
 
-    print '    <table border=1>'
+    print '    <table border=0>'
     print '      <tr>'
     print '        <td>&nbsp;</td>'
     print '        <td><b>STATE_INSENSITIVE</b></td>'
