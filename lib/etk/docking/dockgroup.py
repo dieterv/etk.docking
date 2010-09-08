@@ -416,7 +416,7 @@ class DockGroup(gtk.Container):
         selected = self.style.text_aa[gtk.STATE_SELECTED]
         selected = (selected.red_float, selected.green_float, selected.blue_float)
         selected_light = HslColor(self.style.text_aa[gtk.STATE_SELECTED])
-        selected_light.set_l(selected_light.get_l() * 1.1)
+        selected_light.set_l(selected_light.get_l() * 1.3)
         selected_light = selected_light.get_rgb_float()
 
         # Create cairo context
