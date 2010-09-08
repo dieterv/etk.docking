@@ -248,13 +248,15 @@ class DockPaned(gtk.Container):
             requested_weights = 0
 
             for item in self._children[::2]:
-                print 'reset weight', item.weight, item.min_weight
                 item.weight = item.min_weight
                 requested_weights += item.min_weight
 
             delta_size = new_weight - requested_weights
-        else:
+        elif old_weight > 0:
             delta_size = new_weight - old_weight
+        else:
+            # For initial paned sizing, don't resize.
+            delta_size = 0
 
         # Accept new allocation
         self.allocation = allocation
@@ -267,6 +269,8 @@ class DockPaned(gtk.Container):
             # Adjust weights if we have been resized
             if delta_size:
                 d = delta_size / self.get_n_items()
+
+                # TODO: Fix this. Here the weight assignment goes wrong for loaded elements.
 
                 for item in self._children[::2]:
                     if item.weight + d <= item.min_weight:

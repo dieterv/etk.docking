@@ -33,8 +33,9 @@ def with_iteration(scc=None):
     """
     Make sure the gtk+ main loop runs after the step.
     """
-    while gtk.events_pending():
-        gtk.main_iteration()
+    pass
+#    while gtk.events_pending():
+#       gtk.main_iteration()
 
 
 @Before

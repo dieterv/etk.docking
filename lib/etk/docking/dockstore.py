@@ -46,11 +46,8 @@ widget_factory = {}
 
 def deserialize(layoutstr, itemfactory):
     def _des(element, parent_widget=None):
-        print 'element', element, bool(element) #, element.attrib
-        print 'attrib', element.attrib
         factory = widget_factory[element.tag]
         widget = factory(parent=parent_widget, **element.attrib)
-        print 'widget is a', widget
         if isinstance(widget, DockItem):
             widget.add(itemfactory(widget.get_name()))
         assert widget, 'No widget (%s)' % widget
@@ -69,7 +66,6 @@ def parent_attributes(widget):
     if isinstance(container, DockPaned):
         paned_item = [i for i in container.items if i.child is widget][0]
         d = { 'expand': str(paned_item.expand).lower() }
-        print 'saving weight', paned_item.weight
         if paned_item.weight:
             d['weight'] = str(paned_item.weight)
     return d
@@ -136,7 +132,6 @@ def dock_paned_factory(parent, orientation, expand=None, weight=None):
         paned.set_orientation(gtk.ORIENTATION_HORIZONTAL)
     else:
         paned.set_orientation(gtk.ORIENTATION_VERTICAL)
-    print 'set orientation to', orientation, paned.get_orientation()
     if expand is not None:
         item = parent.insert_child(paned, expand=(expand == 'true'))
         item.weight = float(weight)
