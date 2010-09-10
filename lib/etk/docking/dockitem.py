@@ -93,7 +93,6 @@ class DockItem(gtk.Bin):
 
     def set_title(self, value):
         self._title = value
-        self.set_name(value)
         self.notify('title')
 
     def get_title_tooltip_text(self):

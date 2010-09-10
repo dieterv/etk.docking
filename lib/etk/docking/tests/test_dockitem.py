@@ -129,13 +129,6 @@ class TestDockItem(unittest.TestCase):
 
         dockitem.destroy()
 
-    def test_name(self):
-        dockitem = DockItem(title='test')
-        self.assertEquals(dockitem.get_name(), 'test')
-        dockitem.set_title('anothertest')
-        self.assertEquals(dockitem.get_name(), 'anothertest')
-        dockitem.destroy()
-
     ############################################################################
     # Test public api
     ############################################################################
