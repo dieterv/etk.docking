@@ -21,7 +21,6 @@
 
 
 from __future__ import absolute_import
-
 import logging
 import random
 
@@ -34,15 +33,16 @@ import gtk.gdk as gdk
 import pango
 
 try:
-    from etk.docking import DockLayout, DockFrame, DockPaned, DockGroup, DockItem
+    import etk.docking
 except ImportError:
     # The lib directory is most likely not on PYTHONPATH, so add it here.
     import os, sys
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'lib')))
-    from etk.docking import DockLayout, DockFrame, DockPaned, DockGroup, DockItem
     del os, sys
+finally:
+    from etk.docking import DockLayout, DockFrame, DockPaned, \
+                            DockGroup, DockItem, dockstore
 
-from etk.docking import dockstore
 
 class MainWindow(gtk.Window):
     def __init__(self, docklayout=None):
@@ -99,7 +99,7 @@ class MainWindow(gtk.Window):
         hbox.pack_start(loadbutton, True, True)
 
         vbox.pack_start(hbox, False, False)
-        
+
         self.show_all()
 
     def _on_add_di_button_clicked(self, button):
@@ -120,23 +120,26 @@ class MainWindow(gtk.Window):
                     paned.set_orientation(gtk.ORIENTATION_VERTICAL)
                 else:
                     paned.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+
                 for child in paned.get_children():
                     switch_orientation(child)
+
         paned = self.dockframe.get_children()[0]
         switch_orientation(paned)
 
     def _on_save_button_clicked(self, button):
         file = 'demo.sav'
         s = dockstore.serialize(self.docklayout)
+
         with open(file, 'w') as f:
             f.write(s)
 
-
     def _on_load_button_clicked(self, button):
-        
         file = 'demo.sav'
+
         with open(file) as f:
             s = f.read()
+
         newlayout = dockstore.deserialize(s, self._create_content)
         subwindow = MainWindow(newlayout)
         self.subwindows.append(subwindow)
@@ -161,7 +164,6 @@ class MainWindow(gtk.Window):
         for i in range(random.randrange(1, 10, 1)):
 
             icon_name, tooltip_text, text = random.choice(examples)
-
             child = self._create_content(text)
 
             # Create a DockItem and add our TextView
