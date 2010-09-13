@@ -73,6 +73,23 @@ class DockLayout(gobject.GObject):
         self.remove_signal_handlers(frame)
         self.frames.remove(frame)
 
+    def get_main_frames(self):
+        """
+        Get the frames that are non-floating (the main frames).
+        """
+        return (f for f in self.frames \
+                if not (isinstance(f.get_parent(), gtk.Window) \
+                    and f.get_parent().get_transient_for()) )
+
+    def get_floating_frames(self):
+        """
+        Get the floating frames. Floating frames have a gtk.Window as parent that is
+        transient for some other window.
+        """
+        return (f for f in self.frames \
+                if isinstance(f.get_parent(), gtk.Window) \
+                    and f.get_parent().get_transient_for() )
+
     def add_signal_handlers(self, widget):
         """
         Set up signal handlers for layout and child widgets
