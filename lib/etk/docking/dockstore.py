@@ -45,6 +45,11 @@ def serialize(layout):
 widget_factory = {}
 
 def deserialize(layoutstr, itemfactory):
+    """
+    Return a new layout with it's attached frames. Frames that should be floating
+    already have their gtk.Window attached (check frame.get_parent()). Transient settings
+    and such should be done by the involking application.
+    """
     def _des(element, parent_widget=None):
         factory = widget_factory[element.tag]
         widget = factory(parent=parent_widget, **element.attrib)
@@ -93,7 +98,12 @@ def dock_paned_attributes(widget):
 @attributes.when_type(DockFrame)
 def dock_frame_attributes(widget):
     a = widget.allocation
-    return dict(width=str(a.width), height=str(a.height))
+    d = dict(width=str(a.width), height=str(a.height))
+    parent = widget.get_parent()
+    if isinstance(parent, gtk.Window) and parent.get_transient_for():
+        d['floating'] = 'true'
+        # TODO: also save window x and y
+    return d
 
 def factory(typename):
     '''
@@ -142,9 +152,13 @@ def dock_paned_factory(parent, orientation, expand=None, weight=None):
     return paned
     
 @factory('dockframe')
-def dock_frame_factory(parent, width, height):
+def dock_frame_factory(parent, width, height, floating=None):
+    assert not parent
     frame = DockFrame()
     #frame.realize()
     frame.set_size_request(int(width), int(height))
-    if parent: parent.add(frame)
+    if floating == 'true':
+        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        #self.window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_UTILITY)
+        window.add(frame)
     return frame
