@@ -411,12 +411,13 @@ class DockGroup(gtk.Container):
         # Prepare colors
         bg = self.style.bg[self.state]
         bg = (bg.red_float, bg.green_float, bg.blue_float)
-        light = self.style.dark[self.state]
-        light = (light.red_float, light.green_float, light.blue_float)
-        mid = self.style.dark[self.state]
-        mid = (mid.red_float, mid.green_float, mid.blue_float)
         dark = self.style.dark[self.state]
         dark = (dark.red_float, dark.green_float, dark.blue_float)
+        tab_light = self.style.text_aa[gtk.STATE_SELECTED]
+        tab_light = (tab_light.red_float, tab_light.green_float, tab_light.blue_float)
+        tab_dark = HslColor(self.style.text_aa[gtk.STATE_SELECTED])
+        tab_dark.set_l(0.9)
+        tab_dark = tab_dark.get_rgb_float()
 
         # Create cairo context
         c = self.window.cairo_create()
@@ -447,7 +448,7 @@ class DockGroup(gtk.Container):
                         self._decoration_area.height + self.border_width / 2,
                         a.width - (2 * self._frame_width) - self.border_width,
                         a.height - self._decoration_area.height - self._frame_width - self.border_width)
-            c.set_source_rgb(*mid)
+            c.set_source_rgb(*tab_light)
             c.stroke()
 
             # Draw tabs
@@ -485,8 +486,8 @@ class DockGroup(gtk.Container):
                     c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
                     c.line_to(tx + tw - 0.5, ty + th)
                     linear = cairo.LinearGradient(0.5, 0.5, 0.5, th)
-                    linear.add_color_stop_rgb(0, *light)
-                    linear.add_color_stop_rgb(1, *mid)
+                    linear.add_color_stop_rgb(1, *tab_light)
+                    linear.add_color_stop_rgb(0, *tab_dark)
                     c.set_source(linear)
                     c.fill_preserve()
                     c.set_source_rgb(*dark)
