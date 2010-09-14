@@ -507,8 +507,8 @@ class DockGroup(gtk.Container):
     def do_button_press_event(self, event):
         '''
         :param event: the event that triggered the signal
-        :returns : True to stop other handlers from being invoked for the event.
-                   False to propagate the event further.
+        :returns: True to stop other handlers from being invoked for the event.
+                  False to propagate the event further.
 
         The do_button_press_event() signal handler is executed when a mouse
         button is pressed.
@@ -529,8 +529,8 @@ class DockGroup(gtk.Container):
     def do_button_release_event(self, event):
         '''
         :param event: the event that triggered the signal
-        :returns : True to stop other handlers from being invoked for the event.
-                   False to propagate the event further.
+        :returns: True to stop other handlers from being invoked for the event.
+                  False to propagate the event further.
 
         The do_button_release_event() signal handler is executed when a mouse
         button is released.
@@ -565,8 +565,8 @@ class DockGroup(gtk.Container):
     def do_motion_notify_event(self, event):
         '''
         :param event: the event that triggered the signal
-        :returns : True to stop other handlers from being invoked for the event.
-                   False to propagate the event further.
+        :returns: True to stop other handlers from being invoked for the event.
+                  False to propagate the event further.
 
         The do_motion-notify-event() signal handler is executed when the mouse
         pointer moves while over this widget.
@@ -678,7 +678,7 @@ class DockGroup(gtk.Container):
         #TODO: Fill selection_data with the right data (set() or set_text())
         self.log.debug('%s, %s, %s' % (context, selection_data, info))
 
-       # Set some data, so DnD process continues
+        # Set some data, so DnD process continues
         selection_data.set(gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0]), 8,
                             '%d tabs' % len(self.dragcontext.dragged_object))
 
