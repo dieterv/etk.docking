@@ -26,102 +26,61 @@ import gtk
 from gtk import gdk
 
 
-class DockFrame(gtk.Container):
-    """
-    Top level widget for a dock layout hierarchy.
-    """
+class DockFrame(gtk.Bin):
+    '''
+    The etk.DockFrame widget is a gtk.Bin that acts as the toplevel widget
+    for a dock layout hierarchy.
+    '''
     __gtype_name__ = 'EtkDockFrame'
 
     def __init__(self):
-        gtk.Container.__init__(self)
+        gtk.Bin.__init__(self)
 
         # Initialize logging
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
         self.log.debug('')
-        self.child = None
-        self.placeholder = None
+
+        # Internal housekeeping
+        self._placeholder = None
 
     ############################################################################
     # GtkWidget
     ############################################################################
-    def do_realize(self):
-        self.log.debug('')
-
-        # Internal housekeeping
-        self.set_flags(self.flags() | gtk.REALIZED)
-        self.window = gdk.Window(self.get_parent_window(),
-                                 x = self.allocation.x,
-                                 y = self.allocation.y,
-                                 width = self.allocation.width,
-                                 height = self.allocation.height,
-                                 window_type = gdk.WINDOW_CHILD,
-                                 wclass = gdk.INPUT_OUTPUT,
-                                 event_mask = (gdk.EXPOSURE_MASK |
-                                               gdk.POINTER_MOTION_MASK |
-                                               gdk.BUTTON_PRESS_MASK |
-                                               gdk.BUTTON_RELEASE_MASK))
-        self.window.set_user_data(self)
-        self.style.attach(self.window)
-        self.style.set_background(self.window, gtk.STATE_NORMAL)
-
-        if self.child:
-            self.child.set_parent_window(self.window)
-
-    def do_unrealize(self):
-        self.log.debug('')
-        self.window.destroy()
-        gtk.Container.do_unrealize(self)
-
     def do_size_request(self, requisition):
         self.log.debug('%s' % requisition)
 
-        # Compute total size request
-        width = height = 0
-        if self.child:
-            width, height = self.child.size_request()
+        requisition.width = 0
+        requisition.height = 0
 
-        requisition.width = width
-        requisition.height = height
+        if self.child and self.child.flags() & gtk.VISIBLE:
+            (requisition.width, requisition.height) = self.child.size_request()
+            requisition.width += self.border_width * 2
+            requisition.height += self.border_width * 2
 
     def do_size_allocate(self, allocation):
         self.log.debug('%s' % allocation)
 
         self.allocation = allocation
-        if self.flags() & gtk.REALIZED:
-            self.window.move_resize(*allocation)
 
-        if self.child:
-            bw = self.props.border_width
-            self.child.size_allocate((0, 0,
-                    allocation.width - 2*bw, allocation.height - 2*bw))
-        #if self.placeholder:
-        #    self.placeholder.size_allocate((0, 0, 200, 200))
+        if self.child and self.child.flags() & gtk.VISIBLE:
+            child_allocation = gdk.Rectangle()
+            child_allocation.x = allocation.x + self.border_width
+            child_allocation.y = allocation.y + self.border_width
+            child_allocation.width = allocation.width - (2 * self.border_width)
+            child_allocation.height = allocation.height - (2 * self.border_width)
+            self.child.size_allocate(child_allocation)
 
     def do_forall(self, internals, callback, data):
         # Is also called for map and expose events.
         if self.child:
             callback(self.child, data)
 
-        if internals and self.placeholder:
-            callback(self.placeholder, data)
-
-    def do_add(self, widget):
-        self.log.debug('')
-        assert not self.child
-        widget.set_parent(self)
-        self.child = widget
-
-    def do_remove(self, widget):
-        self.log.debug('')
-        assert self.child
-        self.child.unparent()
-        self.child = None
-
     def set_placeholder(self, placeholder):
-        if self.placeholder:
-            self.placeholder.unparent()
-            self.placeholder = None
-        if placeholder:
-            self.placeholder = placeholder
-            self.placeholder.set_parent(self)
+        if self._placeholder:
+            self._placeholder.hide()
+            self._placeholder.destroy()
+            self._placeholder = None
 
+        if placeholder:
+            self._placeholder = placeholder
+            self._placeholder.set_transient_for(self.get_toplevel())
