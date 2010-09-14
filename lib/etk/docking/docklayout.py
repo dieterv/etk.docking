@@ -37,20 +37,14 @@ MAGIC_BORDER_SIZE = 10
 
 DragData = namedtuple('DragData', 'drop_widget leave received')
 
+
 class DockLayout(gobject.GObject):
     """
     Manage a dock layout.
 
     For this to work the toplevel widget in the layout hierarchy should be a
     DockFrame. The DockFrame is registered with the DockLayout. After that
-    sophisticated drag-and-drop fnctionality is present.
-
-    Signals
-    =======
-
-    item-closed ( group, item ): event forwarded from the DockGroup on which
-    the item was removed. This makes for easy central maintenance of how to deal
-    with closed items (e.g. if the items should be destroyed or not).
+    sophisticated drag-and-drop functionality is present.
     """
 
     __gtype_name__ = 'EtkDockLayout'
@@ -61,14 +55,13 @@ class DockLayout(gobject.GObject):
 
     def __init__(self):
         gobject.GObject.__init__(self)
+
         # Initialize logging
         self.log = getLogger('%s.%s' % (self.__class__.__name__, hex(id(self))))
         self.log.debug('')
 
         self.frames = set()
-        # Map widget -> set([signals, ...])
-        self._signal_handlers = {}
-
+        self._signal_handlers = {} # Map widget -> set([signals, ...])
         self._drag_data = None
 
     def add(self, frame):
@@ -107,6 +100,7 @@ class DockLayout(gobject.GObject):
 
         if isinstance(widget, DockGroup):
             signals.add(widget.connect('item-closed', self.on_dockgroup_item_closed))
+
         self._signal_handlers[widget] = signals
 
         if isinstance(widget, gtk.Container):
@@ -122,9 +116,12 @@ class DockLayout(gobject.GObject):
             pass # No signals
         else:
             self.log.debug('Removing signals for widget %s' % widget)
+
             for s in signals:
                 widget.disconnect(s)
+
             del self._signal_handlers[widget]
+
             if isinstance(widget, gtk.Container):
                 widget.foreach(self.remove_signal_handlers)
 
@@ -153,14 +150,15 @@ class DockLayout(gobject.GObject):
         drag_data = drag_motion(widget, context, x, y, timestamp)
         old_drop_widget = self._drag_data and self._drag_data.drop_widget
         new_drop_widget = drag_data and drag_data.drop_widget
+
         if new_drop_widget is not old_drop_widget:
             self.on_widget_drag_leave(widget, context, timestamp)
             self._drag_data = drag_data
 
-
     def on_widget_drag_leave(self, widget, context, timestamp):
         # Note: when dropping, drag-leave is invoked before drag-drop
         drag_data = self._drag_data
+
         if drag_data and drag_data.leave:
             self.log.debug('on widget drag leave %s' % drag_data.leave)
             drag_data.leave(drag_data.drop_widget)
@@ -176,6 +174,7 @@ class DockLayout(gobject.GObject):
         if drag_data and drag_data.drop_widget:
             target = gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0])
             drag_data.drop_widget.drag_get_data(context, target, timestamp)
+
         return drag_data and drag_data.received
 
     def on_widget_drag_data_received(self, widget, context, x, y, selection_data, info, timestamp):
@@ -186,6 +185,7 @@ class DockLayout(gobject.GObject):
         self.log.debug('%s, %s, %s, %s, %s, %s' % (context, x, y, selection_data, info, timestamp))
         drag_data = self._drag_data
         assert drag_data.received
+
         try:
             drag_data.received(selection_data, info)
         finally:
@@ -201,6 +201,7 @@ class DockLayout(gobject.GObject):
 
     def on_dockgroup_item_closed(self, group, item):
         self.emit('item-closed', group, item)
+
 
 def _propagate_to_parent(func, widget, context, x, y, timestamp):
     '''
@@ -230,17 +231,19 @@ def make_placeholder(widget, x, y, a, ca=None):
         allocation = (ca.x, ca.y, ca.width, MAGIC_BORDER_SIZE)
     elif a.height - y < MAGIC_BORDER_SIZE:
         allocation = (ca.x, a.height - MAGIC_BORDER_SIZE, ca.width, MAGIC_BORDER_SIZE)
+
     placeholder = Placeholder()
+
     if isinstance(widget, DockFrame):
         frame = widget
     else:
         frame = widget.get_ancestor(DockFrame)
         fx, fy = widget.translate_coordinates(frame, allocation[0], allocation[1])
         allocation = (fx, fy, allocation[2], allocation[3])
+
     frame.set_placeholder(placeholder)
     placeholder.size_allocate(allocation)
     placeholder.show()
-
 
 def with_magic_borders(func):
     '''
@@ -354,7 +357,6 @@ def drag_failed(widget, context, result):
 ################################################################################
 # DockGroup
 ################################################################################
-
 def dock_group_expose_highlight(self, event):
     try:
         tab = self._visible_tabs[self._drop_tab_index]
@@ -406,13 +408,13 @@ def dock_group_drag_motion(self, context, x, y, timestamp):
 
     def dock_group_drag_data_received(selection_data, info):
         self.log.debug('%s, %s, %s, %s, %s, %s' % (context, x, y, selection_data, info, timestamp))
-
         source = context.get_source_widget()
         assert source
-
         self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
+
         for item in reversed(source.dragcontext.dragged_object):
             self.insert_item(item, visible_position=self._drop_tab_index)
+
         context.finish(True, True, timestamp) # success, delete, time
 
     return DragData(self, dock_unhighlight, dock_group_drag_data_received)
@@ -420,6 +422,7 @@ def dock_group_drag_motion(self, context, x, y, timestamp):
 @cleanup.when_type(DockGroup)
 def dock_group_cleanup(self):
     self.log.debug('checking for removal', self.items)
+
     if not self.items:
         parent = self.get_parent()
         self.log.debug('removing empty group')
@@ -440,7 +443,7 @@ def dock_group_drag_failed(self, context, result):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.move(*self.get_pointer())
         window.set_size_request(self.allocation.width, self.allocation.height)
-        window.set_policy(True, True, True) # allow_shrink, allow_grow, auto_shrink
+        window.set_resizable(True)
         window.set_transient_for(self.get_toplevel())
         frame = DockFrame()
         window.add(frame)
@@ -468,7 +471,6 @@ def dock_group_drag_failed(self, context, result):
 ################################################################################
 # DockPaned
 ################################################################################
-
 def dock_paned_expose_highlight(self, event):
     try:
         handle = self.handles[self._drop_handle_index]
@@ -495,9 +497,8 @@ def dock_paned_highlight(self):
 @with_magic_borders
 def dock_paned_drag_motion(self, context, x, y, timestamp):
     self.log.debug('%s, %s, %s, %s' % (context, x, y, timestamp))
-
-
     handle = self.get_handle_at_pos(x, y)
+
     if handle:
         self._drop_handle_index = self.handles.index(self.get_handle_at_pos(x, y))
     else:
@@ -515,8 +516,10 @@ def dock_paned_drag_motion(self, context, x, y, timestamp):
         dock_group = DockGroup()
         self.insert_child(dock_group, self._drop_handle_index + 1)
         dock_group.show()
+
         for item in source.dragcontext.dragged_object:
             dock_group.insert_item(item)
+
         context.finish(True, True, timestamp) # success, delete, time
 
     return DragData(self, dock_unhighlight, dock_paned_drag_data_received)
@@ -527,9 +530,11 @@ def dock_paned_cleanup(self):
         parent = self.get_parent()
         self.destroy()
         return parent and cleanup(parent)
+
     if len(self.items) == 1:
         parent = self.get_parent()
         child = self.items[0].child
+
         if isinstance(parent, DockPaned):
             position = [i.child for i in parent.items].index(self)
             child.unparent()
@@ -554,31 +559,38 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
     def handle(create):
         current_group = self.get_item_at_pos(x, y)
         assert current_group
+
         if create:
             #print 'Add new DockPaned and add DockGroup'
             def new_paned_and_group_receiver(selection_data, info):
                 source = context.get_source_widget()
                 assert source
                 new_paned = DockPaned()
+
                 if self.get_orientation() == gtk.ORIENTATION_HORIZONTAL:
                     new_paned.set_orientation(gtk.ORIENTATION_VERTICAL)
                 else:
                     new_paned.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+
                 position = self.items.index(current_group)
                 self.remove(current_group.child)
                 self.insert_child(new_paned, position=position)
                 new_group = DockGroup()
+
                 if min(x, y) < MAGIC_BORDER_SIZE:
                     new_paned.insert_child(new_group)
                     new_paned.insert_child(current_group.child)
                 else:
                     new_paned.insert_child(current_group.child)
                     new_paned.insert_child(new_group)
+
                 new_paned.show()
                 new_group.show()
                 self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
+
                 for item in source.dragcontext.dragged_object:
                     new_group.append_item(item)
+
                 context.finish(True, True, timestamp) # success, delete, time
 
             make_placeholder(self, x, y, self.allocation, current_group.child.allocation)
@@ -589,6 +601,7 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
         else:
             position = -1
             make_placeholder(self, x, y, self.allocation, current_group.child.allocation)
+
         def add_group_receiver(selection_data, info):
             source = context.get_source_widget()
             assert source
@@ -599,22 +612,23 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
             for item in source.dragcontext.dragged_object:
                 new_group.append_item(item)
             context.finish(True, True, timestamp) # success, delete, time
+
         return add_group_receiver
 
     a = self.allocation
+
     if abs(min(y, a.height - y)) < MAGIC_BORDER_SIZE:
         received = handle(self.get_orientation() == gtk.ORIENTATION_HORIZONTAL)
         return DragData(self, dock_paned_magic_borders_leave, received)
     elif abs(min(x, a.width - x)) < MAGIC_BORDER_SIZE:
         received = handle(self.get_orientation() == gtk.ORIENTATION_VERTICAL)
         return DragData(self, dock_paned_magic_borders_leave, received)
-    return None
 
+    return None
 
 ################################################################################
 # DockFrame
 ################################################################################
-
 @cleanup.when_type(DockFrame)
 def dock_frame_cleanup(self):
     if not self.get_children():
@@ -645,6 +659,7 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
     self.log.debug('Magic borders')
     a = self.allocation
     position = None
+
     if x < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_HORIZONTAL
         position = 0
@@ -657,10 +672,12 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
     elif a.height - y < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_VERTICAL
         position = -1
+
     if position is not None:
         self.log.debug('Found %s %s' % (orientation, position))
         self.log.debug('%s %s %s' % (x, y, str(a)))
         make_placeholder(self, x, y, gdk.Rectangle(0, 0, a.width, a.height))
+
         def new_paned_and_group_receiver(selection_data, info):
             source = context.get_source_widget()
             assert source
@@ -677,9 +694,12 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
             new_paned.show()
             new_group.show()
             self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
+
             for item in source.dragcontext.dragged_object:
                 new_group.append_item(item)
+
             context.finish(True, True, timestamp) # success, delete, time
+
         return DragData(self, dock_frame_magic_borders_leave, new_paned_and_group_receiver)
 
     return None
