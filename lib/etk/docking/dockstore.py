@@ -183,7 +183,8 @@ def dock_frame_factory(parent, width, height, floating=None, x=None, y=None):
     parent.add(frame)
     if floating == 'true':
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        #self.window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_UTILITY)
+        #self.window.set_type_)hint(gtk.gdk.WINDOW_TYPE_HINT_UTILITY)
+        window.set_property('skip-taskbar-hint', True)
         window.move(int(x), int(y))
         window.add(frame)
     return frame

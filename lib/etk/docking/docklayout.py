@@ -461,6 +461,7 @@ def dock_group_drag_failed(self, context, result):
         window.move(*self.get_pointer())
         window.set_size_request(self.allocation.width, self.allocation.height)
         window.set_resizable(True)
+        window.set_property('skip-taskbar-hint', True)
         window.set_transient_for(self.get_toplevel())
         frame = DockFrame()
         window.add(frame)
