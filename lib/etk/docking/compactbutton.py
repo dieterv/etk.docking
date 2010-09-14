@@ -26,6 +26,8 @@ import gobject
 import gtk
 import gtk.gdk as gdk
 
+from .util import load_icon
+
 
 class CompactButton(gtk.Widget):
     __gtype_name__ = 'EtkCompactButton'
@@ -86,28 +88,18 @@ class CompactButton(gtk.Widget):
     ############################################################################
     # Convenience
     ############################################################################
-    def _load_icon(self, icon_name):
-        icontheme = gtk.icon_theme_get_default()
-
-        if icontheme.has_icon(icon_name):
-            icon_name = icon_name
-        else:
-            icon_name = 'gtk-missing-image'
-
-        return icontheme.load_icon(icon_name, self._size, gtk.ICON_LOOKUP_USE_BUILTIN)
-
     def _refresh_icons(self):
-        self._icon_normal = self._load_icon(self._icon_name_normal)
+        self._icon_normal = load_icon(self._icon_name_normal, self._size)
 
         if self._icon_name_prelight == self._icon_name_normal:
             self._icon_prelight = self._icon_normal
         else:
-            self._icon_prelight = self._load_icon(self._icon_name_prelight)
+            self._icon_prelight = load_icon(self._icon_name_prelight, self._size)
 
         if self._icon_name_active == self._icon_name_prelight:
             self._icon_active = self._icon_prelight
         else:
-            self._icon_active = self._load_icon(self._icon_name_active)
+            self._icon_active = load_icon(self._icon_name_active, self._size)
 
     ############################################################################
     # GObject

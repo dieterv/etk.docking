@@ -19,6 +19,9 @@
 # along with etk.docking. If not, see <http://www.gnu.org/licenses/>.
 
 
+import gtk
+
+
 def rect_contains(rect, x, y):
     '''
     The rect_contains function checks if a point, defined by x and y falls
@@ -42,3 +45,13 @@ def rect_overlaps(rect, x, y):
         return True
     else:
         return False
+
+def load_icon(icon_name, size):
+    icontheme = gtk.icon_theme_get_default()
+
+    if icontheme.has_icon(icon_name):
+        icon_name = icon_name
+    else:
+        icon_name = 'gtk-missing-image'
+
+    return icontheme.load_icon(icon_name, size, gtk.ICON_LOOKUP_USE_BUILTIN)
