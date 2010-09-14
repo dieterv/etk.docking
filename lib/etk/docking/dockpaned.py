@@ -326,8 +326,8 @@ class DockPaned(gtk.Container):
     def do_button_press_event(self, event):
         '''
         :param event: the event that triggered the signal
-        :returns : True to stop other handlers from being invoked for the event.
-                   False to propagate the event further.
+        :returns: True to stop other handlers from being invoked for the event.
+                  False to propagate the event further.
 
         The do_button_press_event() signal handler is executed when a mouse
         button is pressed.
@@ -351,8 +351,8 @@ class DockPaned(gtk.Container):
     def do_button_release_event(self, event):
         '''
         :param event: the event that triggered the signal
-        :returns : True to stop other handlers from being invoked for the event.
-                   False to propagate the event further.
+        :returns: True to stop other handlers from being invoked for the event.
+                  False to propagate the event further.
 
         The do_button_release_event() signal handler is executed when a mouse
         button is released.
@@ -366,8 +366,8 @@ class DockPaned(gtk.Container):
     def do_motion_notify_event(self, event):
         '''
         :param event: the event that triggered the signal
-        :returns : True to stop other handlers from being invoked for the event.
-                   False to propagate the event further.
+        :returns: True to stop other handlers from being invoked for the event.
+                  False to propagate the event further.
 
         The do_motion-notify-event() signal handler is executed when the mouse
         pointer moves while over this widget.
