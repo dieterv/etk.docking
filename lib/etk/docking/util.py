@@ -49,9 +49,15 @@ def rect_overlaps(rect, x, y):
 def load_icon(icon_name, size):
     icontheme = gtk.icon_theme_get_default()
 
-    if icontheme.has_icon(icon_name):
-        icon_name = icon_name
-    else:
+    if not icontheme.has_icon(icon_name):
         icon_name = 'gtk-missing-image'
 
     return icontheme.load_icon(icon_name, size, gtk.ICON_LOOKUP_USE_BUILTIN)
+
+def load_icon_image(icon_name, size):
+    icontheme = gtk.icon_theme_get_default()
+
+    if not icontheme.has_icon(icon_name):
+        icon_name = 'gtk-missing-image'
+
+    return gtk.image_new_from_icon_name(icon_name, size)

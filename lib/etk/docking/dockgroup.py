@@ -35,7 +35,7 @@ from .compactbutton import CompactButton
 from .dockitem import DockItem
 from .dnd import DockDragContext, DRAG_TARGET_ITEM_LIST
 from .hslcolor import HslColor
-from .util import rect_contains, load_icon
+from .util import rect_contains, load_icon_image
 
 
 class _DockGroupTab(object):
@@ -866,8 +866,7 @@ class DockGroup(gtk.Container):
         # Create composite children for tab
         gtk.widget_push_composite_child()
         tab = _DockGroupTab()
-        icon = load_icon(item.get_icon_name(), gtk.ICON_SIZE_MENU)
-        tab.image = gtk.image_new_from_pixbuf(icon)
+        tab.image = load_icon_image(item.get_icon_name(), gtk.ICON_SIZE_MENU)
         tab.label = gtk.Label()
         tab.button = CompactButton(has_frame=False)
         tab.menu_item = gtk.ImageMenuItem()
