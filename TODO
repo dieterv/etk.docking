@@ -1,5 +1,6 @@
 Release 0.1: must have
 ======================
+
 1) fix the DockGroup tab rendering bug
 
 2) investigate gtk theme to render tabs, make the eclipse based
@@ -10,13 +11,15 @@ Release 0.1: must have
 
 4) get colors from theme for the eclipse based rendering
 
-5) the gdk_draw_* functions have been deprecated for GTK+3, so use cairo
-   instead
-
-6) fix DnD on gtk+ for win32 > 2.16: depends on gdk-win32 csw work :(
 
 Release X: the "when we have time" features
 =========================================
+
+- the gdk_draw_* functions have been deprecated for GTK+3, so use cairo
+   instead
+
+- fix DnD on gtk+ for win32 > 2.16: depends on gdk-win32 csw work :(
+
 - keyboard navigation
 
 - translations
