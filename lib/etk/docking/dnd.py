@@ -36,7 +36,7 @@ class DockDragContext(object):
     GtkDragSourceInfo, GtkDragDestSite, GtkDragDestInfo, ... - that are not
     exposed to Python), we are sadly forced to mimic some of that default behavior.
 
-    This class can also used to store extra information about a drag operation
+    This class can also be used to store extra information about a drag operation
     in progress.
     '''
     __slots__ = ['dragging',        # are we dragging or not (bool)
