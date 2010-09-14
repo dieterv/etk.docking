@@ -64,13 +64,30 @@ def deserialize(layoutstr, itemfactory):
     map(_des, tree, [ layout ] * len(tree))
     return layout
 
+def get_main_frames(layout):
+        return (f for f in layout.frames \
+                if not isinstance(f.get_parent(), gtk.Window))
+
+def finish(layout, main_frame):
+    """
+    Finish the loading process by setting all floating windows "transient_for" the main
+    window (which should be a ancestor of the main_frame).
+    """
+    main_window = main_frame.get_toplevel()
+    for frame in layout.frames:
+        if frame is main_frame:
+            continue
+        parent = frame.get_parent()
+        if parent:
+            assert isinstance(parent, gtk.Window), parent
+            parent.set_transient_for(main_window)
 
 def parent_attributes(widget):
     container = widget.get_parent()
     d = {}
     if isinstance(container, DockPaned):
         paned_item = [i for i in container.items if i.child is widget][0]
-        d = { 'expand': str(paned_item.expand).lower() }
+        d['expand'] = str(paned_item.expand).lower()
         if paned_item.weight:
             d['weight'] = str(paned_item.weight)
     return d
@@ -102,7 +119,6 @@ def dock_frame_attributes(widget):
     parent = widget.get_parent()
     if isinstance(parent, gtk.Window) and parent.get_transient_for():
         d['floating'] = 'true'
-        # TODO: also save window x and y
     return d
 
 def factory(typename):
@@ -153,10 +169,10 @@ def dock_paned_factory(parent, orientation, expand=None, weight=None):
     
 @factory('dockframe')
 def dock_frame_factory(parent, width, height, floating=None):
-    assert not parent
+    assert isinstance(parent, DockLayout), parent
     frame = DockFrame()
-    #frame.realize()
     frame.set_size_request(int(width), int(height))
+    parent.add(frame)
     if floating == 'true':
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         #self.window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_UTILITY)

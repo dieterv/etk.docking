@@ -45,7 +45,7 @@ finally:
 
 
 class MainWindow(gtk.Window):
-    def __init__(self, docklayout=None):
+    def __init__(self, docklayout=None, dockframe=None):
         gtk.Window.__init__(self)
 
         self.set_default_size(500, 150)
@@ -62,7 +62,7 @@ class MainWindow(gtk.Window):
         # Docking
         ########################################################################
         if docklayout:
-            self.dockframe = iter(docklayout.frames).next()
+            self.dockframe = dockframe
             self.docklayout = docklayout
         else:
             self.dockframe = DockFrame()
@@ -141,8 +141,13 @@ class MainWindow(gtk.Window):
             s = f.read()
 
         newlayout = dockstore.deserialize(s, self._create_content)
-        subwindow = MainWindow(newlayout)
+        main_frames = list(dockstore.get_main_frames(newlayout))
+        assert len(main_frames) == 1, main_frames
+        subwindow = MainWindow(newlayout, main_frames[0])
         self.subwindows.append(subwindow)
+        dockstore.finish(newlayout, main_frames[0])
+        for f in newlayout.frames:
+            f.get_toplevel().show_all()
 
     def _create_content(self, text=None):
         # Create a TextView and set some example text
