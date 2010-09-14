@@ -22,7 +22,7 @@ def test_serialize():
     assert '<layout><dockframe height="1" width="1">'\
     '<dockpaned orientation="horizontal">'\
     '<dockgroup expand="true">'\
-    '<dockitem icon="icon" name="fillme" title="t" tooltip="xx" />'\
+    '<dockitem icon="icon" title="t" tooltip="xx" />'\
     '</dockgroup></dockpaned></dockframe></layout>' == s, s
 
 class ItemFactory(object):
@@ -37,7 +37,9 @@ def test_deserialize():
       <dockframe height="120" width="200">
         <dockpaned orientation="horizontal">
           <dockgroup>
-            <dockitem icon="icon" name="fillme" title="t" tooltip="xx" />
+            <dockitem icon="icon" title="t" tooltip="xx">
+              <widget name="fillme" />
+            </dockitem>
           </dockgroup>
         </dockpaned>
       </dockframe>
@@ -55,9 +57,9 @@ def test_deserialize():
     assert group.items, group.items
     item = group.items[0]
     assert isinstance(item, DockItem)
-    button = item.children()[0]
+    button = item.child
     assert isinstance(button, gtk.Button)
-    assert "fillme" == button.get_label()
+    assert "fillme" == button.get_label(), button.get_label()
     win = gtk.Window(gtk.WINDOW_TOPLEVEL)
     win.add(frame)
     win.show()
@@ -73,17 +75,17 @@ def test_deserialize_floating_windows():
       <dockframe height="100" width="492">
         <dockpaned orientation="horizontal">
           <dockgroup expand="true" weight="158">
-            <dockitem icon="file-manager" name="EtkDockItem" title="New 3" tooltip="Hi!"/>
+            <dockitem icon="file-manager" title="New 3" tooltip="Hi!"/>
           </dockgroup>
           <dockgroup expand="true" weight="330">
-            <dockitem icon="web-browser" name="EtkDockItem" title="New 1" tooltip="browser"/>
-            <dockitem icon="web-browser" name="EtkDockItem" title="New 4" tooltip="browser"/>
+            <dockitem icon="web-browser" title="New 1" tooltip="browser"/>
+            <dockitem icon="web-browser" title="New 4" tooltip="browser"/>
           </dockgroup>
         </dockpaned>
       </dockframe>
-      <dockframe floating="true" height="100" width="330">
+      <dockframe floating="true" x="12" y="23" height="100" width="330">
         <dockgroup>
-          <dockitem icon="style" name="EtkDockItem" title="New 2" tooltip="abc"/>
+          <dockitem icon="style" title="New 2" tooltip="abc"/>
         </dockgroup>
       </dockframe>
     </layout>

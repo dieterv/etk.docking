@@ -35,9 +35,10 @@ SERIALIZABLE = ( DockFrame, DockPaned, DockGroup, DockItem )
 def serialize(layout):
     def _ser(widget, element):
         if isinstance(widget, SERIALIZABLE):
-            sub = SubElement(element, type(widget).__name__.lower(),
-                             attributes(widget))
+            sub = SubElement(element, type(widget).__name__.lower() , attributes(widget))
             widget.foreach(_ser, sub)
+        else:
+            sub = SubElement(element, 'widget', attributes(widget))
     tree = Element('layout')
     map(_ser, layout.frames, [tree] * len(layout.frames))
     return tostring(tree, encoding=sys.getdefaultencoding())
@@ -51,13 +52,17 @@ def deserialize(layoutstr, itemfactory):
     and such should be done by the involking application.
     """
     def _des(element, parent_widget=None):
-        factory = widget_factory[element.tag]
-        widget = factory(parent=parent_widget, **element.attrib)
-        if isinstance(widget, DockItem):
-            widget.add(itemfactory(widget.get_name()))
-        assert widget, 'No widget (%s)' % widget
-        if element:
-            map(_des, element, [widget] * len(element))
+        if element.tag == 'widget':
+            name = element.attrib['name']
+            widget = itemfactory(name)
+            widget.set_name(name)
+            parent_widget.add(widget)
+        else:
+            factory = widget_factory[element.tag]
+            widget = factory(parent=parent_widget, **element.attrib)
+            assert widget, 'No widget (%s)' % widget
+            if element:
+                map(_des, element, [widget] * len(element))
         return widget
     tree = fromstring(layoutstr)
     layout = DockLayout()
@@ -96,10 +101,13 @@ def parent_attributes(widget):
 def attributes(widget):
     raise NotImplementedError
 
+@attributes.when_type(gtk.Widget)
+def widget_attributes(widget):
+    return { 'name': widget.get_name() or 'empty' }
+ 
 @attributes.when_type(DockItem)
 def dock_item_attributes(widget):
-    return { 'name': widget.get_name() or 'empty',
-             'icon': widget.props.icon_name,
+    return { 'icon': widget.props.icon_name,
              'title': widget.props.title, 
              'tooltip': widget.props.title_tooltip_text }
 
@@ -119,6 +127,7 @@ def dock_frame_attributes(widget):
     parent = widget.get_parent()
     if isinstance(parent, gtk.Window) and parent.get_transient_for():
         d['floating'] = 'true'
+        d['x'], d['y'] = map(str, parent.get_position())
     return d
 
 def factory(typename):
@@ -131,9 +140,8 @@ def factory(typename):
     return _factory
 
 @factory('dockitem')
-def dock_item(parent, icon, name, title, tooltip, pos=None, vispos=None, current=None):
+def dock_item_factory(parent, icon, title, tooltip, pos=None, vispos=None, current=None):
     item = DockItem(icon, title, tooltip)
-    item.set_name(name)
     if pos: pos = int(pos)
     if vispos: vispos = int(vispos)
     parent.insert_item(item, pos, vispos)
@@ -168,7 +176,7 @@ def dock_paned_factory(parent, orientation, expand=None, weight=None):
     return paned
     
 @factory('dockframe')
-def dock_frame_factory(parent, width, height, floating=None):
+def dock_frame_factory(parent, width, height, floating=None, x=None, y=None):
     assert isinstance(parent, DockLayout), parent
     frame = DockFrame()
     frame.set_size_request(int(width), int(height))
@@ -176,5 +184,6 @@ def dock_frame_factory(parent, width, height, floating=None):
     if floating == 'true':
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         #self.window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_UTILITY)
+        window.move(int(x), int(y))
         window.add(frame)
     return frame

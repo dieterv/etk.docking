@@ -170,6 +170,7 @@ class MainWindow(gtk.Window):
 
             icon_name, tooltip_text, text = random.choice(examples)
             child = self._create_content(text)
+            child.set_name(icon_name)
 
             # Create a DockItem and add our TextView
             di = DockItem(icon_name=icon_name, title='New %s' % self.file_counter, title_tooltip_text=tooltip_text)
