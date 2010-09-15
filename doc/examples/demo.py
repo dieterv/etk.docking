@@ -66,6 +66,7 @@ class MainWindow(gtk.Window):
             self.docklayout = docklayout
         else:
             self.dockframe = DockFrame()
+            self.dockframe.props.border_width = 8
             self.dockframe.add(DockGroup())
             self.docklayout = DockLayout()
             self.docklayout.add(self.dockframe)

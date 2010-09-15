@@ -240,27 +240,39 @@ def make_placeholder(widget, x, y, a, ca=None):
     if ca is None:
         ca = a
 
+    if isinstance(widget, DockFrame):
+        print 'widget is frame', widget.allocation
+        frame = widget
+        bw = frame.border_width
+    else:
+        bw = 0
+
     if x < MAGIC_BORDER_SIZE:
-        allocation = (ca.x, ca.y, MAGIC_BORDER_SIZE, ca.height)
+        allocation = (a.x, a.y, MAGIC_BORDER_SIZE, ca.height - 2*bw)
     elif a.width - x < MAGIC_BORDER_SIZE:
-        allocation = (a.width - MAGIC_BORDER_SIZE, ca.y, MAGIC_BORDER_SIZE, ca.height)
+        allocation = (a.width - MAGIC_BORDER_SIZE - 2*bw, ca.y, MAGIC_BORDER_SIZE, ca.height - 2*bw)
     elif y < MAGIC_BORDER_SIZE:
-        allocation = (ca.x, ca.y, ca.width, MAGIC_BORDER_SIZE)
+        allocation = (ca.x, ca.y, ca.width - 2*bw, MAGIC_BORDER_SIZE)
     elif a.height - y < MAGIC_BORDER_SIZE:
-        allocation = (ca.x, a.height - MAGIC_BORDER_SIZE, ca.width, MAGIC_BORDER_SIZE)
+        allocation = (ca.x, a.height - MAGIC_BORDER_SIZE - 2*bw, ca.width - 2*bw, MAGIC_BORDER_SIZE)
 
     placeholder = Placeholder()
 
-    if isinstance(widget, DockFrame):
-        frame = widget
-    else:
+    if not isinstance(widget, DockFrame):
         frame = widget.get_ancestor(DockFrame)
         fx, fy = widget.translate_coordinates(frame, allocation[0], allocation[1])
         allocation = (fx, fy, allocation[2], allocation[3])
 
+    a = frame.allocation
+    allocation = (a[0] + allocation[0] + bw,
+                  a[1] + allocation[1] + bw,
+                  allocation[2],
+                  allocation[3])
+
     frame.set_placeholder(placeholder)
     placeholder.size_allocate(allocation)
     placeholder.show()
+    #placeholder.get_window().move(allocation[0], allocation[1])
 
 def with_magic_borders(func):
     '''

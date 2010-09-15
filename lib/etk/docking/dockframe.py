@@ -74,13 +74,21 @@ class DockFrame(gtk.Bin):
         # Is also called for map and expose events.
         if self.child:
             callback(self.child, data)
+#        if internals and self._placeholder:
+#            callback(self._placeholder, data)
 
     def set_placeholder(self, placeholder):
+        """
+        Set a new placeholder widget on the frame. The placeholder is drawn on top
+        of the dock items.
+
+        If a new placeholder is set, an existing placeholder is destroyed.
+        """
         if self._placeholder:
-            self._placeholder.hide()
+            self._placeholder.unparent()
             self._placeholder.destroy()
             self._placeholder = None
 
         if placeholder:
             self._placeholder = placeholder
-            self._placeholder.set_transient_for(self.get_toplevel())
+            self._placeholder.set_parent(self)
