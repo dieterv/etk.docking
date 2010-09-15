@@ -233,47 +233,6 @@ def _propagate_to_parent(func, widget, context, x, y, timestamp):
     else:
         return None
 
-def make_placeholder(widget, x, y, a, ca=None):
-    """
-    Create a Placeholder widget and connect it to the DockFrame.
-    """
-    if ca is None:
-        ca = a
-
-    if isinstance(widget, DockFrame):
-        print 'widget is frame', widget.allocation
-        frame = widget
-        bw = frame.border_width
-    else:
-        bw = 0
-
-    if x < MAGIC_BORDER_SIZE:
-        allocation = (a.x, a.y, MAGIC_BORDER_SIZE, ca.height - 2*bw)
-    elif a.width - x < MAGIC_BORDER_SIZE:
-        allocation = (a.width - MAGIC_BORDER_SIZE - 2*bw, ca.y, MAGIC_BORDER_SIZE, ca.height - 2*bw)
-    elif y < MAGIC_BORDER_SIZE:
-        allocation = (ca.x, ca.y, ca.width - 2*bw, MAGIC_BORDER_SIZE)
-    elif a.height - y < MAGIC_BORDER_SIZE:
-        allocation = (ca.x, a.height - MAGIC_BORDER_SIZE - 2*bw, ca.width - 2*bw, MAGIC_BORDER_SIZE)
-
-    placeholder = Placeholder()
-
-    if not isinstance(widget, DockFrame):
-        frame = widget.get_ancestor(DockFrame)
-        fx, fy = widget.translate_coordinates(frame, allocation[0], allocation[1])
-        allocation = (fx, fy, allocation[2], allocation[3])
-
-    a = frame.allocation
-    allocation = (a[0] + allocation[0] + bw,
-                  a[1] + allocation[1] + bw,
-                  allocation[2],
-                  allocation[3])
-
-    frame.set_placeholder(placeholder)
-    placeholder.size_allocate(allocation)
-    placeholder.show()
-    #placeholder.get_window().move(allocation[0], allocation[1])
-
 def with_magic_borders(func):
     '''
     decorator for handlers that have sensitive borders, as items may be dropped
@@ -586,6 +545,30 @@ def dock_paned_magic_borders_leave(self):
 
 @magic_borders.when_type(DockPaned)
 def dock_paned_magic_borders(self, context, x, y, timestamp):
+    def make_placeholder(widget, x, y, a, ca):
+        """
+        Create a Placeholder widget and connect it to the DockFrame.
+        """
+        if x < MAGIC_BORDER_SIZE:
+            allocation = (ca.x, ca.y, MAGIC_BORDER_SIZE, ca.height)
+        elif a.width - x < MAGIC_BORDER_SIZE:
+            allocation = (a.width - MAGIC_BORDER_SIZE, ca.y, MAGIC_BORDER_SIZE, ca.height)
+        elif y < MAGIC_BORDER_SIZE:
+            allocation = (ca.x, ca.y, ca.width, MAGIC_BORDER_SIZE)
+        elif a.height - y < MAGIC_BORDER_SIZE:
+            allocation = (ca.x, a.height - MAGIC_BORDER_SIZE, ca.width, MAGIC_BORDER_SIZE)
+
+        placeholder = Placeholder()
+
+        frame = widget.get_ancestor(DockFrame)
+        fx, fy = widget.translate_coordinates(frame, allocation[0], allocation[1])
+        fa = frame.allocation
+        allocation = (fa.x + fx, fa.y + fy, allocation[2], allocation[3])
+
+        frame.set_placeholder(placeholder)
+        placeholder.size_allocate(allocation)
+        placeholder.show()
+
     def handle(create):
         current_group = self.get_item_at_pos(x, y)
         assert current_group
@@ -688,25 +671,36 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
     '''
     self.log.debug('Magic borders')
     a = self.allocation
+    border = self.border_width
     position = None
 
-    if x < MAGIC_BORDER_SIZE:
+    if x - border < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_HORIZONTAL
         position = 0
-    elif a.width - x < MAGIC_BORDER_SIZE:
+        allocation = (a.x + border, a.y + border, MAGIC_BORDER_SIZE, a.height - border*2)
+    elif a.width - x - border < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_HORIZONTAL
         position = -1
-    elif y < MAGIC_BORDER_SIZE:
+        allocation = (a.x + a.width - MAGIC_BORDER_SIZE - border, a.y + border, MAGIC_BORDER_SIZE, a.height - border*2)
+    elif y - border < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_VERTICAL
         position = 0
-    elif a.height - y < MAGIC_BORDER_SIZE:
+        allocation = (a.x + border, a.y + border, a.width - border*2, MAGIC_BORDER_SIZE)
+    elif a.height - y - border < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_VERTICAL
         position = -1
+        allocation = (a.x + border, a.y + a.height - MAGIC_BORDER_SIZE - border, a.width - border*2, MAGIC_BORDER_SIZE)
 
     if position is not None:
         self.log.debug('Found %s %s' % (orientation, position))
         self.log.debug('%s %s %s' % (x, y, str(a)))
-        make_placeholder(self, x, y, gdk.Rectangle(0, 0, a.width, a.height))
+        #make_placeholder(self, x, y, gdk.Rectangle(0, 0, a.width, a.height))
+
+        placeholder = Placeholder()
+
+        self.set_placeholder(placeholder)
+        placeholder.size_allocate(allocation)
+        placeholder.show()
 
         def new_paned_and_group_receiver(selection_data, info):
             source = context.get_source_widget()
