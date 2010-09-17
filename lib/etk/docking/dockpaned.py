@@ -406,12 +406,12 @@ class DockPaned(gtk.Container):
 
             if self._orientation == gtk.ORIENTATION_HORIZONTAL:
                 cursor = self._hcursor
-                delta_size = int(self.get_pointer()[0] -
+                delta_size = int(event.x -
                                  self.dragcontext.dragged_object.area.x -
                                  self.dragcontext.offset_x)
             else:
                 cursor = self._vcursor
-                delta_size = int(self.get_pointer()[1] -
+                delta_size = int(event.y -
                                  self.dragcontext.dragged_object.area.y -
                                  self.dragcontext.offset_y)
 
