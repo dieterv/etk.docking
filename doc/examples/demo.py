@@ -61,12 +61,12 @@ class MainWindow(gtk.Window):
         ########################################################################
         # Docking
         ########################################################################
-        if docklayout:
+        if docklayout and dockframe:
             self.dockframe = dockframe
             self.docklayout = docklayout
         else:
             self.dockframe = DockFrame()
-            self.dockframe.props.border_width = 8
+            self.dockframe.set_border_width(8)
             self.dockframe.add(DockGroup())
             self.docklayout = DockLayout()
             self.docklayout.add(self.dockframe)
@@ -147,6 +147,7 @@ class MainWindow(gtk.Window):
         subwindow = MainWindow(newlayout, main_frames[0])
         self.subwindows.append(subwindow)
         dockstore.finish(newlayout, main_frames[0])
+
         for f in newlayout.frames:
             f.get_toplevel().show_all()
 
