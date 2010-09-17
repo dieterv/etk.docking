@@ -1,1 +1,0 @@
-<layout><dockframe height="105" width="492"><dockgroup><dockitem icon="style" title="New 1" tooltip="abc"><widget name="style" /></dockitem><dockitem icon="file-manager" title="New 2" tooltip="Hi!"><widget name="file-manager" /></dockitem></dockgroup></dockframe></layout>
