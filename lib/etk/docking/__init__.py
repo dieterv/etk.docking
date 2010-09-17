@@ -43,14 +43,14 @@ gtk.icon_theme_add_builtin_icon('compact-restore', 16, gtk.gdk.pixbuf_new_from_f
 
 # Check for elib, not required.
 try:
-    import elib.intl
+    from elib.intl import install_module
 except ImportError:
-    def _(s): return s
+    def _(message): return message
 else:
-    _ = elib.intl.install_module('etk.docking', os.path.abspath(os.path.join(
-                                                os.path.dirname(__file__),
-                                                '..', '..', 'share', 'locale')))
-    del elib.intl
+    localedir = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                             '..', '..', 'share', 'locale'))
+    _ = install_module('etk.docking', localedir)
+    del localedir, install_module
 
 # Keep our namespace nice and tidy
 del os, gtk, path
