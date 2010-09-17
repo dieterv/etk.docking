@@ -36,24 +36,28 @@ class DockDragContext(object):
     GtkDragSourceInfo, GtkDragDestSite, GtkDragDestInfo, ... - that are not
     exposed to Python), we are sadly forced to mimic some of that default behavior.
 
-    This class can also be used to store extra information about a drag operation
-    in progress.
+    This class is also used to store extra information about a drag operation
+    in progress not available in the C structs mentioned above.
     '''
     __slots__ = ['dragging',        # are we dragging or not (bool)
+                 'dragged_object',  # object being dragged
                  'source_x',        # x coordinate starting a potential drag
                  'source_y',        # y coordinate starting a potential drag
                  'source_button',   # the button the user pressed to start the drag
-                 'dragged_object']  # object being dragged
+                 'offset_x',        # cursor x offset relative to the dragged object
+                 'offset_y']        # cursor y offset relative to the dragged object
 
     def __init__(self):
         self.reset()
 
     def reset(self):
         self.dragging = False
+        self.dragged_object = None
         self.source_x = None
         self.source_y = None
         self.source_button = None
-        self.dragged_object = None
+        self.offset_x = None
+        self.offset_y = None
 
 
 class Placeholder(gtk.DrawingArea):
