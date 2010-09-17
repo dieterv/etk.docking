@@ -26,7 +26,7 @@ import gtk.gdk as gdk
 
 
 class HslColor(gobject.GObject):
-    __gtype_name__ = 'HtkHslColor'
+    __gtype_name__ = 'EtkHslColor'
     __gproperties__ = {'h': (float, 'h', 'h', 0.0, 1.0, 0.0, gobject.PARAM_READWRITE),
                        's': (float, 's', 's', 0.0, 1.0, 0.0, gobject.PARAM_READWRITE),
                        'l': (float, 'l', 'l', 0.0, 1.0, 0.0, gobject.PARAM_READWRITE),
