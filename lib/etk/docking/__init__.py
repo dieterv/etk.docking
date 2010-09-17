@@ -42,15 +42,15 @@ gtk.icon_theme_add_builtin_icon('compact-maximize', 16, gtk.gdk.pixbuf_new_from_
 gtk.icon_theme_add_builtin_icon('compact-restore', 16, gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-restore.png')))
 
 # Check for elib, not required.
-#try:
-#    import elib.intl
-#except ImportError:
-def _(s): return s
-#else:
-#    _ = elib.intl.install_module('etk.docking', os.path.abspath(os.path.join(
-#                                                os.path.dirname(__file__),
-#                                                '..', '..', 'share', 'locale')))
-#    del elib.intl
+try:
+    import elib.intl
+except ImportError:
+    def _(s): return s
+else:
+    _ = elib.intl.install_module('etk.docking', os.path.abspath(os.path.join(
+                                                os.path.dirname(__file__),
+                                                '..', '..', 'share', 'locale')))
+    del elib.intl
 
 # Keep our namespace nice and tidy
 del os, gtk, path
