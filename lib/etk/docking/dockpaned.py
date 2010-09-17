@@ -56,6 +56,7 @@ class _DockPanedItem(object):
         self.child = None
         self.min_weight = None
         self.weight = None
+        self.expand = True
 
     def __contains__(self, pos):
         return rect_contains(self.child.allocation, *pos)
@@ -347,10 +348,10 @@ class DockPaned(gtk.Container):
         '''
         self.log.debug('%s' % event)
 
-        # We might start a drag operation, or we could simply be starting
+        # We might be starting a drag operation, or we could simply be starting
         # a click somewhere. Store information from this event in self.dragcontext
         # and decide in do_motion_notify_event if we're actually starting a
-        # drag operation.
+        # drag operation or not.
         if event.window is self.window and event.button == 1:
             for item in self._children[1::2]:
                 if (event.x, event.y) in item:
@@ -359,7 +360,11 @@ class DockPaned(gtk.Container):
                     self.dragcontext.source_x = event.x
                     self.dragcontext.source_y = event.y
                     self.dragcontext.source_button = event.button
-                    break
+                    self.dragcontext.offset_x = event.x - item.area.x
+                    self.dragcontext.offset_y = event.y - item.area.y
+                    return True
+
+        return False
 
     def do_button_release_event(self, event):
         '''
@@ -375,6 +380,9 @@ class DockPaned(gtk.Container):
         # Reset drag context
         if event.button == self.dragcontext.source_button:
             self.dragcontext.reset()
+            return True
+
+        return False
 
     def do_motion_notify_event(self, event):
         '''
@@ -391,8 +399,8 @@ class DockPaned(gtk.Container):
 
         # Set an appropriate cursor when the pointer is over a handle
         if event.window is self.window:
-            for item in self._children[1::2]:
-                if (event.x, event.y) in item:
+            for handle in self._children[1::2]:
+                if (event.x, event.y) in handle:
                     if self._orientation == gtk.ORIENTATION_HORIZONTAL:
                         cursor = self._hcursor
                     elif self._orientation == gtk.ORIENTATION_VERTICAL:
@@ -407,13 +415,16 @@ class DockPaned(gtk.Container):
 
             if self._orientation == gtk.ORIENTATION_HORIZONTAL:
                 cursor = self._hcursor
-                delta_size = int(self.get_pointer()[0] - self.dragcontext.source_x)
+                delta_size = int(self.get_pointer()[0] -
+                                 self.dragcontext.dragged_object.area.x -
+                                 self.dragcontext.offset_x)
             else:
                 cursor = self._vcursor
-                delta_size = int(self.get_pointer()[1] - self.dragcontext.source_y)
+                delta_size = int(self.get_pointer()[1] -
+                                 self.dragcontext.dragged_object.area.y -
+                                 self.dragcontext.offset_y)
 
             delta_weight = delta_size #((delta_size << 16) + 999) / 1000
-
             item_after = self._children[handle_index + 1]
 
             if delta_weight < 0:
@@ -437,7 +448,7 @@ class DockPaned(gtk.Container):
 
             self.queue_resize()
 
-        # Set the cursor we decided above...
+        # Set the cursor we decided upon above...
         if cursor:
             self.window.set_cursor(cursor)
 
