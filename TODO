@@ -9,8 +9,6 @@ Release 0.1: must have
 3) and while doing 1 & 2, do_size_request/do_size_allocate/do_expose_event
    methods for DockGroup are not that efficient, but better than before...
 
-4) get colors from theme for the eclipse based rendering
-
 
 Release X: the "when we have time" features
 =========================================
@@ -18,7 +16,7 @@ Release X: the "when we have time" features
 - the gdk_draw_* functions have been deprecated for GTK+3, so use cairo
    instead
 
-- fix DnD on gtk+ for win32 > 2.16: depends on gdk-win32 csw work :(
+- fix DnD on win32 for gtk+ > 2.16.6: depends on gdk-win32 csw/grabs work :(
 
 - keyboard navigation
 
