@@ -49,14 +49,12 @@ class _DockPanedItem(object):
     '''
     __slots__ = ['child',      # child widget
                  'min_weight', # minimum relative weight
-                 'weight',     # relative weight, used to calculate width/height
-                 'expand']     # used to store the 'expand' child property
+                 'weight']     # relative weight, used to calculate width/height
 
     def __init__(self):
         self.child = None
         self.min_weight = None
         self.weight = None
-        self.expand = True
 
     def __contains__(self, pos):
         return rect_contains(self.child.allocation, *pos)
@@ -83,13 +81,6 @@ class DockPaned(gtk.Container):
               0,
               1,
               0,
-              gobject.PARAM_READWRITE)}
-    __gchild_properties__ = \
-        {'expand':
-             (gobject.TYPE_BOOLEAN,
-              'expand',
-              'expand',
-              True,
               gobject.PARAM_READWRITE)}
 
     def __init__(self):
@@ -455,15 +446,6 @@ class DockPaned(gtk.Container):
     ############################################################################
     # GtkContainer
     ############################################################################
-    def do_get_child_property(self, child, pspec):
-        if pspec.name == 'expand':
-            self.log.debug('%s, %s' % child, pspec)
-
-    def do_set_child_property(self, child, value, pspec):
-        if pspec.name == 'expand':
-            self.log.debug('%s, %s, %s' % child, pspec, value)
-            self.child_notify('expand')
-
     def do_forall(self, internals, callback, data):
         try:
             for item in self._children:
@@ -473,12 +455,15 @@ class DockPaned(gtk.Container):
             pass
 
     def do_add(self, widget):
+        self.log.debug('%s' % widget)
+
         if widget not in (item.child for item in self.items):
-            self._insert_child(widget, expand=True)
+            self._insert_child(widget)
 
     def do_remove(self, widget):
         # Get the _DockPanedItem associated with widget
-        self.log.debug('')
+        self.log.debug('%s' % widget)
+
         for item in self._children:
             if isinstance(item, _DockPanedItem) and item.child is widget:
                 item.child.unparent()
@@ -534,21 +519,19 @@ class DockPaned(gtk.Container):
             if delta_weight == 0:
                 break
 
-    def insert_child(self, widget, position=-1, expand=True):
-        item = self._insert_child(widget, position, expand)
+    def insert_child(self, widget, position=-1):
+        item = self._insert_child(widget, position)
         self.emit('add', widget)
         return item
 
-    def _insert_child(self, widget, position=-1, expand=True):
+    def _insert_child(self, widget, position=-1):
         '''
         Private logic, shared between public interface and add event handler.
         '''
         #TODO: implement 'expand' child property...
         item = _DockPanedItem()
-        item.expand = expand
         item.child = widget
         item.child.set_parent(self)
-        item.child.child_notify('expand')
 
         if position == -1:
             if len(self._children) >= 1:
@@ -627,11 +610,3 @@ class DockPaned(gtk.Container):
     #TODO: def next_item()
     #TODO: def prev_item()
     #TODO: def reorder_item(item, position)
-
-############################################################################
-# Install child properties
-############################################################################
-for index, (name, pspec) in enumerate(DockPaned.__gchild_properties__.iteritems()):
-    pspec = list(pspec)
-    pspec.insert(0, name)
-    DockPaned.install_child_property(index + 1, tuple(pspec))
