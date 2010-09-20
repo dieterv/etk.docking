@@ -90,11 +90,11 @@ def finish(layout, main_frame):
 def parent_attributes(widget):
     container = widget.get_parent()
     d = {}
-    if isinstance(container, DockPaned):
-        paned_item = [i for i in container.items if i.child is widget][0]
-        d['expand'] = str(paned_item.expand).lower()
-        if paned_item.weight:
-            d['weight'] = str(paned_item.weight)
+#    if isinstance(container, DockPaned):
+#        paned_item = [i for i in container.items if i.child is widget][0]
+#        d['expand'] = str(paned_item.expand).lower()
+#        if paned_item.weight:
+#            d['weight'] = str(paned_item.weight)
     return d
 
 @generic

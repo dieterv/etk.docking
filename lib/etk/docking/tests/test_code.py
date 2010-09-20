@@ -59,7 +59,7 @@ class Capture(object):
 
 class TestCode(unittest.TestCase):
     ############################################################################
-    # Test tab/spaces
+    # Test indentation (tab/spaces)
     ############################################################################
     def test_indentation(self):
         capture = Capture()

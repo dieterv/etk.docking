@@ -21,7 +21,7 @@ def test_serialize():
     s = serialize(layout)
     assert '<layout><dockframe height="1" width="1">'\
     '<dockpaned orientation="horizontal">'\
-    '<dockgroup expand="true">'\
+    '<dockgroup>'\
     '<dockitem icon="icon" title="t" tooltip="xx" />'\
     '</dockgroup></dockpaned></dockframe></layout>' == s, s
 
@@ -65,7 +65,7 @@ def test_deserialize():
     win.show()
     while gtk.events_pending():
         gtk.main_iteration()
-    
+
     #assert frame.allocation.width == 200, frame.allocation.width
     #assert frame.allocation.height == 120, frame.allocation.height
 
@@ -74,10 +74,10 @@ def test_deserialize_floating_windows():
     <layout>
       <dockframe height="100" width="492">
         <dockpaned orientation="horizontal">
-          <dockgroup expand="true" weight="158">
+          <dockgroup weight="158">
             <dockitem icon="file-manager" title="New 3" tooltip="Hi!"/>
           </dockgroup>
-          <dockgroup expand="true" weight="330">
+          <dockgroup weight="330">
             <dockitem icon="web-browser" title="New 1" tooltip="browser"/>
             <dockitem icon="web-browser" title="New 4" tooltip="browser"/>
           </dockgroup>
