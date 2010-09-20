@@ -27,7 +27,7 @@ import gtk
 import gtk.gdk as gdk
 
 from .dnd import DockDragContext
-from .util import rect_contains, rect_overlaps
+from .util import rect_overlaps
 
 
 class _DockPanedHandle(object):
@@ -45,7 +45,7 @@ class _DockPanedHandle(object):
 
 class _DockPanedItem(object):
     '''
-    Convenience class storing information about a child.
+    Convenience class storing information about a child widget.
     '''
     __slots__ = ['child',      # child widget
                  'min_weight', # minimum relative weight
@@ -57,7 +57,7 @@ class _DockPanedItem(object):
         self.weight = None
 
     def __contains__(self, pos):
-        return rect_contains(self.child.allocation, *pos)
+        return rect_overlaps(self.child.allocation, *pos)
 
 class DockPaned(gtk.Container):
     '''
@@ -74,7 +74,7 @@ class DockPaned(gtk.Container):
               gobject.G_MAXINT,
               4,
               gobject.PARAM_READWRITE),
-              'orientation':
+         'orientation':
              (gobject.TYPE_UINT,
               'handle size',
               'handle size',
@@ -92,16 +92,16 @@ class DockPaned(gtk.Container):
         self.log.debug('')
 
         # Initialize properties
-        self.set_orientation(gtk.ORIENTATION_HORIZONTAL)
         self.set_handle_size(4)
+        self.set_orientation(gtk.ORIENTATION_HORIZONTAL)
 
         # Initialize attributes
-        self._children = [] # Note: list contains both items and handles.
+        self._children = [] # list contains both child widgets and handles.
         self._reset_weights = False
         self._hcursor = None
         self._vcursor = None
 
-        # Initialize handle dragging (this is not DnD!)
+        # Initialize handle dragging (not to be confused with DnD...)
         self.dragcontext = DockDragContext()
 
     ############################################################################
@@ -160,9 +160,8 @@ class DockPaned(gtk.Container):
         self.style.set_background(self.window, gtk.STATE_NORMAL)
 
         # Set parent window on all child widgets
-        for item in self._children:
-            if isinstance(item, _DockPanedItem):
-                item.child.set_parent_window(self.window)
+        for item in self._children[::2]:
+            item.child.set_parent_window(self.window)
 
         # Initialize cursors
         self._hcursor = gtk.gdk.Cursor(self.get_display(), gdk.SB_H_DOUBLE_ARROW)
@@ -170,6 +169,7 @@ class DockPaned(gtk.Container):
 
     def do_unrealize(self):
         self.log.debug('')
+
         self._hcursor = None
         self._vcursor = None
         self.window.set_user_data(None)
@@ -195,27 +195,29 @@ class DockPaned(gtk.Container):
             return size
             #return ((size << 16) + 999) / 1000
 
-        # Compute total size request
+        # Start with nothing
         width = height = 0
 
-        for item in self._children:
-            if isinstance(item, _DockPanedItem):
-                w, h = item.child.size_request()
+        # Add child widgets
+        for item in self._children[::2]:
+            w, h = item.child.size_request()
 
-                if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-                    item.min_weight = _weight(w)
-                    width += w
-                    height = max(height, h)
-                else:
-                    item.min_weight = _weight(h)
-                    width = max(width, w)
-                    height += h
+            if self._orientation == gtk.ORIENTATION_HORIZONTAL:
+                item.min_weight = _weight(w)
+                width += w
+                height = max(height, h)
             else:
-                if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-                    width += self._handle_size
-                else:
-                    height += self._handle_size
+                item.min_weight = _weight(h)
+                width = max(width, w)
+                height += h
 
+        # Add handles
+        if self._orientation == gtk.ORIENTATION_HORIZONTAL:
+            width += self._get_n_handles() * self._handle_size
+        else:
+            height += self._get_n_handles() * self._handle_size
+
+        # Done
         requisition.width = width
         requisition.height = height
 
@@ -316,7 +318,7 @@ class DockPaned(gtk.Container):
     def do_expose_event(self, event):
         self.log.debug('%s' % event)
 
-        for item in self._children[1::2]:
+        for handle in self._children[1::2]:
             #TODO: render themed handle if not using compact layout
             pass
 
@@ -344,15 +346,15 @@ class DockPaned(gtk.Container):
         # and decide in do_motion_notify_event if we're actually starting a
         # drag operation or not.
         if event.window is self.window and event.button == 1:
-            for item in self._children[1::2]:
-                if (event.x, event.y) in item:
+            for handle in self._children[1::2]:
+                if (event.x, event.y) in handle:
                     self.dragcontext.dragging = True
-                    self.dragcontext.dragged_object = item
+                    self.dragcontext.dragged_object = handle
                     self.dragcontext.source_x = event.x
                     self.dragcontext.source_y = event.y
                     self.dragcontext.source_button = event.button
-                    self.dragcontext.offset_x = event.x - item.area.x
-                    self.dragcontext.offset_y = event.y - item.area.y
+                    self.dragcontext.offset_x = event.x - handle.area.x
+                    self.dragcontext.offset_y = event.y - handle.area.y
                     return True
 
         return False
@@ -493,6 +495,10 @@ class DockPaned(gtk.Container):
     ############################################################################
     # EtkDockPaned
     ############################################################################
+    handles = property(lambda s: s._children[1::2])
+
+    items = property(lambda s: s._children[::2])
+
     def _redistribute_weight(self, delta_weight, enlarge, shrink):
         '''
         The _redistribute_weight method subtracts weight from the items
@@ -561,21 +567,17 @@ class DockPaned(gtk.Container):
     #TODO: def get_current_item(self):
     #TODO: def get_nth_item(self, item_num):
 
-    handles = property(lambda s: s._children[1::2])
-
-    items = property(lambda s: s._children[::2])
-
     def _get_n_handles(self):
         '''
         The _get_n_handles() method returns the number of handles in the DockPaned.
         '''
-        return int(len(self.handles))
+        return int(len(self._children[1::2]))
 
     def get_n_items(self):
         '''
         The get_n_items() method returns the number of items in the DockPaned.
         '''
-        return int(len(self.items))
+        return int(len(self._children[::2]))
 
     def get_handle_at_pos(self, x, y):
         '''
@@ -587,9 +589,9 @@ class DockPaned(gtk.Container):
         contains the position specified by x and y or None if no handle is at
         that position.
         '''
-        for h in self.handles:
-            if (x, y) in h:
-                return h
+        for handle in self._children[1::2]:
+            if (x, y) in handle:
+                return handle
         else:
             return None
 
@@ -599,9 +601,9 @@ class DockPaned(gtk.Container):
         :param y: the y coordinate of the position
         :returns: the item at the position specified by x and y or None
         '''
-        for i in self.items:
-            if (x, y) in i:
-                return i
+        for item in self._children[::2]:
+            if (x, y) in item:
+                return item
         else:
             return None
 
