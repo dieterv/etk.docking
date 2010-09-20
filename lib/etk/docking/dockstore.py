@@ -104,11 +104,11 @@ def attributes(widget):
 @attributes.when_type(gtk.Widget)
 def widget_attributes(widget):
     return { 'name': widget.get_name() or 'empty' }
- 
+
 @attributes.when_type(DockItem)
 def dock_item_attributes(widget):
     return { 'icon': widget.props.icon_name,
-             'title': widget.props.title, 
+             'title': widget.props.title,
              'tooltip': widget.props.title_tooltip_text }
 
 @attributes.when_type(DockGroup)
@@ -174,7 +174,7 @@ def dock_paned_factory(parent, orientation, expand=None, weight=None):
     if isinstance(parent, DockPaned):
         parent._reset_weights = False
     return paned
-    
+
 @factory('dockframe')
 def dock_frame_factory(parent, width, height, floating=None, x=None, y=None):
     assert isinstance(parent, DockLayout), parent
@@ -183,7 +183,7 @@ def dock_frame_factory(parent, width, height, floating=None, x=None, y=None):
     parent.add(frame)
     if floating == 'true':
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        #self.window.set_type_)hint(gtk.gdk.WINDOW_TYPE_HINT_UTILITY)
+        #self.window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_UTILITY)
         window.set_property('skip-taskbar-hint', True)
         window.move(int(x), int(y))
         window.add(frame)
