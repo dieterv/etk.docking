@@ -46,7 +46,7 @@ source_suffix = '.rst'
 source_encoding = 'utf-8'
 
 # The master toctree document.
-master_doc = 'src/index'
+master_doc = 'index'
 
 # General information about the project.
 project = u'etk.docking'
