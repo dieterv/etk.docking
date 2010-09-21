@@ -582,10 +582,10 @@ class DockGroup(gtk.Container):
         if event.window is self.window:
             # Check if we are actually starting a DnD operation
             if event.state & gdk.BUTTON1_MASK and \
-                    self.dragcontext.source_button == 1 and \
-                    self.drag_check_threshold(int(self.dragcontext.source_x),
-                                              int(self.dragcontext.source_y),
-                                              int(event.x), int(event.y)):
+               self.dragcontext.source_button == 1 and \
+               self.drag_check_threshold(int(self.dragcontext.source_x),
+                                         int(self.dragcontext.source_y),
+                                         int(event.x), int(event.y)):
                 self.log.debug('drag_begin')
                 self.dragcontext.dragging = True
 
@@ -791,10 +791,12 @@ class DockGroup(gtk.Container):
     ############################################################################
     # EtkDockGroup
     ############################################################################
-
     items = property(lambda s: [t.item for t in s._tabs])
 
     visible_items = property(lambda s: [t.item for t in s._visible_tabs])
+
+    def __contains__(self, item):
+        return item in self.items
 
     def get_tab_at_pos(self, x, y):
         '''
@@ -852,9 +854,7 @@ class DockGroup(gtk.Container):
         self.emit('add', item)
         return index
 
-
     def _insert_item(self, item, position=None, visible_position=None):
-        # TODO: move this logic to a signal handler.
         if not isinstance(item, DockItem):
             raise TypeError('item should be of type "DockItem", got: "%s"' % type(item).__name__)
 
@@ -951,7 +951,7 @@ class DockGroup(gtk.Container):
     def get_nth_item(self, item_num):
         '''
         :param item_num: the index of an item tab in the DockGroup.
-        :returns: a DockItem, or None if item_num is out of bounds
+        :returns: a DockItem, or None if item_num is out of bounds.
 
         The get_nth_item() method returns the DockItem contained in the item tab
         with the index specified by item_num. If item_num is out of bounds for
@@ -1050,6 +1050,8 @@ class DockGroup(gtk.Container):
         to the end of the list. If position is negative, item will be moved
         to the beginning of the list.
         '''
+        assert self.item_num(item) is not None
+
         if position < 0:
             position = 0
         elif position > self.get_n_items() - 1:
@@ -1058,9 +1060,6 @@ class DockGroup(gtk.Container):
         tab = self._tabs[self.item_num(item)]
         self._tabs.remove(tab)
         self._tabs.insert(position, tab)
-
-    def __contains__(self, item):
-        return item in self.items
 
     ############################################################################
     # Property notification signal handlers
