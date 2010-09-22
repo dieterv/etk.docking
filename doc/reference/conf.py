@@ -208,3 +208,11 @@ latex_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'http://docs.python.org/': None}
+
+def autodoc_skip_member(app, what, name, obj, skip, options):
+    # Ignore gobject virtual function implementations (signal handlers)
+    if name.startswith('do_') or '.do_' in name:
+        return True
+
+def setup(app):
+    app.connect('autodoc-skip-member', autodoc_skip_member)
