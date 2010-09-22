@@ -1,20 +1,44 @@
-Release 0.1: must have
+Release 0.1: "must have"
+========================
+- take a deep breath and a long look at the GTK+ api, follow it as much as
+  possible, ie change DockPaned.insert_item(item, ...) to
+  DockPaned.insert_item(child, ...), etc
+
+- fix DockPaned once and for all
+
+- fix the DockGroup tab rendering bug
+    > implies reviewing the _tabs/_visible_tabs system and it's interaction
+      with tab ordering...
+    > right moment to implement "tab order" property (alphabetical,
+      opening order, last used, more?)
+
+- implement the group-id system, can be used to configure:
+    - auto remove empty dockgroups
+    - can float
+    - expand (so you can have a group-id=documents with expand=True and
+      a group-id=tools with expand=False). This should control the expand
+      child property of DockPaned
+    - ???
+
+- DockGroup needs a item-changed signal
+    > needs to be reemitted by DockFrame as the end user only needs to
+      concern himself with DockFrame and DockItem widgets (beside designing
+      an initial layout)
+
+
+Release 0.2: "no rush"
 ======================
+- Use native gtk themeing to render all widgets, make the eclipse based "compact"
+  rendering optional.
 
-1) fix the DockGroup tab rendering bug
+- Minimize DockGroup to toolbar
 
-2) investigate gtk theme to render tabs, make the eclipse based
-   rendering optional
-
-3) and while doing 1 & 2, do_size_request/do_size_allocate/do_expose_event
-   methods for DockGroup are not that efficient, but better than before...
+- Autoshow/hide minimized DockGroups
 
 
-Release X: the "when we have time" features
-=========================================
-
-- the gdk_draw_* functions have been deprecated for GTK+3, so use cairo
-   instead
+Release x: "when we have time"
+==============================
+- the gdk_draw_* functions have been deprecated for GTK+3, migrate to cairo
 
 - fix DnD on win32 for gtk+ > 2.16.6: depends on gdk-win32 csw/grabs work :(
 
