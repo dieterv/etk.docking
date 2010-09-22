@@ -72,7 +72,7 @@ class MainWindow(gtk.Window):
             self.docklayout.add(self.dockframe)
 
         vbox.pack_start(self.dockframe)
-        self.docklayout.connect('item-closed', lambda g, i: i.destroy())
+        self.docklayout.connect('item-closed', lambda layout, group, item: item.destroy())
 
         ########################################################################
         # Testing Tools
