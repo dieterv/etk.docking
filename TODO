@@ -20,10 +20,14 @@ Release 0.1: "must have"
       child property of DockPaned
     - ???
 
-- DockGroup needs a item-changed signal
-    > needs to be reemitted by DockFrame as the end user only needs to
-      concern himself with DockFrame and DockItem widgets (beside designing
-      an initial layout)
+- implement full signal set on DockGroup, DockPaned, ???:
+    - item-added
+    - item-removed
+    - item-reordered
+    - item-selected
+
+    > reemit by DockFrame so the end user only needs to concern himself with
+      DockFrame and DockItem widgets (beside designing an initial layout)
 
 
 Release 0.2: "no rush"
