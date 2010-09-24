@@ -411,8 +411,6 @@ def dock_group_drag_motion(self, context, x, y, timestamp):
 
 @cleanup.when_type(DockGroup)
 def dock_group_cleanup(self):
-    self.log.debug('checking for removal', self.items)
-
     if not self.items:
         parent = self.get_parent()
         self.log.debug('removing empty group')
