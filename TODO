@@ -32,12 +32,14 @@ Release 0.1: "must have"
 
 Release 0.2: "no rush"
 ======================
-- Use native gtk themeing to render all widgets, make the eclipse based "compact"
+- use native gtk themeing to render all widgets, make the eclipse based "compact"
   rendering optional.
 
-- Minimize DockGroup to toolbar
+- use PlaceHolderWindow to consistently hightlight _all_ drop zones
 
-- Autoshow/hide minimized DockGroups
+- minimize DockGroup to toolbar
+
+- autoshow/hide minimized DockGroups
 
 
 Release x: "when we have time"
