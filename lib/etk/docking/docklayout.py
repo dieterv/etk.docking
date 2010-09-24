@@ -58,7 +58,6 @@ class DockLayout(gobject.GObject):
 
         # Initialize logging
         self.log = getLogger('%s.%s' % (self.__class__.__name__, hex(id(self))))
-        self.log.debug('')
 
         self.frames = set()
         self._signal_handlers = {} # Map widget -> set([signals, ...])
@@ -113,7 +112,10 @@ class DockLayout(gobject.GObject):
                                ('drag-data-received', self.on_widget_drag_data_received),
                                ('drag-end', self.on_widget_drag_end),
                                ('drag-failed', self.on_widget_drag_failed)):
-            signals.add(widget.connect(name, callback))
+            try:
+                signals.add(widget.connect(name, callback))
+            except TypeError, e:
+                self.log.warning('%s: %s' % (widget, e))
 
         if isinstance(widget, DockGroup):
             signals.add(widget.connect('item-closed', self.on_dockgroup_item_closed))
@@ -432,7 +434,7 @@ def dock_group_drag_failed(self, context, result):
         window.move(*self.get_pointer())
         window.set_resizable(True)
         window.set_skip_taskbar_hint(True)
-        window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_UTILITY)
+        window.set_type_hint(gdk.WINDOW_TYPE_HINT_UTILITY)
         window.set_transient_for(self.get_toplevel())
         frame = DockFrame()
         window.add(frame)
@@ -462,7 +464,7 @@ def dock_group_drag_failed(self, context, result):
 ################################################################################
 def dock_paned_expose_highlight(self, event):
     try:
-        handle = self.handles[self._drop_handle_index]
+        handle = self._handles[self._drop_handle_index]
     except (AttributeError, IndexError, TypeError), e:
         self.log.error(e)
         return
@@ -486,10 +488,11 @@ def dock_paned_highlight(self):
 @with_magic_borders
 def dock_paned_drag_motion(self, context, x, y, timestamp):
     self.log.debug('%s, %s, %s, %s' % (context, x, y, timestamp))
-    handle = self.get_handle_at_pos(x, y)
+
+    handle = self._get_handle_at_pos(x, y)
 
     if handle:
-        self._drop_handle_index = self.handles.index(self.get_handle_at_pos(x, y))
+        self._drop_handle_index = self._handles.index(handle)
     else:
         self._drop_handle_index = None
 
@@ -503,7 +506,7 @@ def dock_paned_drag_motion(self, context, x, y, timestamp):
         self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
         # If on handle: create new DockGroup and add items
         dock_group = DockGroup()
-        self.insert_child(dock_group, self._drop_handle_index + 1)
+        self.insert_item(dock_group, self._drop_handle_index + 1)
         dock_group.show()
 
         for item in source.dragcontext.dragged_object:
@@ -515,20 +518,20 @@ def dock_paned_drag_motion(self, context, x, y, timestamp):
 
 @cleanup.when_type(DockPaned)
 def dock_paned_cleanup(self):
-    if not self.items:
+    if not self._items:
         parent = self.get_parent()
         self.destroy()
         return parent and cleanup(parent)
 
-    if len(self.items) == 1:
+    if len(self._items) == 1:
         parent = self.get_parent()
-        child = self.items[0].child
+        child = self._items[0].child
 
         if isinstance(parent, DockPaned):
-            position = [i.child for i in parent.items].index(self)
+            position = [i.child for i in parent._items].index(self)
             child.unparent()
             parent.remove(self)
-            parent.insert_child(child, position)
+            parent.insert_item(child, position)
             assert child.get_parent() is parent, (child.get_parent(), parent)
         else:
             child.unparent()
@@ -585,17 +588,18 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
                 else:
                     new_paned.set_orientation(gtk.ORIENTATION_HORIZONTAL)
 
-                position = self.items.index(current_group)
+                position = self._items.index(current_group)
                 self.remove(current_group.child)
-                self.insert_child(new_paned, position=position)
+                #TODO: bug: sometimes current_group.child still has a parent?!?
+                self.insert_item(new_paned, position)
                 new_group = DockGroup()
 
                 if min(x, y) < MAGIC_BORDER_SIZE:
-                    new_paned.insert_child(new_group)
-                    new_paned.insert_child(current_group.child)
+                    new_paned.insert_item(new_group)
+                    new_paned.insert_item(current_group.child)
                 else:
-                    new_paned.insert_child(current_group.child)
-                    new_paned.insert_child(new_group)
+                    new_paned.insert_item(current_group.child)
+                    new_paned.insert_item(new_group)
 
                 new_paned.show()
                 new_group.show()
@@ -612,14 +616,14 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
             position = 0
             make_placeholder(self, x, y, self.allocation, current_group.child.allocation)
         else:
-            position = -1
+            position = None
             make_placeholder(self, x, y, self.allocation, current_group.child.allocation)
 
         def add_group_receiver(selection_data, info):
             source = context.get_source_widget()
             assert source
             new_group = DockGroup()
-            self.insert_child(new_group, position=position)
+            self.insert_item(new_group, position)
             new_group.show()
             self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
             for item in source.dragcontext.dragged_object:
@@ -672,7 +676,6 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
     self.log.debug('Magic borders')
     a = self.allocation
     border = self.border_width
-    position = None
 
     if x - border < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_HORIZONTAL
@@ -680,7 +683,7 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
         allocation = (a.x + border, a.y + border, MAGIC_BORDER_SIZE, a.height - border*2)
     elif a.width - x - border < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_HORIZONTAL
-        position = -1
+        position = None
         allocation = (a.x + a.width - MAGIC_BORDER_SIZE - border, a.y + border, MAGIC_BORDER_SIZE, a.height - border*2)
     elif y - border < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_VERTICAL
@@ -688,42 +691,41 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
         allocation = (a.x + border, a.y + border, a.width - border*2, MAGIC_BORDER_SIZE)
     elif a.height - y - border < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_VERTICAL
-        position = -1
+        position = None
         allocation = (a.x + border, a.y + a.height - MAGIC_BORDER_SIZE - border, a.width - border*2, MAGIC_BORDER_SIZE)
+    else:
+        return None
 
-    if position is not None:
-        self.log.debug('Found %s %s' % (orientation, position))
-        self.log.debug('%s %s %s' % (x, y, str(a)))
-        #make_placeholder(self, x, y, gdk.Rectangle(0, 0, a.width, a.height))
+    self.log.debug('Found %s %s' % (orientation, position))
+    self.log.debug('%s %s %s' % (x, y, str(a)))
+    #make_placeholder(self, x, y, gdk.Rectangle(0, 0, a.width, a.height))
 
-        placeholder = Placeholder()
+    placeholder = Placeholder()
 
-        self.set_placeholder(placeholder)
-        placeholder.size_allocate(allocation)
-        placeholder.show()
+    self.set_placeholder(placeholder)
+    placeholder.size_allocate(allocation)
+    placeholder.show()
 
-        def new_paned_and_group_receiver(selection_data, info):
-            source = context.get_source_widget()
-            assert source
-            new_paned = DockPaned()
-            new_paned.set_orientation(orientation)
-            current_child = self.get_children()[0]
-            assert current_child
-            self.remove(current_child)
-            self.add(new_paned)
-            new_group = DockGroup()
-            new_paned.insert_child(current_child)
-            current_child.queue_resize()
-            new_paned.insert_child(new_group, position=position)
-            new_paned.show()
-            new_group.show()
-            self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
+    def new_paned_and_group_receiver(selection_data, info):
+        source = context.get_source_widget()
+        assert source
+        new_paned = DockPaned()
+        new_paned.set_orientation(orientation)
+        current_child = self.get_children()[0]
+        assert current_child
+        self.remove(current_child)
+        self.add(new_paned)
+        new_group = DockGroup()
+        new_paned.insert_item(current_child)
+        current_child.queue_resize()
+        new_paned.insert_item(new_group, position)
+        new_paned.show()
+        new_group.show()
+        self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
 
-            for item in source.dragcontext.dragged_object:
-                new_group.append_item(item)
+        for item in source.dragcontext.dragged_object:
+            new_group.append_item(item)
 
-            context.finish(True, True, timestamp) # success, delete, time
+        context.finish(True, True, timestamp) # success, delete, time
 
-        return DragData(self, dock_frame_magic_borders_leave, new_paned_and_group_receiver)
-
-    return None
+    return DragData(self, dock_frame_magic_borders_leave, new_paned_and_group_receiver)

@@ -96,7 +96,33 @@ class TestDockPaned(unittest.TestCase):
 
         dockpaned.destroy()
 
-    def test_group_removal(self):
+    ############################################################################
+    # Test child properties
+    ############################################################################
+    def test_child_prop_expand(self):
+        global child_notify_called
+
+        def _on_child_notify(gobject, pspec):
+            global notify_called
+            notify_called = True
+
+        dockpaned = DockPaned()
+        dockgroup = DockGroup()
+        dockgroup.connect('child-notify::expand', _on_child_notify)
+        dockpaned.add(dockgroup)
+
+        notify_called = False
+        dockpaned.child_set_property(dockgroup, 'expand', True)
+        self.assertTrue(notify_called,
+                        msg='expand child property change notification failed')
+
+        dockgroup.destroy()
+        dockpaned.destroy()
+
+    ############################################################################
+    # Test child/parent interaction
+    ############################################################################
+    def test_child_destroy(self):
         paned = DockPaned()
         group = DockGroup()
         paned.add(group)
@@ -110,8 +136,9 @@ class TestDockPaned(unittest.TestCase):
     ############################################################################
     # Test public api
     ############################################################################
-    def test_insert_child(self):
+    def test_insert_item(self):
         events = []
+
         def add_handler(self, widget):
             print 'added widget', widget
             events.append(widget)
@@ -125,7 +152,26 @@ class TestDockPaned(unittest.TestCase):
         assert dg1 in events, events
 
         dg2 = DockGroup()
-        dockpaned.insert_child(dg2)
+        dockpaned.insert_item(dg2)
 
         assert dg2 in events, events
 
+    def test_reorder_item(self):
+        dockgroup1 = DockGroup()
+        dockgroup2 = DockGroup()
+        dockgroup3 = DockGroup()
+        dockpaned = DockPaned()
+        dockpaned.add(dockgroup1)
+        dockpaned.add(dockgroup2)
+        dockpaned.add(dockgroup3)
+        dockpaned.reorder_item(dockgroup3, 0)
+        dockpaned.reorder_item(dockgroup1, 2)
+
+        self.assertTrue(dockpaned.item_num(dockgroup1) == 2)
+        self.assertTrue(dockpaned.item_num(dockgroup2) == 1)
+        self.assertTrue(dockpaned.item_num(dockgroup3) == 0)
+
+        dockgroup1.destroy()
+        dockgroup2.destroy()
+        dockgroup3.destroy()
+        dockpaned.destroy()

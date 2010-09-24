@@ -21,7 +21,6 @@
 from __future__ import absolute_import
 import sys
 import gtk
-from logging import getLogger
 from simplegeneric import generic
 from xml.etree.ElementTree import Element, SubElement, tostring, fromstring
 from .docklayout import DockLayout
@@ -90,11 +89,9 @@ def finish(layout, main_frame):
 def parent_attributes(widget):
     container = widget.get_parent()
     d = {}
-#    if isinstance(container, DockPaned):
-#        paned_item = [i for i in container.items if i.child is widget][0]
-#        d['expand'] = str(paned_item.expand).lower()
-#        if paned_item.weight:
-#            d['weight'] = str(paned_item.weight)
+    if isinstance(container, DockPaned):
+        paned_item = [i for i in container.items if i.child is widget][0]
+        d['expand'] = str(paned_item.expand).lower()
     return d
 
 @generic
@@ -151,12 +148,13 @@ def dock_item_factory(parent, icon, title, tooltip, pos=None, vispos=None, curre
 def dock_paned_factory(parent, expand=None, weight=None):
     group = DockGroup()
     if expand is not None:
-        item = parent.insert_child(group, expand=(expand == 'true'))
-        item.weight = float(weight)
+        item = parent.insert_item(group, expand=(expand == 'true'))
+        ###item.weight = float(weight)
     else:
         parent.add(group)
     if isinstance(parent, DockPaned):
-        parent._reset_weights = False
+        ###parent._reset_weights = False
+        parent._reset_weights = True
     return group
 
 @factory('dockpaned')
@@ -167,12 +165,13 @@ def dock_paned_factory(parent, orientation, expand=None, weight=None):
     else:
         paned.set_orientation(gtk.ORIENTATION_VERTICAL)
     if expand is not None:
-        item = parent.insert_child(paned, expand=(expand == 'true'))
-        item.weight = float(weight)
+        item = parent.insert_item(paned, expand=(expand == 'true'))
+        ###item.weight = float(weight)
     else:
         parent.add(paned)
     if isinstance(parent, DockPaned):
-        parent._reset_weights = False
+        ###parent._reset_weights = False
+        parent._reset_weights = True
     return paned
 
 @factory('dockframe')
@@ -183,7 +182,7 @@ def dock_frame_factory(parent, width, height, floating=None, x=None, y=None):
     parent.add(frame)
     if floating == 'true':
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        #self.window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_UTILITY)
+        #self.window.set_type_hint(gdk.WINDOW_TYPE_HINT_UTILITY)
         window.set_property('skip-taskbar-hint', True)
         window.move(int(x), int(y))
         window.add(frame)
