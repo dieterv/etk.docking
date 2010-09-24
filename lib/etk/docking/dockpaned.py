@@ -194,7 +194,6 @@ class DockPaned(gtk.Container):
         self._orientation_changed = True #TODO: fix this hack...
         self.queue_resize()
 
-        print len(self._items), len(self._handles) + 1
         assert len(self._items) == len(self._handles) + 1
         return self.item_num(child)
 
