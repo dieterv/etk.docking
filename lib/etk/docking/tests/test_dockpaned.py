@@ -103,17 +103,17 @@ class TestDockPaned(unittest.TestCase):
         global child_notify_called
 
         def _on_child_notify(gobject, pspec):
-            global notify_called
-            notify_called = True
+            global child_notify_called
+            child_notify_called = True
 
         dockpaned = DockPaned()
         dockgroup = DockGroup()
         dockgroup.connect('child-notify::expand', _on_child_notify)
         dockpaned.add(dockgroup)
 
-        notify_called = False
+        child_notify_called = False
         dockpaned.child_set_property(dockgroup, 'expand', True)
-        self.assertTrue(notify_called,
+        self.assertTrue(child_notify_called,
                         msg='expand child property change notification failed')
 
         dockgroup.destroy()
@@ -127,11 +127,11 @@ class TestDockPaned(unittest.TestCase):
         group = DockGroup()
         paned.add(group)
 
-        assert len(paned.items) == 1
+        assert paned.get_n_items() == len(paned._items) == 1
 
         group.destroy()
 
-        assert len(paned.items) == 0
+        assert paned.get_n_items() == len(paned._items) == 0
 
     ############################################################################
     # Test public api

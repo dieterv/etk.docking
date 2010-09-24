@@ -160,10 +160,14 @@ class DockPaned(gtk.Container):
         :meth:`prepend_item` methods.
         '''
 
-        for item in self._items:
-            if item.child is child:
-                #TODO: improve this message...
-                raise ValueError('Inserted widget is already in the dockpaned')
+        assert not isinstance(child, _DockPanedItem)
+        assert not isinstance(child, _DockPanedHandle)
+        assert isinstance(child, gtk.Widget)
+        assert not child.get_parent()
+
+        if self.item_num(child):
+            #TODO: improve this message...
+            raise ValueError('Inserted widget is already in the dockpaned')
 
         if position is None or position < 0:
             position = self.get_n_items()
@@ -171,26 +175,27 @@ class DockPaned(gtk.Container):
         # Create new _DockPanedItem
         item = _DockPanedItem()
         item.child = child
-        assert not item.child.get_parent()
-        item.child.set_parent(self)
-
-        # And a _DockPanedHandle if needed
-        if len(self._items):
-            self._handles.insert(position - 1, _DockPanedHandle())
-
-        # Do everything needed to make it an actual child widget
         self._items.insert(position, item)
 
-        if self.flags() & gtk.REALIZED:
-            item.child.set_parent_window(self.window)
+        # Set parent/parent_window on child
+        child.set_parent(self)
 
-        # Set expand child property
+        if self.flags() & gtk.REALIZED:
+            child.set_parent_window(self.window)
+
+        # Set child properties
         self.child_set_property(child, 'expand', expand)
+
+        # And a _DockPanedHandle if needed
+        if len(self._items) > 1:
+            self._handles.insert(position - 1, _DockPanedHandle())
 
         # Refresh ourselves
         self._orientation_changed = True #TODO: fix this hack...
         self.queue_resize()
 
+        print len(self._items), len(self._handles) + 1
+        assert len(self._items) == len(self._handles) + 1
         return self.item_num(child)
 
     def _remove_item(self, child):
@@ -203,9 +208,10 @@ class DockPaned(gtk.Container):
 
         item_num = self.item_num(child)
 
-        if item_num:
+        if item_num is not None:
             # Unparent the widget
             child.unparent()
+            assert not child.get_parent()
 
             # Remove the DockPanedItem from the list
             del self._items[item_num]
@@ -223,7 +229,11 @@ class DockPaned(gtk.Container):
                     # be located before the DockPanedItem we just removed
                     del self._handles[item_num - 1]
 
-        self.queue_resize()
+            self.queue_resize()
+        else:
+            raise ValueError('Error removing child "%s"' % child)
+
+        assert len(self._items) == len(self._handles) + 1
 
     def _get_expandable_items(self):
         for item in self._items:

@@ -588,7 +588,6 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
 
                 position = self._items.index(current_group)
                 self.remove(current_group.child)
-                #TODO: bug: sometimes current_group.child still has a parent?!?
                 self.insert_item(new_paned, position)
                 new_group = DockGroup()
 
