@@ -1,5 +1,5 @@
-:class:`DockGroup`
-==================
+:class:`etk.DockGroup`
+======================
 
 .. autoclass:: etk.docking.DockGroup
     :show-inheritance:

@@ -1,5 +1,5 @@
-:class:`DockLayout`
-===================
+:class:`etk.DockLayout`
+=======================
 
 .. autoclass:: etk.docking.DockLayout
     :show-inheritance:
