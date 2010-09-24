@@ -38,7 +38,6 @@ class DockFrame(gtk.Bin):
 
         # Initialize logging
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
-        self.log.debug('')
 
         # Internal housekeeping
         self._placeholder = None
@@ -47,8 +46,6 @@ class DockFrame(gtk.Bin):
     # GtkWidget
     ############################################################################
     def do_size_request(self, requisition):
-        self.log.debug('%s' % requisition)
-
         requisition.width = 0
         requisition.height = 0
 
@@ -58,8 +55,6 @@ class DockFrame(gtk.Bin):
             requisition.height += self.border_width * 2
 
     def do_size_allocate(self, allocation):
-        self.log.debug('%s' % allocation)
-
         self.allocation = allocation
 
         if self.child and self.child.flags() & gtk.VISIBLE:
