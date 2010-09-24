@@ -44,8 +44,8 @@ class DockDragContext(object):
                  'source_x',        # x coordinate starting a potential drag
                  'source_y',        # y coordinate starting a potential drag
                  'source_button',   # the button the user pressed to start the drag
-                 'offset_x',        # cursor x offset relative to the dragged object
-                 'offset_y']        # cursor y offset relative to the dragged object
+                 'offset_x',        # cursor x offset relative to dragged object source_x
+                 'offset_y']        # cursor y offset relative to dragged object source_y
 
     def __init__(self):
         self.reset()
