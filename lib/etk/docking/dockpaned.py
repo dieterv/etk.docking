@@ -131,6 +131,14 @@ class DockPaned(gtk.Container):
     # Private
     ############################################################################
     def _children(self):
+        '''
+        :return: an iterator that returns the items and handles in the dockpaned.
+
+        The :meth:`_children` method returns an iterator that returns the items
+        and handles in the dockpaned in the order they are rendered to screen.
+        This corresponds to ``[_items[0], _handles[0], _items[1], _handles[1],
+        _items[2], ...]``
+        '''
         index = 0
         switch = True
 
