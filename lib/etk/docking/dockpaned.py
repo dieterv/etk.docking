@@ -232,7 +232,8 @@ class DockPaned(gtk.Container):
         else:
             raise ValueError('Error removing child "%s"' % child)
 
-        assert len(self._items) == len(self._handles) + 1
+        assert len(self._items) == len(self._handles) + 1 or \
+               len(self._items) == len(self._handles) == 0
 
     def _get_expandable_items(self):
         for item in self._items:
