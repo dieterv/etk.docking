@@ -330,17 +330,38 @@ class DockPaned(gtk.Container):
             self.set_orientation(value)
 
     def get_handle_size(self):
+        '''
+        :return: the size of the handles in the dockpaned.
+
+        Retrieves the size of the handles in the dockpaned.
+        '''
         return self._handle_size
 
-    def set_handle_size(self, value):
-        self._handle_size = value
+    def set_handle_size(self, handle_size):
+        '''
+        :param handle_size: the new size for the handles in the dockpaned.
+
+        Sets the size for the handles in the dockpaned.
+        '''
+        self._handle_size = handle_size
         self.notify('handle-size')
+        self.queue_resize()
 
     def get_orientation(self):
+        '''
+        :return: the orientation of the dockpaned.
+
+        Retrieves the orientation of the dockpaned.
+        '''
         return self._orientation
 
-    def set_orientation(self, value):
-        self._orientation = value
+    def set_orientation(self, orientation):
+        '''
+        :param orientation: the dockpaned's new orientation.
+
+        Sets the orientation of the dockpaned.
+        '''
+        self._orientation = orientation
         self._orientation_changed = True
         self.notify('orientation')
         self.queue_resize()
