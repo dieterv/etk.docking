@@ -90,7 +90,7 @@ def parent_attributes(widget):
     container = widget.get_parent()
     d = {}
     if isinstance(container, DockPaned):
-        paned_item = [i for i in container.items if i.child is widget][0]
+        paned_item = [i for i in container._items if i.child is widget][0]
         d['expand'] = str(paned_item.expand).lower()
     return d
 
@@ -145,7 +145,7 @@ def dock_item_factory(parent, icon, title, tooltip, pos=None, vispos=None, curre
     return item
 
 @factory('dockgroup')
-def dock_paned_factory(parent, expand=None, weight=None):
+def dock_group_factory(parent, expand=None, weight=None):
     group = DockGroup()
     if expand is not None:
         item = parent.insert_item(group, expand=(expand == 'true'))
