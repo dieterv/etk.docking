@@ -237,17 +237,16 @@ class DockGroup(gtk.Container):
         self._decoration_area.width = dw
         self._decoration_area.height = dh
 
-        # Current item
+        # Current item: we only honor the height request
         if self._current_tab:
-            (iw, ih) = self._current_tab.item.size_request()
+            ih = self._current_tab.item.size_request()[1]
         else:
-            iw = ih = 0
+            ih = 0
 
-        iw += 2 * self._frame_width + 2 * self.border_width
         ih += self._frame_width + 2 * self.border_width
 
         # Compute total size requisition
-        requisition.width = max(dw, iw)
+        requisition.width = dw
         requisition.height = dh + ih
 
     def do_size_allocate(self, allocation):
