@@ -168,8 +168,6 @@ class DockPaned(gtk.Container):
         :meth:`prepend_item` methods.
         '''
 
-        assert not isinstance(child, _DockPanedItem)
-        assert not isinstance(child, _DockPanedHandle)
         assert isinstance(child, gtk.Widget)
         assert not child.get_parent()
 
