@@ -369,10 +369,11 @@ def dock_group_highlight(self):
         self.log.debug('attaching expose event')
         self._expose_event_id = self.connect_after('expose-event',
                                                    dock_group_expose_highlight)
-    self.queue_resize()
+    self.queue_draw()
 
 def dock_unhighlight(self):
-    self.queue_resize()
+    self.queue_draw()
+
     try:
         self.disconnect(self._expose_event_id)
         del self._expose_event_id
@@ -480,7 +481,7 @@ def dock_paned_highlight(self):
         self.log.debug('attaching expose event')
         self._expose_event_id = self.connect_after('expose-event',
                                                    dock_paned_expose_highlight)
-    self.queue_resize()
+    self.queue_draw()
 
 @drag_motion.when_type(DockPaned)
 @with_magic_borders
