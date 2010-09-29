@@ -23,7 +23,7 @@ from __future__ import absolute_import
 from logging import getLogger
 
 import gtk
-from gtk import gdk
+import gtk.gdk as gdk
 
 
 class DockFrame(gtk.Bin):
@@ -65,13 +65,9 @@ class DockFrame(gtk.Bin):
             child_allocation.height = allocation.height - (2 * self.border_width)
             self.child.size_allocate(child_allocation)
 
-    def do_forall(self, internals, callback, data):
-        # Is also called for map and expose events.
-        if self.child:
-            callback(self.child, data)
-#        if internals and self._placeholder:
-#            callback(self._placeholder, data)
-
+    ############################################################################
+    # EtkDockFrame
+    ############################################################################
     def set_placeholder(self, placeholder):
         """
         Set a new placeholder widget on the frame. The placeholder is drawn on top
