@@ -83,10 +83,10 @@ class DockGroup(gtk.Container):
                             gobject.G_MAXUINT,
                             0,
                             gobject.PARAM_READWRITE)}
-    __gsignals__ = {
-        'item-closed': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
-                      (gobject.TYPE_OBJECT,)),
-    }
+    __gsignals__ = {'item-closed':
+                        (gobject.SIGNAL_RUN_LAST,
+                         gobject.TYPE_NONE,
+                         (gobject.TYPE_OBJECT,))}
 
     def __init__(self):
         gtk.Container.__init__(self)
@@ -613,7 +613,6 @@ class DockGroup(gtk.Container):
         handler is to set up a custom drag icon with the drag_source_set_icon()
         method.
         '''
-
         # Free the item for transport.
         for item in self.dragcontext.dragged_object:
             self._dragged_tab_index = [t.item for t in self._tabs].index(item)
@@ -832,13 +831,10 @@ class DockGroup(gtk.Container):
         return index
 
     def _insert_item(self, item, position=None, visible_position=None):
-        if not isinstance(item, DockItem):
-            raise TypeError('Item should be of type "DockItem", got: "%s"' % type(item).__name__)
+        assert isinstance(item, DockItem)
+        assert self.item_num(item) is None
 
-        if item in self._tabs:
-            raise ValueError('Inserted item is already in the group')
-
-        if position is None:
+        if position is None or position < 0:
             position = self.get_n_items()
 
         # Create composite children for tab
