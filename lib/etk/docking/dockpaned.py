@@ -235,6 +235,31 @@ class DockPaned(gtk.Container):
         self.queue_resize()
         self.emit('item-removed', child, item_num)
 
+    def _get_n_handles(self):
+        '''
+        :returns: the number of handles in the dockpaned.
+
+        The :meth:`_get_n_handles` method returns the number of handles in the
+        dockpaned.
+        '''
+        return len(self._handles)
+
+    def _get_handle_at_pos(self, x, y):
+        '''
+        :param x: the x coordinate of the position.
+        :param y: the y coordinate of the position.
+        :returns: the handle at the position specified by x and y or :const:`None`.
+
+        The :meth:`_get_handle_at_pos` method returns the handle whose area
+        contains the position specified by `x` and `y` or :const:`None` if no
+        handle is at that position.
+        '''
+        for handle in self._handles:
+            if (x, y) in handle:
+                return handle
+        else:
+            return None
+
     def _get_expandable_items(self):
         for item in self._items:
             if item.expand:
@@ -262,9 +287,12 @@ class DockPaned(gtk.Container):
         return (weight  * 1000) >> 16
 
     def _redistribute_size(self, delta_size, enlarge, shrink):
-        #TODO: finish docstring...
         '''
-        :param delta_size:
+        :param delta_size: the size we want to add the item specified by
+                           `enlarge`.
+        :param enlarge: the `_DockPanedItem` we want to add size to.
+        :param shrink: a list of `_DockPanedItem`'s where the size requested
+                       by `delta_size` will be removed.
 
         The :meth:`_redistribute_size` method subtracts size from the items
         specified by `shrink` and adds the freed size to the item specified by
@@ -763,15 +791,6 @@ class DockPaned(gtk.Container):
         '''
         return len(self._items)
 
-    def _get_n_handles(self):
-        '''
-        :returns: the number of handles in the dockpaned.
-
-        The :meth:`_get_n_handles` method returns the number of handles in the
-        dockpaned.
-        '''
-        return len(self._handles)
-
     def get_nth_item(self, item_num):
         '''
         :param item_num: the index of an item in the dockpaned.
@@ -784,22 +803,6 @@ class DockPaned(gtk.Container):
         '''
         if item_num >= 0 and item_num <= self.get_n_items() - 1:
             return self._items[item_num].child
-        else:
-            return None
-
-    def _get_handle_at_pos(self, x, y):
-        '''
-        :param x: the x coordinate of the position.
-        :param y: the y coordinate of the position.
-        :returns: the handle at the position specified by x and y or :const:`None`.
-
-        The :meth:`_get_handle_at_pos` method returns the handle whose area
-        contains the position specified by `x` and `y` or :const:`None` if no
-        handle is at that position.
-        '''
-        for handle in self._handles:
-            if (x, y) in handle:
-                return handle
         else:
             return None
 
