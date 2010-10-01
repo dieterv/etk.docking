@@ -334,7 +334,7 @@ class TestDockGroup(unittest.TestCase):
         self.assertEquals([dockitem1, dockitem2], events)
         self.assertEquals([True, True], item_in)
         self.assertEquals([True, True], item_in_after)
-        
+
         dockitem3 = DockItem()
         dockgroup.append_item(dockitem3)
         self.assertEquals([dockitem1, dockitem2, dockitem3], events)
@@ -401,7 +401,7 @@ class TestDockGroup(unittest.TestCase):
         dockgroup.add(dockitem)
 
         tab = dockgroup._tabs[0]
-        
+
         item_closed = []
         def item_closed_handler(group, item):
             item_closed.append((group, item))

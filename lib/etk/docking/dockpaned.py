@@ -34,7 +34,6 @@ class _DockPanedHandle(object):
     '''
     Private object storing information about a handle.
     '''
-
     __slots__ = ['area']       # area, used for hit testing (gdk.Rectangle)
 
     def __init__(self):
@@ -48,7 +47,6 @@ class _DockPanedItem(object):
     '''
     Private object storing information about a child widget.
     '''
-
     __slots__ = ['child',      # child widget
                  'weight',     # relative weight
                  'min_weight', # minimum relative weight
@@ -81,7 +79,6 @@ class DockPaned(gtk.Container):
     with the dockpaned widget. If multiple child widgets have the resize
     property set to :const:`True`, all of them will expand of shrink evenly.
     '''
-
     __gtype_name__ = 'EtkDockPaned'
     __gproperties__ = \
         {'handle-size':
@@ -107,6 +104,14 @@ class DockPaned(gtk.Container):
               'expand',
               True,
               gobject.PARAM_READWRITE)}
+    __gsignals__ = {'item-added':
+                        (gobject.SIGNAL_RUN_LAST,
+                         gobject.TYPE_NONE,
+                         (gobject.TYPE_OBJECT, gobject.TYPE_UINT)),
+                    'item-removed':
+                        (gobject.SIGNAL_RUN_LAST,
+                         gobject.TYPE_NONE,
+                         (gobject.TYPE_OBJECT, gobject.TYPE_UINT))}
 
     def __init__(self):
         gtk.Container.__init__(self)
@@ -119,6 +124,7 @@ class DockPaned(gtk.Container):
         self._handles = []
         self._hcursor = None
         self._vcursor = None
+        self._item_inserted = False
 
         # Initialize handle dragging (not to be confused with DnD...)
         self._dragcontext = DockDragContext()
@@ -167,13 +173,9 @@ class DockPaned(gtk.Container):
         the :meth:`add`, :meth:`insert_item`, :meth:`append_item` and
         :meth:`prepend_item` methods.
         '''
-
         assert isinstance(child, gtk.Widget)
+        assert self.item_num(child) is None
         assert not child.get_parent()
-
-        if self.item_num(child):
-            #TODO: improve this message...
-            raise ValueError('Inserted widget is already in the dockpaned')
 
         if position is None or position < 0:
             position = self.get_n_items()
@@ -182,25 +184,22 @@ class DockPaned(gtk.Container):
         item = _DockPanedItem()
         item.child = child
         self._items.insert(position, item)
-
-        # Set parent/parent_window on child
         child.set_parent(self)
 
         if self.flags() & gtk.REALIZED:
             child.set_parent_window(self.window)
 
-        # Set child properties
         self.child_set_property(child, 'expand', expand)
 
-        # And a _DockPanedHandle if needed
+        # Create a _DockPanedHandle if needed
         if len(self._items) > 1:
             self._handles.insert(position - 1, _DockPanedHandle())
 
-        # Refresh ourselves
-        self._orientation_changed = True #TODO: fix this hack...
-        self.queue_resize()
-
         assert len(self._items) == len(self._handles) + 1
+
+        self._item_inserted = True
+        self.queue_resize()
+        self.emit('item-added', child, position)
         return self.item_num(child)
 
     def _remove_item(self, child):
@@ -210,36 +209,31 @@ class DockPaned(gtk.Container):
         The :meth:`_remove_item` method is the private implementation behind
         the :meth:`remove` and :meth:`remove_item` methods.
         '''
-
         item_num = self.item_num(child)
+        assert item_num is not None
 
-        if item_num is not None:
-            # Unparent the widget
-            child.unparent()
-            assert not child.get_parent()
+        # Remove the DockPanedItem from the list
+        child.unparent()
+        del self._items[item_num]
 
-            # Remove the DockPanedItem from the list
-            del self._items[item_num]
-
-            # If there are still items/handles in the list, we'd like to
-            # remove a handle...
-            if self._items:
-                try:
-                    # Remove the DockPanedHandle that used to be located after
-                    # the DockPanedItem we just removed
-                    del self._handles[item_num]
-                except IndexError:
-                    # Well, seems we removed the last DockPanedItem from the
-                    # list, so we'll remove the DockPanedHandle that used to
-                    # be located before the DockPanedItem we just removed
-                    del self._handles[item_num - 1]
-
-            self.queue_resize()
-        else:
-            raise ValueError('Error removing child "%s"' % child)
+        # If there are still items/handles in the list, we'd like to
+        # remove a handle...
+        if self._items:
+            try:
+                # Remove the DockPanedHandle that used to be located after
+                # the DockPanedItem we just removed
+                del self._handles[item_num]
+            except IndexError:
+                # Well, seems we removed the last DockPanedItem from the
+                # list, so we'll remove the DockPanedHandle that used to
+                # be located before the DockPanedItem we just removed
+                del self._handles[item_num - 1]
 
         assert len(self._items) == len(self._handles) + 1 or \
                len(self._items) == len(self._handles) == 0
+
+        self.queue_resize()
+        self.emit('item-removed', child, item_num)
 
     def _get_expandable_items(self):
         for item in self._items:
@@ -251,25 +245,24 @@ class DockPaned(gtk.Container):
 
     def _s2w(self, size):
         '''
-        :param size: an integer size value corresponding to a child's width
+        :param size: an integer size value corresponding to a child's width.
                      if the orientation property is gtk.ORIENTATION_HORIZONTAL,
                      otherwise the child's height.
         :returns: the weight value.
         '''
-
         return ((size << 16) + 999) / 1000
 
     def _w2s(self, weight):
         '''
         :param size: a weight value
-        :returns: the integer size value corresponding to a child's width
+        :returns: the integer size value corresponding to a child's width.
                   if the orientation property is gtk.ORIENTATION_HORIZONTAL,
                   otherwise the child's height.
         '''
-
         return (weight  * 1000) >> 16
 
     def _redistribute_size(self, delta_size, enlarge, shrink):
+        #TODO: finish docstring...
         '''
         :param delta_size:
 
@@ -278,7 +271,6 @@ class DockPaned(gtk.Container):
         `enlarge`. This is done until `delta_size` reaches 0, or there's no
         more items left in `shrink`.
         '''
-
         # Distribute delta_size amongst the items in shrink
         for item in shrink:
             if self._orientation == gtk.ORIENTATION_HORIZONTAL:
@@ -327,43 +319,6 @@ class DockPaned(gtk.Container):
         elif pspec.name == 'orientation':
             self.set_orientation(value)
 
-    def get_handle_size(self):
-        '''
-        :return: the size of the handles in the dockpaned.
-
-        Retrieves the size of the handles in the dockpaned.
-        '''
-        return self._handle_size
-
-    def set_handle_size(self, handle_size):
-        '''
-        :param handle_size: the new size for the handles in the dockpaned.
-
-        Sets the size for the handles in the dockpaned.
-        '''
-        self._handle_size = handle_size
-        self.notify('handle-size')
-        self.queue_resize()
-
-    def get_orientation(self):
-        '''
-        :return: the orientation of the dockpaned.
-
-        Retrieves the orientation of the dockpaned.
-        '''
-        return self._orientation
-
-    def set_orientation(self, orientation):
-        '''
-        :param orientation: the dockpaned's new orientation.
-
-        Sets the orientation of the dockpaned.
-        '''
-        self._orientation = orientation
-        self._orientation_changed = True
-        self.notify('orientation')
-        self.queue_resize()
-
     ############################################################################
     # GtkWidget
     ############################################################################
@@ -402,8 +357,8 @@ class DockPaned(gtk.Container):
         gtk.Container.do_unrealize(self)
 
     def do_map(self):
-        gtk.Container.do_map(self)
         self.window.show()
+        gtk.Container.do_map(self)
 
     def do_unmap(self):
         self.window.hide()
@@ -486,7 +441,7 @@ class DockPaned(gtk.Container):
                 new_weight = self._s2w(allocation.height - handle_sizes)
 
             # Compute delta (have we been resized?)
-            if old_weight < 0:
+            if old_weight < 0 or self._item_inserted:
                 # This is the first time we get allocated...
                 delta_weight = 0
             else:
@@ -601,6 +556,7 @@ class DockPaned(gtk.Container):
         # Reset drag context
         if event.button == self._dragcontext.source_button:
             self._dragcontext.reset()
+            self.window.set_cursor(None)
             return True
 
         return False
@@ -654,6 +610,19 @@ class DockPaned(gtk.Container):
     ############################################################################
     # GtkContainer
     ############################################################################
+    def do_add(self, widget):
+        self._insert_item(widget, expand=True)
+
+    def do_remove(self, widget):
+        self._remove_item(widget)
+
+    def do_forall(self, internals, callback, data):
+        try:
+            for item in self._items:
+                callback(item.child, data)
+        except AttributeError:
+            pass
+
     def do_get_child_property(self, child, property_id, pspec):
         if pspec.name == 'expand':
             for item in self._items:
@@ -675,23 +644,46 @@ class DockPaned(gtk.Container):
                 #TODO: improve this message...
                 raise ValueError('Widget specified by child is not a child of ours...')
 
-    def do_forall(self, internals, callback, data):
-        try:
-            for item in self._items:
-                callback(item.child, data)
-        except AttributeError:
-            pass
-
-    def do_add(self, widget):
-        if widget not in (item.child for item in self._items):
-            self._insert_item(widget, expand=True)
-
-    def do_remove(self, widget):
-        self._remove_item(widget)
-
     ############################################################################
     # EtkDockPaned
     ############################################################################
+    def get_handle_size(self):
+        '''
+        :return: the size of the handles in the dockpaned.
+
+        Retrieves the size of the handles in the dockpaned.
+        '''
+        return self._handle_size
+
+    def set_handle_size(self, handle_size):
+        '''
+        :param handle_size: the new size for the handles in the dockpaned.
+
+        Sets the size for the handles in the dockpaned.
+        '''
+        self._handle_size = handle_size
+        self.notify('handle-size')
+        self.queue_resize()
+
+    def get_orientation(self):
+        '''
+        :return: the orientation of the dockpaned.
+
+        Retrieves the orientation of the dockpaned.
+        '''
+        return self._orientation
+
+    def set_orientation(self, orientation):
+        '''
+        :param orientation: the dockpaned's new orientation.
+
+        Sets the orientation of the dockpaned.
+        '''
+        self._orientation = orientation
+        self._orientation_changed = True
+        self.notify('orientation')
+        self.queue_resize()
+
     def append_item(self, child):
         '''
         :param child: the :class:`gtk.Widget` to use as the contents of the item.
@@ -699,7 +691,6 @@ class DockPaned(gtk.Container):
 
         The :meth:`append_item` method prepends an item to the dockpaned.
         '''
-
         return self._insert_item(child)
 
     def prepend_item(self, child):
@@ -709,7 +700,6 @@ class DockPaned(gtk.Container):
 
         The :meth:`prepend_item` method prepends an item to the dockpaned.
         '''
-
         return self._insert_item(child, 0)
 
     def insert_item(self, child, position=None, expand=True):
@@ -729,28 +719,24 @@ class DockPaned(gtk.Container):
         widget to use as the contents of the item. If position is negative or
         :const:`None` the item is appended to the dockpaned.
         '''
-
-        item_num = self._insert_item(child, position, expand)
-        self.emit('add', child)
-        return item_num
+        return self._insert_item(child, position, expand)
 
     def remove_item(self, item_num):
         '''
-        :param item_num: the index of an item, starting from 0. If :const:`None`
-                         or negative, the last item will be removed.
+        :param item_num: the index (starting from 0) of the item to remove. If
+                         :const:`None` or negative, the last item will be removed.
 
         The :meth:`remove_item` method removes the item at the location
         specified by `item_num`. The value of `item_num` starts from 0. If
         `item_num` is negative or :const:`None` the last item of the dockpaned
         will be removed.
         '''
-
         if item_num is None or item_num < 0:
-            item = self.get_nth_item(self.get_n_items())
+            child = self.get_nth_item(self.get_n_items() - 1)
         else:
-            item = self.get_nth_item(item_num)
+            child = self.get_nth_item(item_num)
 
-        self._remove_item(item.child)
+        self._remove_item(child)
 
     def item_num(self, child):
         '''
@@ -762,32 +748,29 @@ class DockPaned(gtk.Container):
         contains the widget specified by `child` or :const:`None` if no item
         contains `child`.
         '''
-
         for item in self._items:
             if item.child is child:
                 return self._items.index(item)
         else:
             return None
 
-    def _get_n_handles(self):
-        '''
-        :returns: the number of handles in the dockpaned.
-
-        The :meth:`_get_n_handles‘ method returns the number of handles in the
-        dockpaned.
-        '''
-
-        return len(self._handles)
-
     def get_n_items(self):
         '''
         :returns: the number of child widgets in the dockpaned.
 
-        The :meth:`get_n_items‘ method returns the number of child widgets in
+        The :meth:`get_n_items` method returns the number of child widgets in
         the dockpaned.
         '''
-
         return len(self._items)
+
+    def _get_n_handles(self):
+        '''
+        :returns: the number of handles in the dockpaned.
+
+        The :meth:`_get_n_handles` method returns the number of handles in the
+        dockpaned.
+        '''
+        return len(self._handles)
 
     def get_nth_item(self, item_num):
         '''
@@ -799,23 +782,21 @@ class DockPaned(gtk.Container):
         the index specified by `item_num`. If `item_num` is out of bounds for
         the item range of the dockpaned this method returns :const:`None`.
         '''
-
         if item_num >= 0 and item_num <= self.get_n_items() - 1:
-            return self._items[item_num]
+            return self._items[item_num].child
         else:
             return None
 
     def _get_handle_at_pos(self, x, y):
         '''
-        :param x: the x coordinate of the position
-        :param y: the y coordinate of the position
-        :returns: the handle at the position specified by x and y or :const:`None`
+        :param x: the x coordinate of the position.
+        :param y: the y coordinate of the position.
+        :returns: the handle at the position specified by x and y or :const:`None`.
 
         The :meth:`_get_handle_at_pos` method returns the handle whose area
         contains the position specified by `x` and `y` or :const:`None` if no
         handle is at that position.
         '''
-
         for handle in self._handles:
             if (x, y) in handle:
                 return handle
@@ -824,18 +805,18 @@ class DockPaned(gtk.Container):
 
     def get_item_at_pos(self, x, y):
         '''
-        :param x: the x coordinate of the position
-        :param y: the y coordinate of the position
-        :returns: the item at the position specified by x and y or :const:`None`
+        :param x: the x coordinate of the position.
+        :param y: the y coordinate of the position.
+        :returns: the child widget at the position specified by x and y or
+                  :const:`None`.
 
-        The :meth:`get_item_at_pos` method returns the child widget whose allocation
-        contains the position specified by `x` and `y` or :const:`None` if no
-        child widget is at that position.
+        The :meth:`get_item_at_pos` method returns the child widget whose
+        allocation contains the position specified by `x` and `y` or
+        :const:`None` if no child widget is at that position.
         '''
-
         for item in self._items:
             if (x, y) in item:
-                return item
+                return item.child
         else:
             return None
 
@@ -851,20 +832,16 @@ class DockPaned(gtk.Container):
         list or negative or :const:`None`, `child` will be moved to the end of
         the list.
         '''
-
         item_num = self.item_num(child)
+        assert item_num is not None
 
-        if not item_num:
-            #TODO: improve this message...
-            raise ValueError('widget is not a child of this DockPaned')
-        else:
-            if position is None or position < 0 or position > self.get_n_items() - 1:
-                position = self.get_n_items()
+        if position is None or position < 0 or position > self.get_n_items() - 1:
+            position = self.get_n_items()
 
-            item = self._items[item_num]
-            self._items.remove(item)
-            self._items.insert(position, item)
-            self.queue_resize()
+        item = self._items[item_num]
+        self._items.remove(item)
+        self._items.insert(position, item)
+        self.queue_resize()
 
 ############################################################################
 # Install child properties

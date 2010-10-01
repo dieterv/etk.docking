@@ -18,20 +18,22 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with etk.docking. If not, see <http://www.gnu.org/licenses/>.
 
+
 from __future__ import absolute_import
-from logging import getLogger
 from collections import namedtuple
+from logging import getLogger
+
+from simplegeneric import generic
 
 import gobject
 import gtk
 import gtk.gdk as gdk
 
-from simplegeneric import generic
-
 from .dnd import DRAG_TARGET_ITEM_LIST, Placeholder
 from .dockframe import DockFrame
 from .dockgroup import DockGroup
 from .dockpaned import DockPaned
+
 
 MAGIC_BORDER_SIZE = 10
 
@@ -57,7 +59,7 @@ class DockLayout(gobject.GObject):
         gobject.GObject.__init__(self)
 
         # Initialize logging
-        self.log = getLogger('%s.%s' % (self.__class__.__name__, hex(id(self))))
+        self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
 
         self.frames = set()
         self._signal_handlers = {} # Map widget -> set([signals, ...])
@@ -96,8 +98,6 @@ class DockLayout(gobject.GObject):
         if self._signal_handlers.get(widget):
             return
 
-        self.log.debug('Adding signal handlers for widget %s' % widget)
-
         signals = set()
         widget.drag_dest_set(gtk.DEST_DEFAULT_MOTION,
                              [DRAG_TARGET_ITEM_LIST],
@@ -105,7 +105,9 @@ class DockLayout(gobject.GObject):
 
         # Use instance methods here, so layout can do additional bookkeeping
         for name, callback in (('add', self.on_widget_add),
+                               ('item-added', self.on_widget_add),
                                ('remove', self.on_widget_remove),
+                               ('item-removed', self.on_widget_remove),
                                ('drag_motion', self.on_widget_drag_motion),
                                ('drag-leave', self.on_widget_drag_leave),
                                ('drag-drop', self.on_widget_drag_drop),
@@ -115,7 +117,7 @@ class DockLayout(gobject.GObject):
             try:
                 signals.add(widget.connect(name, callback))
             except TypeError, e:
-                self.log.warning('%s: %s' % (widget, e))
+                self.log.debug(e)
 
         if isinstance(widget, DockGroup):
             signals.add(widget.connect('item-closed', self.on_dockgroup_item_closed))
@@ -134,8 +136,6 @@ class DockLayout(gobject.GObject):
         except KeyError:
             pass # No signals
         else:
-            self.log.debug('Removing signals for widget %s' % widget)
-
             for s in signals:
                 widget.disconnect(s)
 
@@ -150,14 +150,14 @@ class DockLayout(gobject.GObject):
         """
         cleanup(group)
 
-    def on_widget_add(self, container, widget):
+    def on_widget_add(self, container, widget, item_num=None):
         """
         Deal with new elements being added to the layout or it's children.
         """
         if isinstance(widget, gtk.Container):
             self.add_signal_handlers(widget)
 
-    def on_widget_remove(self, container, widget):
+    def on_widget_remove(self, container, widget, item_num=None):
         """
         Remove signals from containers and subcontainers.
         """
@@ -167,6 +167,7 @@ class DockLayout(gobject.GObject):
     def on_widget_drag_motion(self, widget, context, x, y, timestamp):
         context.docklayout = self
         drag_data = drag_motion(widget, context, x, y, timestamp)
+
         old_drop_widget = self._drag_data and self._drag_data.drop_widget
         new_drop_widget = drag_data and drag_data.drop_widget
 
@@ -428,7 +429,6 @@ def dock_group_drag_end(self, context):
 def dock_group_drag_failed(self, context, result):
     self.log.debug('%s, %s' % (context, result))
     if result == 1: #gtk.DRAG_RESULT_NO_TARGET
-        #print 'Create new window', int(result)
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.move(*self.get_pointer())
         window.set_resizable(True)
@@ -576,7 +576,6 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
         assert current_group
 
         if create:
-            #print 'Add new DockPaned and add DockGroup'
             def new_paned_and_group_receiver(selection_data, info):
                 source = context.get_source_widget()
                 assert source
@@ -587,16 +586,16 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
                 else:
                     new_paned.set_orientation(gtk.ORIENTATION_HORIZONTAL)
 
-                position = self._items.index(current_group)
-                self.remove(current_group.child)
+                position = self.item_num(current_group)
+                self.remove(current_group)
                 self.insert_item(new_paned, position)
                 new_group = DockGroup()
 
                 if min(x, y) < MAGIC_BORDER_SIZE:
                     new_paned.insert_item(new_group)
-                    new_paned.insert_item(current_group.child)
+                    new_paned.insert_item(current_group)
                 else:
-                    new_paned.insert_item(current_group.child)
+                    new_paned.insert_item(current_group)
                     new_paned.insert_item(new_group)
 
                 new_paned.show()
@@ -608,14 +607,14 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
 
                 context.finish(True, True, timestamp) # success, delete, time
 
-            make_placeholder(self, x, y, self.allocation, current_group.child.allocation)
+            make_placeholder(self, x, y, self.allocation, current_group.allocation)
             return new_paned_and_group_receiver
         elif min(x, y) < MAGIC_BORDER_SIZE:
             position = 0
-            make_placeholder(self, x, y, self.allocation, current_group.child.allocation)
+            make_placeholder(self, x, y, self.allocation, current_group.allocation)
         else:
             position = None
-            make_placeholder(self, x, y, self.allocation, current_group.child.allocation)
+            make_placeholder(self, x, y, self.allocation, current_group.allocation)
 
         def add_group_receiver(selection_data, info):
             source = context.get_source_widget()

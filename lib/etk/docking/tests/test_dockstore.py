@@ -21,7 +21,7 @@ def test_serialize():
     s = serialize(layout)
     assert '<layout><dockframe height="1" width="1">'\
     '<dockpaned orientation="horizontal">'\
-    '<dockgroup>'\
+    '<dockgroup expand="true">'\
     '<dockitem icon="icon" title="t" tooltip="xx" />'\
     '</dockgroup></dockpaned></dockframe></layout>' == s, s
 
@@ -51,11 +51,11 @@ def test_deserialize():
     frame = iter(layout.frames).next()
     assert frame.child
     paned = frame.child
-    assert paned.items
-    group = paned.items[0].child
+    assert paned.get_n_items()
+    group = paned.get_nth_item(0)
     assert isinstance(group, DockGroup), group
-    assert group.items, group.items
-    item = group.items[0]
+    assert group.get_n_items()
+    item = group.get_nth_item(0)
     assert isinstance(item, DockItem)
     button = item.child
     assert isinstance(button, gtk.Button)

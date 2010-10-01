@@ -22,6 +22,7 @@
 import unittest
 
 import gtk
+import gtk.gdk as gdk
 
 from etk.docking import DockPaned, DockGroup
 
@@ -120,41 +121,276 @@ class TestDockPaned(unittest.TestCase):
         dockpaned.destroy()
 
     ############################################################################
-    # Test child/parent interaction
+    # Test signals
     ############################################################################
-    def test_child_destroy(self):
-        paned = DockPaned()
-        group = DockGroup()
-        paned.add(group)
+    def test_add_signal(self):
+        add_events = []
 
-        assert paned.get_n_items() == len(paned._items) == 1
+        def on_add(self, widget):
+            add_events.append(widget)
 
-        group.destroy()
+        dockgroup = DockGroup()
+        dockpaned = DockPaned()
+        dockpaned.connect('add', on_add)
+        dockpaned.add(dockgroup)
 
-        assert paned.get_n_items() == len(paned._items) == 0
+        self.assertTrue(dockgroup in add_events)
+
+        dockgroup.destroy()
+        dockpaned.destroy()
+
+    def test_remove_signal(self):
+        remove_events = []
+        item_removed_events = []
+
+        def on_remove(self, widget):
+            remove_events.append(widget)
+
+        def on_item_removed(dockpaned, child, position):
+            item_removed_events.append(child)
+
+        dockgroup = DockGroup()
+        dockpaned = DockPaned()
+        dockpaned.connect('remove', on_remove)
+        dockpaned.connect('item-removed', on_item_removed)
+        dockpaned.add(dockgroup)
+        dockpaned.remove(dockgroup)
+
+        self.assertTrue(dockgroup in remove_events)
+        self.assertTrue(dockgroup in item_removed_events)
+
+        dockgroup.destroy()
+        dockpaned.destroy()
+
+    def test_item_added_signal(self):
+        add_events = []
+        item_added_events = []
+
+        def on_add(self, widget):
+            add_events.append(widget)
+
+        def on_item_added(dockpaned, child, position):
+            item_added_events.append(child)
+
+        dockgroup1 = DockGroup()
+        dockgroup2 = DockGroup()
+        dockpaned = DockPaned()
+        dockpaned.connect('add', on_add)
+        dockpaned.connect('item-added', on_item_added)
+        dockpaned.add(dockgroup1)
+        dockpaned.insert_item(dockgroup2)
+
+        self.assertTrue(dockgroup1 in item_added_events)
+        self.assertTrue(dockgroup1 in add_events)
+        self.assertTrue(dockgroup2 in item_added_events)
+        self.assertFalse(dockgroup2 in add_events)
+
+        dockgroup2.destroy()
+        dockgroup1.destroy()
+        dockpaned.destroy()
+
+    def test_item_removed_signal(self):
+        remove_events = []
+        item_removed_events = []
+
+        def on_remove(self, widget):
+            remove_events.append(widget)
+
+        def on_item_removed(dockpaned, child, position):
+            item_removed_events.append(child)
+
+        dockgroup1 = DockGroup()
+        dockgroup2 = DockGroup()
+        dockpaned = DockPaned()
+        dockpaned.connect('remove', on_remove)
+        dockpaned.connect('item-removed', on_item_removed)
+        dockpaned.add(dockgroup1)
+        dockpaned.add(dockgroup2)
+        dockpaned.remove(dockgroup1)
+        dockpaned.remove_item(0)
+
+        self.assertTrue(dockgroup1 in item_removed_events)
+        self.assertTrue(dockgroup1 in remove_events)
+        self.assertTrue(dockgroup2 in item_removed_events)
+        self.assertFalse(dockgroup2 in remove_events)
+
+        dockgroup1.destroy()
+        dockgroup2.destroy()
+        dockpaned.destroy()
 
     ############################################################################
     # Test public api
     ############################################################################
-    def test_insert_item(self):
-        events = []
-
-        def add_handler(self, widget):
-            print 'added widget', widget
-            events.append(widget)
-
+    def test_add(self):
+        dockgroup = DockGroup()
         dockpaned = DockPaned()
-        dockpaned.connect('add', add_handler)
+        dockpaned.add(dockgroup)
 
-        dg1 = DockGroup()
-        dockpaned.add(dg1)
+        self.assertTrue(dockgroup in dockpaned)
 
-        assert dg1 in events, events
+        dockgroup.destroy()
+        dockpaned.destroy()
 
-        dg2 = DockGroup()
-        dockpaned.insert_item(dg2)
+    def test_remove(self):
+        dockgroup = DockGroup()
+        dockpaned = DockPaned()
+        dockpaned.add(dockgroup)
+        dockpaned.remove(dockgroup)
 
-        assert dg2 in events, events
+        self.assertTrue(dockgroup not in dockpaned)
+
+        dockgroup.destroy()
+        dockpaned.destroy()
+
+    def test_append_item(self):
+        dockgroup1 = DockGroup()
+        dockgroup2 = DockGroup()
+        dockpaned = DockPaned()
+        item_num1 = dockpaned.append_item(dockgroup1)
+        item_num2 = dockpaned.append_item(dockgroup2)
+
+        self.assertTrue(item_num1 == 0)
+        self.assertTrue(dockpaned.get_nth_item(0) is dockgroup1)
+        self.assertTrue(item_num2 == 1)
+        self.assertTrue(dockpaned.get_nth_item(1) is dockgroup2)
+
+        dockgroup2.destroy()
+        dockgroup1.destroy()
+        dockpaned.destroy()
+
+    def test_prepend_item(self):
+        dockgroup1 = DockGroup()
+        dockgroup2 = DockGroup()
+        dockpaned = DockPaned()
+        item_num1 = dockpaned.prepend_item(dockgroup1)
+        self.assertTrue(item_num1 == 0)
+        item_num2 = dockpaned.prepend_item(dockgroup2)
+        self.assertTrue(item_num2 == 0)
+
+        self.assertTrue(dockpaned.get_nth_item(0) is dockgroup2)
+        self.assertTrue(dockpaned.get_nth_item(1) is dockgroup1)
+
+        dockgroup2.destroy()
+        dockgroup1.destroy()
+        dockpaned.destroy()
+
+    def test_insert_item(self):
+        dockgroup1 = DockGroup()
+        dockgroup2 = DockGroup()
+        dockgroup3 = DockGroup()
+        dockpaned = DockPaned()
+        item_num1 = dockpaned.insert_item(dockgroup1, position=None)
+        self.assertTrue(item_num1 == 0)
+        item_num2 = dockpaned.insert_item(dockgroup2, position=-1)
+        self.assertTrue(item_num2 == 1)
+        item_num3 = dockpaned.insert_item(dockgroup3, position=1)
+        self.assertTrue(item_num3 == 1)
+
+        self.assertTrue(dockpaned.get_nth_item(0) is dockgroup1)
+        self.assertTrue(dockpaned.get_nth_item(1) is dockgroup3)
+        self.assertTrue(dockpaned.get_nth_item(2) is dockgroup2)
+
+        dockgroup3.destroy()
+        dockgroup2.destroy()
+        dockgroup1.destroy()
+        dockpaned.destroy()
+
+    def test_remove_item(self):
+        dockgroup1 = DockGroup()
+        dockgroup2 = DockGroup()
+        dockgroup3 = DockGroup()
+        dockpaned = DockPaned()
+        dockpaned.add(dockgroup1)
+        dockpaned.add(dockgroup2)
+        dockpaned.add(dockgroup3)
+        dockpaned.remove_item(None)
+        dockpaned.remove_item(0)
+        dockpaned.remove_item(-1)
+
+        self.assertTrue(dockgroup1 not in dockpaned)
+        self.assertTrue(dockgroup2 not in dockpaned)
+
+        dockgroup2.destroy()
+        dockgroup1.destroy()
+        dockpaned.destroy()
+
+    def test_item_num(self):
+        dockgroup1 = DockGroup()
+        dockgroup2 = DockGroup()
+        dockpaned = DockPaned()
+        dockpaned.add(dockgroup1)
+        dockpaned.add(dockgroup2)
+
+        self.assertTrue(dockpaned.item_num(dockgroup1) == 0)
+        self.assertTrue(dockpaned.item_num(dockgroup2) == 1)
+
+        dockgroup2.destroy()
+        dockgroup1.destroy()
+        dockpaned.destroy()
+
+    def test_get_n_items(self):
+        dockgroup1 = DockGroup()
+        dockgroup2 = DockGroup()
+        dockpaned = DockPaned()
+        dockpaned.add(dockgroup1)
+        dockpaned.add(dockgroup2)
+
+        self.assertTrue(dockpaned.get_n_items() == 2)
+
+        dockgroup2.destroy()
+        dockgroup1.destroy()
+        dockpaned.destroy()
+
+    def test_get_n_handles(self):
+        dockgroup1 = DockGroup()
+        dockgroup2 = DockGroup()
+        dockpaned = DockPaned()
+        dockpaned.add(dockgroup1)
+        dockpaned.add(dockgroup2)
+
+        self.assertTrue(dockpaned._get_n_handles() == 1)
+
+        dockgroup2.destroy()
+        dockgroup1.destroy()
+        dockpaned.destroy()
+
+    def test_get_nth_item(self):
+        dockgroup1 = DockGroup()
+        dockgroup2 = DockGroup()
+        dockpaned = DockPaned()
+        dockpaned.add(dockgroup1)
+        dockpaned.add(dockgroup2)
+
+        self.assertTrue(dockpaned.get_nth_item(0) == dockgroup1)
+        self.assertTrue(dockpaned.get_nth_item(1) == dockgroup2)
+
+        dockgroup2.destroy()
+        dockgroup1.destroy()
+        dockpaned.destroy()
+
+    def test_get_item_at_pos(self):
+        dockgroup1 = DockGroup()
+        dockgroup2 = DockGroup()
+        dockpaned = DockPaned()
+        dockpaned.add(dockgroup1)
+        dockpaned.add(dockgroup2)
+        window = gtk.Window()
+        window.add(dockpaned)
+        window.show_all()
+
+        child1 = dockpaned.get_item_at_pos(dockgroup1.allocation.x + 1,
+                                           dockgroup1.allocation.y + 1)
+
+        child2 = dockpaned.get_item_at_pos(dockgroup2.allocation.x + 1,
+                                           dockgroup2.allocation.y + 1)
+
+        self.assertTrue(child1 is dockgroup1)
+        self.assertTrue(child2 is dockgroup2)
+
+        dockgroup2.destroy()
+        dockgroup1.destroy()
+        dockpaned.destroy()
+        window.destroy()
 
     def test_reorder_item(self):
         dockgroup1 = DockGroup()
@@ -171,7 +407,24 @@ class TestDockPaned(unittest.TestCase):
         self.assertTrue(dockpaned.item_num(dockgroup2) == 1)
         self.assertTrue(dockpaned.item_num(dockgroup3) == 0)
 
-        dockgroup1.destroy()
-        dockgroup2.destroy()
         dockgroup3.destroy()
+        dockgroup2.destroy()
+        dockgroup1.destroy()
+        dockpaned.destroy()
+
+    ############################################################################
+    # Test parent/child interaction
+    ############################################################################
+    def test_child_destroy(self):
+        dockgroup = DockGroup()
+        dockpaned = DockPaned()
+        dockpaned.add(dockgroup)
+
+        self.assertTrue(dockpaned.get_n_items() == len(dockpaned._items) == 1)
+
+        dockgroup.destroy()
+
+        self.assertTrue(dockpaned.get_n_items() == len(dockpaned._items) == 0)
+
+        dockgroup.destroy()
         dockpaned.destroy()
