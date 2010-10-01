@@ -18,11 +18,15 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with etk.docking. If not, see <http://www.gnu.org/licenses/>.
 
+
 from __future__ import absolute_import
 import sys
-import gtk
+
 from simplegeneric import generic
 from xml.etree.ElementTree import Element, SubElement, tostring, fromstring
+
+import gtk
+
 from .docklayout import DockLayout
 from .dockframe import DockFrame
 from .dockpaned import DockPaned
@@ -38,18 +42,20 @@ def serialize(layout):
             widget.foreach(_ser, sub)
         else:
             sub = SubElement(element, 'widget', attributes(widget))
+
     tree = Element('layout')
     map(_ser, layout.frames, [tree] * len(layout.frames))
+
     return tostring(tree, encoding=sys.getdefaultencoding())
 
 widget_factory = {}
 
 def deserialize(layoutstr, itemfactory):
-    """
+    '''
     Return a new layout with it's attached frames. Frames that should be floating
     already have their gtk.Window attached (check frame.get_parent()). Transient settings
-    and such should be done by the involking application.
-    """
+    and such should be done by the invoking application.
+    '''
     def _des(element, parent_widget=None):
         if element.tag == 'widget':
             name = element.attrib['name']
@@ -63,25 +69,30 @@ def deserialize(layoutstr, itemfactory):
             if element:
                 map(_des, element, [widget] * len(element))
         return widget
+
     tree = fromstring(layoutstr)
     layout = DockLayout()
     map(_des, tree, [ layout ] * len(tree))
+
     return layout
 
 def get_main_frames(layout):
-        return (f for f in layout.frames \
-                if not isinstance(f.get_parent(), gtk.Window))
+    return (f for f in layout.frames \
+            if not isinstance(f.get_parent(), gtk.Window))
 
 def finish(layout, main_frame):
-    """
+    '''
     Finish the loading process by setting all floating windows "transient_for" the main
     window (which should be a ancestor of the main_frame).
-    """
+    '''
     main_window = main_frame.get_toplevel()
+
     for frame in layout.frames:
         if frame is main_frame:
             continue
+
         parent = frame.get_parent()
+
         if parent:
             assert isinstance(parent, gtk.Window), parent
             parent.set_transient_for(main_window)
@@ -89,9 +100,11 @@ def finish(layout, main_frame):
 def parent_attributes(widget):
     container = widget.get_parent()
     d = {}
+
     if isinstance(container, DockPaned):
         paned_item = [i for i in container._items if i.child is widget][0]
         d['expand'] = str(paned_item.expand).lower()
+
     return d
 
 @generic
@@ -122,9 +135,11 @@ def dock_frame_attributes(widget):
     a = widget.allocation
     d = dict(width=str(a.width), height=str(a.height))
     parent = widget.get_parent()
+
     if isinstance(parent, gtk.Window) and parent.get_transient_for():
         d['floating'] = 'true'
         d['x'], d['y'] = map(str, parent.get_position())
+
     return d
 
 def factory(typename):
@@ -134,6 +149,7 @@ def factory(typename):
     def _factory(func):
         widget_factory[typename] = func
         return func
+
     return _factory
 
 @factory('dockitem')
@@ -147,43 +163,53 @@ def dock_item_factory(parent, icon, title, tooltip, pos=None, vispos=None, curre
 @factory('dockgroup')
 def dock_group_factory(parent, expand=None, weight=None):
     group = DockGroup()
+
     if expand is not None:
         item = parent.insert_item(group, expand=(expand == 'true'))
         ###item.weight = float(weight)
     else:
         parent.add(group)
+
     if isinstance(parent, DockPaned):
         ###parent._reset_weights = False
         parent._reset_weights = True
+
     return group
 
 @factory('dockpaned')
 def dock_paned_factory(parent, orientation, expand=None, weight=None):
     paned = DockPaned()
+
     if orientation == 'horizontal':
         paned.set_orientation(gtk.ORIENTATION_HORIZONTAL)
     else:
         paned.set_orientation(gtk.ORIENTATION_VERTICAL)
+
     if expand is not None:
         item = parent.insert_item(paned, expand=(expand == 'true'))
         ###item.weight = float(weight)
     else:
         parent.add(paned)
+
     if isinstance(parent, DockPaned):
         ###parent._reset_weights = False
         parent._reset_weights = True
+
     return paned
 
 @factory('dockframe')
 def dock_frame_factory(parent, width, height, floating=None, x=None, y=None):
     assert isinstance(parent, DockLayout), parent
+
     frame = DockFrame()
     frame.set_size_request(int(width), int(height))
     parent.add(frame)
+
     if floating == 'true':
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         #self.window.set_type_hint(gdk.WINDOW_TYPE_HINT_UTILITY)
         window.set_property('skip-taskbar-hint', True)
         window.move(int(x), int(y))
         window.add(frame)
+
     return frame
