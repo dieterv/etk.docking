@@ -192,8 +192,8 @@ class DockPaned(gtk.Container):
         self.child_set_property(child, 'expand', expand)
 
         # Create a _DockPanedHandle if needed
-        if len(self._items) > 1:
-            self._handles.insert(position - 1, _DockPanedHandle())
+        if self.get_n_items() > 1:
+            self._insert_handle(position - 1)
 
         assert len(self._items) == len(self._handles) + 1
 
@@ -219,21 +219,40 @@ class DockPaned(gtk.Container):
         # If there are still items/handles in the list, we'd like to
         # remove a handle...
         if self._items:
-            try:
-                # Remove the DockPanedHandle that used to be located after
-                # the DockPanedItem we just removed
-                del self._handles[item_num]
-            except IndexError:
-                # Well, seems we removed the last DockPanedItem from the
-                # list, so we'll remove the DockPanedHandle that used to
-                # be located before the DockPanedItem we just removed
-                del self._handles[item_num - 1]
+            self._remove_handle(item_num)
 
         assert len(self._items) == len(self._handles) + 1 or \
                len(self._items) == len(self._handles) == 0
 
         self.queue_resize()
         self.emit('item-removed', child, item_num)
+
+    def _insert_handle(self, position):
+        '''
+        :param position: the index (starting at 0) at which to insert a handle.
+
+        The :meth:`_insert_handle` inserts a handle at the index specified by
+        `position`.
+        '''
+        handle = _DockPanedHandle()
+        self._handles.insert(position, handle)
+
+    def _remove_handle(self, position):
+        '''
+        :param position: the index (starting at 0) at which to remove a handle.
+
+        The :meth:`_remove_handle` removes a handle at the index specified by
+        `position`.
+        '''
+        try:
+            # Remove the DockPanedHandle that used to be located after
+            # the DockPanedItem we just removed
+            del self._handles[position]
+        except IndexError:
+            # Well, seems we removed the last DockPanedItem from the
+            # list, so we'll remove the DockPanedHandle that used to
+            # be located before the DockPanedItem we just removed
+            del self._handles[position - 1]
 
     def _get_n_handles(self):
         '''
