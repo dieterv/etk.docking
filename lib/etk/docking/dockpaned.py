@@ -569,6 +569,7 @@ class DockPaned(gtk.Container):
             self.window.move_resize(*allocation)
 
         self._orientation_changed = False
+        self._item_inserted = False
 
     def do_expose_event(self, event):
         for handle in self._handles:
