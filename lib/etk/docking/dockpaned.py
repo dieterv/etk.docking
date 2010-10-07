@@ -138,11 +138,11 @@ class DockPaned(gtk.Container):
     ############################################################################
     def _children(self):
         '''
-        :return: an iterator that returns the items and handles in the dockpaned.
+        :returns: an iterator that returns the items and handles in the dockpaned.
 
         The :meth:`_children` method returns an iterator that returns the items
-        and handles in the dockpaned in the order they are rendered to screen.
-        This corresponds to ``[_items[0], _handles[0], _items[1], _handles[1],
+        and handles in the dockpaned in the order they are drawn. This
+        corresponds to ``[_items[0], _handles[0], _items[1], _handles[1],
         _items[2], ...]``
         '''
         index = 0
@@ -183,13 +183,13 @@ class DockPaned(gtk.Container):
         # Create new _DockPanedItem
         item = _DockPanedItem()
         item.child = child
-        self._items.insert(position, item)
-        child.set_parent(self)
+        item.child.set_parent(self)
 
         if self.flags() & gtk.REALIZED:
-            child.set_parent_window(self.window)
+            item.child.set_parent_window(self.window)
 
-        self.child_set_property(child, 'expand', expand)
+        self._items.insert(position, item)
+        self.child_set_property(item.child, 'expand', expand)
 
         # Create a _DockPanedHandle if needed
         if self.get_n_items() > 1:
@@ -597,8 +597,8 @@ class DockPaned(gtk.Container):
                 self._dragcontext.offset_x = event.x - handle.area.x
                 self._dragcontext.offset_y = event.y - handle.area.y
                 return True
-            else:
-                return False
+
+        return False
 
     def do_button_release_event(self, event):
         # Reset drag context
