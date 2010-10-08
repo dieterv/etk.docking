@@ -542,9 +542,8 @@ class DockPaned(gtk.Container):
                         rect.height = size
                         cy += size
 
-                    # Allocate child sizes
+                    # Give any extra space left to the last item in the list
                     if child is self._items[-1]:
-                        # Give any extra space left to the last item in the list
                         if self._orientation == gtk.ORIENTATION_HORIZONTAL:
                             rect.width += allocation.width - cx
                         else:
