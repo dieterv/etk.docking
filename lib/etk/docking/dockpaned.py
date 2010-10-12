@@ -571,6 +571,9 @@ class DockPaned(gtk.Container):
         self._item_inserted = False
 
     def do_expose_event(self, event):
+        for item in self._items:
+            self.propagate_expose(item.child, event)
+
         for handle in self._handles:
             #TODO: render themed handle if not using compact layout
             pass
