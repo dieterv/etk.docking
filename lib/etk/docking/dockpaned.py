@@ -48,14 +48,16 @@ class _DockPanedItem(object):
     Private object storing information about a child widget.
     '''
     __slots__ = ['child',      # child widget
-                 'weight',     # relative weight
-                 'min_weight', # minimum relative weight
+                 'weight',     # relative weight [0..1]
+                 'weight_request', # requested weight, processed in size_allocate()
+                 'min_size', # minimum relative weight
                  'expand']     # used to store the 'expand' child property
 
     def __init__(self):
         self.child = None
         self.weight = None
-        self.min_weight = None
+        self.weight_request = None
+        self.min_size = None
         self.expand = True
 
     def __contains__(self, pos):
@@ -287,6 +289,12 @@ class DockPaned(gtk.Container):
         else:
             return None
 
+    def _item_for_child(self, child):
+        for item in self._items:
+            if item.child is child:
+                return child
+        raise ValueError('child widget %s not in paned' % child)
+
     def _get_expandable_items(self):
         for item in self._items:
             if item.expand:
@@ -431,12 +439,12 @@ class DockPaned(gtk.Container):
                 width += w
                 height = max(height, h)
                 # Store the minimum weight for usage in do_size_allocate
-                item.min_weight = self._s2w(w)
+                item.min_size = w
             else:
                 width = max(width, w)
                 height += h
                 # Store the minimum weight for usage in do_size_allocate
-                item.min_weight = self._s2w(h)
+                item.min_size = w
 
         # Add handles
         if self._orientation == gtk.ORIENTATION_HORIZONTAL:
@@ -472,28 +480,37 @@ class DockPaned(gtk.Container):
             # other purpose!
             ####################################################################
 
+            # On orientation switch, the relative sizes are retained.
+            # The total weight = 1.0 => _normalize_weights()
+            # 
+            #
+            #
+            #
+            s2w = self._s2w
+            w2s = self._w2s
+
             # Compute weight for child widgets
             for item in self._items:
                 if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-                    if not item.weight or self._orientation_changed:
-                        item.weight = item.min_weight
+                    if not item.weight:
+                        item.weight = s2w(item.min_size)
                     else:
-                        item.weight = self._s2w(item.child.allocation.width)
+                        item.weight = s2w(item.child.allocation.width)
                 else:
-                    if not item.weight or self._orientation_changed:
-                        item.weight = item.min_weight
+                    if not item.weight:
+                        item.weight = s2w(item.min_size)
                     else:
-                        item.weight = self._s2w(item.child.allocation.height)
+                        item.weight = s2w(item.child.allocation.height)
 
             # Compute old and new total weight
             handle_sizes = self._get_n_handles() * self._handle_size
 
             if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-                old_weight = self._s2w(self.allocation.width - handle_sizes)
-                new_weight = self._s2w(allocation.width - handle_sizes)
+                old_weight = s2w(self.allocation.width - handle_sizes)
+                new_weight = s2w(allocation.width - handle_sizes)
             else:
-                old_weight = self._s2w(self.allocation.height - handle_sizes)
-                new_weight = self._s2w(allocation.height - handle_sizes)
+                old_weight = s2w(self.allocation.height - handle_sizes)
+                new_weight = s2w(allocation.height - handle_sizes)
 
             # Compute delta (have we been resized?)
             if old_weight < 0 or self._item_inserted:
@@ -503,7 +520,7 @@ class DockPaned(gtk.Container):
                 delta_weight = new_weight - old_weight
 
             # Adjust child widget weights (if we have been resized)
-            if delta_weight and not self._orientation_changed:
+            if delta_weight:
                 n_expandable_items = self._get_n_expandable_items()
 
                 if n_expandable_items:
@@ -511,16 +528,16 @@ class DockPaned(gtk.Container):
 
 
                     for item in self._get_expandable_items():
-                        if item.weight + d <= item.min_weight:
-                            item.weight = item.min_weight
+                        if item.weight + d <= item.min_size:
+                            item.weight = item.min_size
                         else:
                             item.weight += d
                 else:
                     d = delta_weight / self.get_n_items()
 
                     for item in self._items:
-                        if item.weight + d <= item.min_weight:
-                            item.weight = item.min_weight
+                        if item.weight + d <= item.min_size:
+                            item.weight = item.min_size
                         else:
                             item.weight += d
 
@@ -542,11 +559,11 @@ class DockPaned(gtk.Container):
 
                 if isinstance(child, _DockPanedItem):
                     if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-                        size = self._w2s(child.weight)
+                        size = w2s(child.weight)
                         rect.width = size
                         cx += size
                     else:
-                        size = self._w2s(child.weight)
+                        size = w2s(child.weight)
                         rect.height = size
                         cy += size
 
@@ -575,7 +592,6 @@ class DockPaned(gtk.Container):
         if self.flags() & gtk.REALIZED:
             self.window.move_resize(*allocation)
 
-        self._orientation_changed = False
         self._item_inserted = False
 
     def do_expose_event(self, event):
@@ -733,7 +749,6 @@ class DockPaned(gtk.Container):
         Sets the orientation of the dockpaned.
         '''
         self._orientation = orientation
-        self._orientation_changed = True
         self.notify('orientation')
         self.queue_resize()
 
@@ -790,12 +805,6 @@ class DockPaned(gtk.Container):
             child = self.get_nth_item(item_num)
 
         self._remove_item(child)
-
-    def _item_for_child(self, child):
-        for item in self._items:
-            if item.child is child:
-                return child
-        raise ValueError('child widget %s not in paned' % child)
 
     def item_num(self, child):
         '''
