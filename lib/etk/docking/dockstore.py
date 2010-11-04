@@ -98,12 +98,16 @@ def finish(layout, main_frame):
             parent.set_transient_for(main_window)
 
 def parent_attributes(widget):
+    """
+    Add properties defined in the parent widget specific for this instance (like weight).
+    """
     container = widget.get_parent()
     d = {}
 
     if isinstance(container, DockPaned):
         paned_item = [i for i in container._items if i.child is widget][0]
         d['expand'] = str(paned_item.expand).lower()
+        d['weight'] = str(paned_item.weight)
 
     return d
 
@@ -166,6 +170,7 @@ def dock_group_factory(parent, expand=None, weight=None):
 
     if expand is not None:
         item = parent.insert_item(group, expand=(expand == 'true'))
+        # TODO: Do something with the width
         ###item.weight = float(weight)
     else:
         parent.add(group)

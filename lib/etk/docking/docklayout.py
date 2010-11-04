@@ -91,6 +91,29 @@ class DockLayout(gobject.GObject):
                 if isinstance(f.get_parent(), gtk.Window) \
                     and f.get_parent().get_transient_for() )
 
+    def _get_signals(self, widget):
+        """
+        Get a list of signals to be registered for a specific widget.
+        """
+        if isinstance(widget, DockPaned):
+            signals = (('item-added', self.on_widget_add),
+                       ('item-removed', self.on_widget_remove))
+        elif isinstance(widget, gtk.Container):
+            signals = (('add', self.on_widget_add),
+                       ('remove', self.on_widget_remove))
+        else:
+            signals = ()
+
+        if isinstance(widget, DockGroup):
+            signals = signals + (('item-closed', self.on_dockgroup_item_closed),)
+
+        return signals + (('drag-motion', self.on_widget_drag_motion),
+                          ('drag-leave', self.on_widget_drag_leave),
+                          ('drag-drop', self.on_widget_drag_drop),
+                          ('drag-data-received', self.on_widget_drag_data_received),
+                          ('drag-end', self.on_widget_drag_end),
+                          ('drag-failed', self.on_widget_drag_failed))
+
     def add_signal_handlers(self, widget):
         """
         Set up signal handlers for layout and child widgets
@@ -104,23 +127,11 @@ class DockLayout(gobject.GObject):
                              gdk.ACTION_MOVE)
 
         # Use instance methods here, so layout can do additional bookkeeping
-        for name, callback in (('add', self.on_widget_add),
-                               ('item-added', self.on_widget_add),
-                               ('remove', self.on_widget_remove),
-                               ('item-removed', self.on_widget_remove),
-                               ('drag_motion', self.on_widget_drag_motion),
-                               ('drag-leave', self.on_widget_drag_leave),
-                               ('drag-drop', self.on_widget_drag_drop),
-                               ('drag-data-received', self.on_widget_drag_data_received),
-                               ('drag-end', self.on_widget_drag_end),
-                               ('drag-failed', self.on_widget_drag_failed)):
+        for name, callback in self._get_signals(widget):
             try:
                 signals.add(widget.connect(name, callback))
             except TypeError, e:
                 self.log.debug(e)
-
-        if isinstance(widget, DockGroup):
-            signals.add(widget.connect('item-closed', self.on_dockgroup_item_closed))
 
         self._signal_handlers[widget] = signals
 
