@@ -103,6 +103,14 @@ class DockPaned(gtk.Container):
               'expand',
               'expand',
               True,
+              gobject.PARAM_READWRITE),
+         'weight':
+             (gobject.TYPE_FLOAT,
+              'item weight',
+              'item weight',
+              0, # min
+              1, # max
+              .2, # default
               gobject.PARAM_READWRITE)}
     __gsignals__ = {'item-added':
                         (gobject.SIGNAL_RUN_LAST,
@@ -674,25 +682,20 @@ class DockPaned(gtk.Container):
             pass
 
     def do_get_child_property(self, child, property_id, pspec):
+        item = self._item_for_child(child)
         if pspec.name == 'expand':
-            for item in self._items:
-                if item.child is child:
-                    return item.expand
-                    break
-            else:
-                #TODO: improve this message...
-                raise ValueError('Widget specified by child is not a child of ours...')
+            return item.expand
+        elif pspec.name == 'weight':
+            return item.weight
 
     def do_set_child_property(self, child, property_id, value, pspec):
+        item = self._item_for_child(child)
         if pspec.name == 'expand':
-            for item in self._items:
-                if item.child is child:
-                    item.expand = value
-                    item.child.child_notify('expand')
-                    break
-            else:
-                #TODO: improve this message...
-                raise ValueError('Widget specified by child is not a child of ours...')
+            item.expand = value
+            child.child_notify('expand')
+        elif pspec.name == 'weight':
+            item.weight = value
+            child.child_notify('weight')
 
     ############################################################################
     # EtkDockPaned
@@ -787,6 +790,12 @@ class DockPaned(gtk.Container):
             child = self.get_nth_item(item_num)
 
         self._remove_item(child)
+
+    def _item_for_child(self, child):
+        for item in self._items:
+            if item.child is child:
+                return child
+        raise ValueError('child widget %s not in paned' % child)
 
     def item_num(self, child):
         '''
