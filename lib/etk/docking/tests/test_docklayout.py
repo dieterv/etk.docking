@@ -148,8 +148,11 @@ class TestDockLayoutDnD(unittest.TestCase):
         while gtk.events_pending():
             gtk.main_iteration()
 
-        x, y = 30, 30
+
         context = StubContext(group, [group.items[0]])
+
+        group.do_drag_begin(context)
+        x, y = 30, 30
         layout.on_widget_drag_motion(group, context, x, y, 0)
 
         assert layout._drag_data
