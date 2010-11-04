@@ -55,8 +55,8 @@ class _DockPanedItem(object):
 
     def __init__(self):
         self.child = None
-        self.weight = None
-        self.weight_request = None
+        self.weight = 0
+        self.weight_request = 0.2
         self.min_size = None
         self.expand = True
 
@@ -134,7 +134,6 @@ class DockPaned(gtk.Container):
         self._handles = []
         self._hcursor = None
         self._vcursor = None
-        self._item_inserted = False
 
         # Initialize handle dragging (not to be confused with DnD...)
         self._dragcontext = DockDragContext()
@@ -207,7 +206,6 @@ class DockPaned(gtk.Container):
 
         assert len(self._items) == len(self._handles) + 1
 
-        self._item_inserted = True
         self.queue_resize()
         self.emit('item-added', child, position)
         return self.item_num(child)
@@ -303,24 +301,6 @@ class DockPaned(gtk.Container):
     def _get_n_expandable_items(self):
         return len(list(self._get_expandable_items()))
 
-    def _s2w(self, size):
-        '''
-        :param size: an integer size value corresponding to a child's width.
-                     if the orientation property is gtk.ORIENTATION_HORIZONTAL,
-                     otherwise the child's height.
-        :returns: the weight value.
-        '''
-        return ((size << 16) + 999) / 1000
-
-    def _w2s(self, weight):
-        '''
-        :param size: a weight value
-        :returns: the integer size value corresponding to a child's width.
-                  if the orientation property is gtk.ORIENTATION_HORIZONTAL,
-                  otherwise the child's height.
-        '''
-        return (weight  * 1000) >> 16
-
     def _redistribute_size(self, delta_size, enlarge, shrink):
         '''
         :param delta_size: the size we want to add the item specified by
@@ -366,6 +346,25 @@ class DockPaned(gtk.Container):
 
             if delta_size == 0:
                 break
+
+    def _redistribute_weight(self):
+        items = self._items
+
+        updated_items = [ i for i in items if i.weight_request ]
+        other_items = [ i for i in items if not i.weight_request ]
+
+        updated_weight = sum(i.weight_request for i in updated_items)
+        other_weight = sum(i.weight for i in other_items)
+
+        # TODO: take into account min_size for other_weights
+
+        total_weight = updated_weight + other_weight
+
+        for i in updated_items:
+            i.weight = i.weight_request / total_weight
+        for i in other_items:
+            i.weight = i.weight / total_weight
+
 
     ############################################################################
     # GObject
@@ -468,120 +467,54 @@ class DockPaned(gtk.Container):
             # pass with the complete delta. Distributing those small values
             # evenly across multiple child widgets simply doesn't work very well.
             # To overcome this problem, we assign a weight (can be translated to
-            # "huge value") to each child.
-            # You can look at the _s2w and _w2s methods to discover how the
-            # weight value is calculated.
+            # "factor") to each child.
             #
-            # !!! WARNING !!!
-            #
-            # Outside of the do_size_request/do_size_allocate dance, the
-            # weight values associated with each child widget have absolutely
-            # no meaning whatsoever. Therefore, you should not use them for any
-            # other purpose!
             ####################################################################
 
-            # On orientation switch, the relative sizes are retained.
-            # The total weight = 1.0 => _normalize_weights()
-            # 
-            #
-            #
-            #
-            s2w = self._s2w
-            w2s = self._w2s
+            self._redistribute_weight()
 
-            # Compute weight for child widgets
-            for item in self._items:
-                if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-                    if not item.weight:
-                        item.weight = s2w(item.min_size)
-                    else:
-                        item.weight = s2w(item.child.allocation.width)
-                else:
-                    if not item.weight:
-                        item.weight = s2w(item.min_size)
-                    else:
-                        item.weight = s2w(item.child.allocation.height)
 
-            # Compute old and new total weight
-            handle_sizes = self._get_n_handles() * self._handle_size
-
+            # Find the size we can actually spend on items:
             if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-                old_weight = s2w(self.allocation.width - handle_sizes)
-                new_weight = s2w(allocation.width - handle_sizes)
+                size = allocation.width - self._get_n_handles() * self._handle_size
             else:
-                old_weight = s2w(self.allocation.height - handle_sizes)
-                new_weight = s2w(allocation.height - handle_sizes)
+                size = allocation.height - self._get_n_handles() * self._handle_size
 
-            # Compute delta (have we been resized?)
-            if old_weight < 0 or self._item_inserted:
-                # This is the first time we get allocated...
-                delta_weight = 0
-            else:
-                delta_weight = new_weight - old_weight
+            # TODO: ensure min_sizes for all widgets
 
-            # Adjust child widget weights (if we have been resized)
-            if delta_weight:
-                n_expandable_items = self._get_n_expandable_items()
-
-                if n_expandable_items:
-                    d = delta_weight / n_expandable_items
-
-
-                    for item in self._get_expandable_items():
-                        if item.weight + d <= item.min_size:
-                            item.weight = item.min_size
-                        else:
-                            item.weight += d
-                else:
-                    d = delta_weight / self.get_n_items()
-
-                    for item in self._items:
-                        if item.weight + d <= item.min_size:
-                            item.weight = item.min_size
-                        else:
-                            item.weight += d
-
-            ####################################################################
-            # And now we continue the regular child widget allocation fun
-            ####################################################################
             cx = cy = 0  # current x and y counters
+            handle_size = self._handle_size
 
-            # Allocate child widgets
+            # Allocate child widgets: both items and handles, so we can simply increment
             for child in self._children():
                 rect = gdk.Rectangle()
                 rect.x = cx
                 rect.y = cy
 
-                if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-                    rect.height = allocation.height
-                else:
-                    rect.width = allocation.width
-
                 if isinstance(child, _DockPanedItem):
+                    s = round(child.weight * size)
                     if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-                        size = w2s(child.weight)
-                        rect.width = size
-                        cx += size
-                    else:
-                        size = w2s(child.weight)
-                        rect.height = size
-                        cy += size
-
-                    # Give any extra space left to the last item in the list
-                    if child is self._items[-1]:
-                        if self._orientation == gtk.ORIENTATION_HORIZONTAL:
+                        rect.height = allocation.height
+                        rect.width = s
+                        cx += s
+                        if child is self._items[-1]:
                             rect.width += allocation.width - cx
-                        else:
+                    else:
+                        rect.height = s
+                        rect.width = allocation.width
+                        cy += s
+                        if child is self._items[-1]:
                             rect.height += allocation.height - cy
 
                     child.child.size_allocate(rect)
+
                 elif isinstance(child, _DockPanedHandle):
                     if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-                        rect.width = self._handle_size
-                        cx += self._handle_size
+                        rect.width = handle_size
+                        cx += handle_size
                     else:
-                        rect.height = self._handle_size
-                        cy += self._handle_size
+                        rect.height = handle_size
+                        cy += handle_size
 
                     child.area = rect
 
@@ -591,8 +524,6 @@ class DockPaned(gtk.Container):
         # Move/Resize our GdkWindow
         if self.flags() & gtk.REALIZED:
             self.window.move_resize(*allocation)
-
-        self._item_inserted = False
 
     def do_expose_event(self, event):
         for item in self._items:
