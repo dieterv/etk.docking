@@ -107,7 +107,7 @@ def parent_attributes(widget):
     if isinstance(container, DockPaned):
         paned_item = [i for i in container._items if i.child is widget][0]
         d['expand'] = str(paned_item.expand).lower()
-        d['weight'] = str(paned_item.weight)
+        d['weight'] = str(int(paned_item.weight * 100))
 
     return d
 
@@ -169,15 +169,9 @@ def dock_group_factory(parent, expand=None, weight=None):
     group = DockGroup()
 
     if expand is not None:
-        item = parent.insert_item(group, expand=(expand == 'true'))
-        # TODO: Do something with the width
-        ###item.weight = float(weight)
+        parent.insert_item(group, expand=(expand == 'true'), weight=float(weight) / 100.)
     else:
         parent.add(group)
-
-    if isinstance(parent, DockPaned):
-        ###parent._reset_weights = False
-        parent._reset_weights = True
 
     return group
 
@@ -191,14 +185,9 @@ def dock_paned_factory(parent, orientation, expand=None, weight=None):
         paned.set_orientation(gtk.ORIENTATION_VERTICAL)
 
     if expand is not None:
-        item = parent.insert_item(paned, expand=(expand == 'true'))
-        ###item.weight = float(weight)
+        item = parent.insert_item(paned, expand=(expand == 'true'), weight=float(weight) / 100.)
     else:
         parent.add(paned)
-
-    if isinstance(parent, DockPaned):
-        ###parent._reset_weights = False
-        parent._reset_weights = True
 
     return paned
 

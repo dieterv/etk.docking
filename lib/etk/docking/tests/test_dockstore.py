@@ -21,9 +21,10 @@ def test_serialize():
     s = serialize(layout)
     assert '<layout><dockframe height="1" width="1">'\
     '<dockpaned orientation="horizontal">'\
-    '<dockgroup expand="true">'\
+    '<dockgroup expand="true" weight="0">'\
     '<dockitem icon="icon" title="t" tooltip="xx" />'\
     '</dockgroup></dockpaned></dockframe></layout>' == s, s
+
 
 class ItemFactory(object):
 
