@@ -107,7 +107,8 @@ def parent_attributes(widget):
     if isinstance(container, DockPaned):
         paned_item = [i for i in container._items if i.child is widget][0]
         d['expand'] = str(paned_item.expand).lower()
-        d['weight'] = str(int(paned_item.weight * 100))
+        if paned_item.weight:
+            d['weight'] = str(int(paned_item.weight * 100))
 
     return d
 
