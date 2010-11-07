@@ -55,7 +55,7 @@ class _DockPanedItem(object):
 
     def __init__(self):
         self.child = None
-        self.weight = 0.2
+        self.weight = None
         self.weight_request = 0.2
         self.min_size = None
         self.expand = True
@@ -195,9 +195,12 @@ class DockPaned(gtk.Container):
         item.child = child
         item.child.set_parent(self)
         item.expand = expand
-        item.weight_request = weight
         if not self._items:
-            item.weight = 1.0
+            # First item always gets 100% allocated
+            item.weight_request = 1.0
+        elif weight:
+            assert 0.0 <= weight <= 1.0
+            item.weight_request = weight
 
         if self.flags() & gtk.REALIZED:
             item.child.set_parent_window(self.window)
@@ -363,24 +366,35 @@ class DockPaned(gtk.Container):
         self.queue_resize()
 
     def _redistribute_weight(self, size):
+        '''
+        Divide the space available over the items. Items that have explicitly been
+        assigned a weight should get it assigned, as long as the max weight (1.0) is not
+        exeeded.
+        '''
         items = self._items
 
         updated_items = [ i for i in items if i.weight_request ]
         other_items = [ i for i in items if not i.weight_request ]
 
-        updated_weight = sum(i.weight_request for i in updated_items)
+        updated_weight = min(sum(i.weight_request for i in updated_items), 1.0)
+
+        # Divide left over space among already present items, avoid divide-by-zero
+        remaining_weight = 1.00001 - updated_weight
+        for i in other_items:
+            i.weight = i.weight * remaining_weight
+
         other_weight = sum(i.weight for i in other_items)
 
+        # Assign weight to explicitly assigned items
         total_weight = updated_weight + other_weight
-
-        if total_weight:
-            for i in updated_items:
-                i.weight = i.weight_request / total_weight
-            for i in other_items:
-                i.weight = i.weight / total_weight
-        
         for i in updated_items:
+            i.weight = i.weight_request / total_weight
             i.weight_request = None
+
+        # TODO: Honour min_size
+        for i in items:
+            if i.weight * size < i.min_size:
+                i.weight = float(i.min_size) / size
 
     ############################################################################
     # GObject

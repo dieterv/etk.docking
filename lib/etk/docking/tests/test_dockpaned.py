@@ -120,6 +120,26 @@ class TestDockPaned(unittest.TestCase):
         dockgroup.destroy()
         dockpaned.destroy()
 
+    def test_child_prop_weight(self):
+        global child_notify_called
+
+        def _on_child_notify(gobject, pspec):
+            global child_notify_called
+            child_notify_called = True
+
+        dockpaned = DockPaned()
+        dockgroup = DockGroup()
+        dockgroup.connect('child-notify::weight', _on_child_notify)
+        dockpaned.add(dockgroup)
+
+        child_notify_called = False
+        dockpaned.child_set_property(dockgroup, 'weight', 0.3)
+        self.assertTrue(child_notify_called,
+                        msg='weight child property change notification failed')
+
+        dockgroup.destroy()
+        dockpaned.destroy()
+
     ############################################################################
     # Test signals
     ############################################################################
@@ -219,6 +239,35 @@ class TestDockPaned(unittest.TestCase):
         dockpaned.destroy()
 
     ############################################################################
+    # Test protected api
+    ############################################################################
+
+    def test_redistribute_weight(self):
+        dockpaned = DockPaned()
+        dockgroup1 = DockGroup()
+        dockgroup2 = DockGroup()
+
+        dockpaned.insert_item(dockgroup1, expand=True, weight=0.5)
+
+        self.assertEquals(1, len(dockpaned._items))
+        self.assertEquals(None, dockpaned._items[0].weight)
+        self.assertEquals(1.0, dockpaned._items[0].weight_request)
+
+        dockpaned._redistribute_weight(100)
+
+        self.assertEquals(1.0, dockpaned._items[0].weight)
+        self.assertEquals(None, dockpaned._items[0].weight_request)
+
+        dockpaned.insert_item(dockgroup2, expand=True, weight=0.5)
+
+        self.assertTrue(0.5, dockpaned._items[1].weight_request)
+
+        dockpaned._redistribute_weight(100)
+
+        self.assertAlmostEquals(0.5, dockpaned._items[0].weight, 4)
+        self.assertAlmostEquals(0.5, dockpaned._items[1].weight, 4)
+
+    ############################################################################
     # Test public api
     ############################################################################
     def test_add(self):
@@ -283,7 +332,7 @@ class TestDockPaned(unittest.TestCase):
         self.assertTrue(item_num1 == 0)
         item_num2 = dockpaned.insert_item(dockgroup2, position=-1)
         self.assertTrue(item_num2 == 1)
-        item_num3 = dockpaned.insert_item(dockgroup3, position=1)
+        item_num3 = dockpaned.insert_item(dockgroup3, position=1, weight=0.5)
         self.assertTrue(item_num3 == 1)
 
         self.assertTrue(dockpaned.get_nth_item(0) is dockgroup1)
