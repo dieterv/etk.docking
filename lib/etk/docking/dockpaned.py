@@ -386,15 +386,21 @@ class DockPaned(gtk.Container):
         other_weight = sum(i.weight for i in other_items)
 
         # Assign weight to explicitly assigned items
-        total_weight = updated_weight + other_weight
         for i in updated_items:
-            i.weight = i.weight_request / total_weight
+            i.weight = i.weight_request
             i.weight_request = None
 
-        # TODO: Honour min_size
+        # Honour min_size
+        # TODO: This is not correct yet, since the weight assigned should be exact
+        #       (not be adjusted by the next step).
         for i in items:
             if i.weight * size < i.min_size:
                 i.weight = float(i.min_size) / size
+
+        # Normalize
+        total_weight = sum(i.weight for i in items)
+        for i in items:
+            i.weight /= total_weight
 
     ############################################################################
     # GObject
