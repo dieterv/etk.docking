@@ -201,6 +201,13 @@ class DockPaned(gtk.Container):
         elif weight:
             assert 0.0 <= weight <= 1.0
             item.weight_request = weight
+#        elif self.allocation and child.allocation:
+#        else:
+#            size = self._effective_size(self.allocation) - self._handle_size
+#            child_size = self._size(child.allocation)
+#            print 'allocate', self.allocation, size, child_size
+#            if size > 0 and child_size > 0:
+#                item.weight_request = float(child_size) / size
 
         if self.flags() & gtk.REALIZED:
             item.child.set_parent_window(self.window)
@@ -308,14 +315,21 @@ class DockPaned(gtk.Container):
     def _get_n_expandable_items(self):
         return len(list(self._get_expandable_items()))
 
+    def _size(self, allocation):
+        '''
+        Get the size (width or height) required in calculations, depending on the
+        Paned's orientation.
+        '''
+        if self._orientation == gtk.ORIENTATION_HORIZONTAL:
+            return allocation.width
+        else:
+            return allocation.height
+
     def _effective_size(self, allocation):
         '''
         Find the size we can actually spend on items.
         '''
-        if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-            return allocation.width - self._get_n_handles() * self._handle_size
-        else:
-            return allocation.height - self._get_n_handles() * self._handle_size
+        return self._size(allocation) - self._get_n_handles() * self._handle_size
 
     def _redistribute_size(self, delta_size, enlarge, shrink):
         '''
@@ -336,10 +350,7 @@ class DockPaned(gtk.Container):
 
         for item in shrink:
 
-            if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-                available_size = item.child.allocation.width - item.min_size
-            else:
-                available_size = item.child.allocation.height - item.min_size
+            available_size = self._size(item.child.allocation) - item.min_size
 
             # Check if we can shrink (respecting the child's size_request)
             if available_size > 0:
