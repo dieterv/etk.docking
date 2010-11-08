@@ -195,19 +195,6 @@ class DockPaned(gtk.Container):
         item.child = child
         item.child.set_parent(self)
         item.expand = expand
-        if not self._items:
-            # First item always gets 100% allocated
-            item.weight_request = 1.0
-        elif weight:
-            assert 0.0 <= weight <= 1.0
-            item.weight_request = weight
-#        elif self.allocation and child.allocation:
-#        else:
-#            size = self._effective_size(self.allocation) - self._handle_size
-#            child_size = self._size(child.allocation)
-#            print 'allocate', self.allocation, size, child_size
-#            if size > 0 and child_size > 0:
-#                item.weight_request = float(child_size) / size
 
         if self.flags() & gtk.REALIZED:
             item.child.set_parent_window(self.window)
@@ -219,6 +206,22 @@ class DockPaned(gtk.Container):
             self._insert_handle(position - 1)
 
         assert len(self._items) == len(self._handles) + 1
+
+        if len(self._items) == 1:
+            # First item always gets 100% allocated
+            item.weight_request = 1.0
+        elif weight:
+            assert 0.0 <= weight <= 1.0
+            item.weight_request = weight
+        elif self.allocation and child.allocation:
+            size = self._effective_size(self.allocation) - self._handle_size
+            if self._orientation == gtk.ORIENTATION_HORIZONTAL:
+                child_size = child.size_request()[0]
+            else:
+                child_size = child.size_request()[1]
+
+            if size > 0 and child_size > 0:
+                item.weight_request = float(child_size) / size
 
         self.queue_resize()
         self.emit('item-added', child, position)
@@ -362,12 +365,8 @@ class DockPaned(gtk.Container):
                 else:
                     adjustment = delta_size
 
-                if self._orientation == gtk.ORIENTATION_HORIZONTAL:
-                    enlarge.weight_request = float(enlarge_alloc.width + adjustment) / size
-                    item.weight_request = float(a.width - adjustment) / size
-                else:
-                    enlarge.weight_request = float(enlarge_alloc.height + adjustment) / size
-                    item.weight_request = float(a.height - adjustment) / size
+                enlarge.weight_request = float(self._size(enlarge_alloc) + adjustment) / size
+                item.weight_request = float(self._size(a) - adjustment) / size
 
                 delta_size -= adjustment
 
@@ -391,14 +390,15 @@ class DockPaned(gtk.Container):
         other_weight = sum(i.weight for i in other_items)
         total_weight = updated_weight + other_weight
 
+        # TODO: scale other_items only, keep into account the min_size
+        # (min_weight = min_size / self._size(self.allocation)
+        # if weight < min_weight set weight_request = min_size
         if total_weight:
             for i in updated_items:
                 i.weight = i.weight_request / total_weight
+                i.weight_request = None
             for i in other_items:
                 i.weight = i.weight / total_weight
-
-        for i in updated_items:
-            i.weight_request = None
 
     ############################################################################
     # GObject
