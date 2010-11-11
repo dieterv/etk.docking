@@ -247,11 +247,11 @@ class TestDockPaned(unittest.TestCase):
         dockgroup1 = DockGroup()
         dockgroup2 = DockGroup()
 
-        dockpaned.insert_item(dockgroup1, expand=True, weight=0.5)
+        dockpaned.insert_item(dockgroup1, expand=True)
 
         self.assertEquals(1, len(dockpaned._items))
-        self.assertEquals(None, dockpaned._items[0].weight)
-        self.assertEquals(1.0, dockpaned._items[0].weight_request)
+        self.assertEquals(1.0, dockpaned._items[0].weight)
+        self.assertEquals(None, dockpaned._items[0].weight_request)
 
         dockpaned._redistribute_weight(100)
 
@@ -266,6 +266,32 @@ class TestDockPaned(unittest.TestCase):
 
         self.assertAlmostEquals(0.5, dockpaned._items[0].weight, 4)
         self.assertAlmostEquals(0.5, dockpaned._items[1].weight, 4)
+
+    def test_redistribute_weight_resize(self):
+        dockpaned = DockPaned()
+        dockgroup1 = DockGroup()
+        dockgroup2 = DockGroup()
+
+        dockpaned.insert_item(dockgroup1, expand=True, weight=0.5)
+
+        self.assertEquals(1, len(dockpaned._items))
+        self.assertEquals(None, dockpaned._items[0].weight)
+        self.assertEquals(0.5, dockpaned._items[0].weight_request)
+
+        dockpaned._redistribute_weight(100)
+
+        self.assertEquals(1.0, dockpaned._items[0].weight)
+        self.assertEquals(None, dockpaned._items[0].weight_request)
+
+        dockpaned.insert_item(dockgroup2, expand=True, weight=0.5)
+
+        self.assertTrue(0.5, dockpaned._items[1].weight_request)
+
+        dockpaned._redistribute_weight(100)
+
+        self.assertAlmostEquals(0.5, dockpaned._items[0].weight, 4)
+        self.assertAlmostEquals(0.5, dockpaned._items[1].weight, 4)
+
 
     ############################################################################
     # Test public api

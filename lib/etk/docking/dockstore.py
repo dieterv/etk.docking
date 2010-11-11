@@ -169,7 +169,7 @@ def dock_item_factory(parent, icon, title, tooltip, pos=None, vispos=None, curre
 def dock_group_factory(parent, expand=None, weight=None):
     group = DockGroup()
 
-    if expand is not None:
+    if weight is not None:
         parent.insert_item(group, expand=(expand == 'true'), weight=float(weight) / 100.)
     else:
         parent.add(group)
@@ -185,7 +185,7 @@ def dock_paned_factory(parent, orientation, expand=None, weight=None):
     else:
         paned.set_orientation(gtk.ORIENTATION_VERTICAL)
 
-    if expand is not None:
+    if weight is not None:
         item = parent.insert_item(paned, expand=(expand == 'true'), weight=float(weight) / 100.)
     else:
         parent.add(paned)

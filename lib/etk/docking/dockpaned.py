@@ -30,6 +30,9 @@ from .dnd import DockDragContext
 from .util import rect_overlaps
 
 
+# The weight we allocate to a newly added item if we can't come up with anything else
+FALLBACK_WEIGHT = 0.2
+
 class _DockPanedHandle(object):
     '''
     Private object storing information about a handle.
@@ -56,7 +59,7 @@ class _DockPanedItem(object):
     def __init__(self):
         self.child = None
         self.weight = None
-        self.weight_request = 0.2
+        self.weight_request = None
         self.min_size = None
         self.expand = True
 
@@ -207,12 +210,12 @@ class DockPaned(gtk.Container):
 
         assert len(self._items) == len(self._handles) + 1
 
-        if len(self._items) == 1:
-            # First item always gets 100% allocated
-            item.weight_request = 1.0
-        elif weight:
+        if weight:
             assert 0.0 <= weight <= 1.0
             item.weight_request = weight
+        elif len(self._items) == 1:
+            # First item always gets 100% allocated
+            item.weight = 1.0
         elif self.allocation and child.allocation:
             size = self._effective_size(self.allocation) - self._handle_size
             if self._orientation == gtk.ORIENTATION_HORIZONTAL:
@@ -222,6 +225,10 @@ class DockPaned(gtk.Container):
 
             if size > 0 and child_size > 0:
                 item.weight_request = float(child_size) / size
+            else:
+                item.weight_request = FALLBACK_WEIGHT
+        else:
+            item.weight_request = FALLBACK_WEIGHT
 
         self.queue_resize()
         self.emit('item-added', child, position)
@@ -382,6 +389,9 @@ class DockPaned(gtk.Container):
         exeeded.
         '''
         items = self._items
+
+        # does not hold true: assert sum(i.min_size for i in items) <= size + 2, \
+        # '%d != %d' % (sum(i.min_size for i in items), size + 2)
 
         updated_items = [ i for i in items if i.weight_request ]
         other_items = [ i for i in items if not i.weight_request ]
