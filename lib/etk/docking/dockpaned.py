@@ -387,28 +387,40 @@ class DockPaned(gtk.Container):
         Divide the space available over the items. Items that have explicitly been
         assigned a weight should get it assigned, as long as the max weight (1.0) is not
         exeeded.
+
+        The general scheme is as follows:
+        
+        * figure out which items requested a new weight
+        * ensure sum(min_sizes) fits in the allocated size
+        * ensure the requested weights do not make items go smaller than min_size
+        * divide remaining space over other items.
         '''
         items = self._items
+        size = float(size)
 
-        # does not hold true: assert sum(i.min_size for i in items) <= size + 2, \
-        # '%d != %d' % (sum(i.min_size for i in items), size + 2)
-
-        updated_items = [ i for i in items if i.weight_request ]
+        requested_items = [ i for i in items if i.weight_request ]
         other_items = [ i for i in items if not i.weight_request ]
 
-        updated_weight = sum(i.weight_request for i in updated_items)
-        other_weight = sum(i.weight for i in other_items)
-        total_weight = updated_weight + other_weight
+        # Ensure the min_sizes do not exceed the overall size
+        min_size = sum(i.min_size for i in items)
+        if min_size > size:
+            sf = size / min_size
+        else:
+            sf = 1.0
 
-        # TODO: scale other_items only, keep into account the min_size
-        # (min_weight = min_size / self._size(self.allocation)
-        # if weight < min_weight set weight_request = min_size
-        if total_weight:
-            for i in updated_items:
-                i.weight = i.weight_request / total_weight
-                i.weight_request = None
-            for i in other_items:
-                i.weight = i.weight / total_weight
+        # First ensure all remaining items can be placed
+        for i, w in zip(other_items,
+                        fair_scale(1.0 - sum(i.weight_request for i in requested_items), \
+                                   [(i.weight, sf * i.min_size / size) for i in other_items])):
+            i.weight = w
+
+        # Divide what's left over the requesting items
+        for i, w in zip(requested_items,
+                        fair_scale(1.0 - sum(i.weight for i in other_items), \
+                                   [(i.weight_request, sf * i.min_size / size) for i in requested_items])):
+            i.weight = w
+            i.weight_request = None
+        
 
     ############################################################################
     # GObject
@@ -543,6 +555,7 @@ class DockPaned(gtk.Container):
                         if child is self._items[-1]:
                             rect.height += allocation.height - cy
 
+                    print 'SIZE', child, s, rect.width, rect.height
                     child.child.size_allocate(rect)
 
                 elif isinstance(child, _DockPanedHandle):
@@ -865,3 +878,42 @@ for index, (name, pspec) in enumerate(DockPaned.__gchild_properties__.iteritems(
     pspec = list(pspec)
     pspec.insert(0, name)
     DockPaned.install_child_property(index + 1, tuple(pspec))
+
+def fair_scale(weight, wmpairs):
+    """
+    Fair scaling algorithm. 
+    A weight and a list of (weight, min_weight) pairs is provided. The result is a list
+    of calculated weights that add up to weight, but are no smaller than their specified
+    min_weight's.
+
+    >>> fair_scale(.7, ((.3, .2), (.5, .1)))
+    [0.26249999999999996, 0.43749999999999994]
+    >>> fair_scale(.5, ((.3, .2), (.5, .1)))
+    [0.20000000000000001, 0.29999999999999999]
+    >>> fair_scale(.4, ((.3, .2), (.5, .1)))
+    [0.20000000000000001, 0.20000000000000001]
+    """
+    print 'wmpairs', weight, wmpairs,
+    # List of new weights
+    n = [0] * len(wmpairs)
+    # Values that have been assigned their min_weight end up in this list:
+    skip = [False] * len(wmpairs)
+    while True:
+        try:
+            f = weight / sum(a[0] for a, s in zip(wmpairs, skip) if not s)
+        except ZeroDivisionError:
+            f = 0
+        for i, (w, m) in enumerate(wmpairs):
+            if skip[i]:
+                continue
+            n[i] = w * f
+            if n[i] < m:
+                n[i] = m
+                weight -= m
+                skip[i] = True
+                break
+        else:
+            break # quit while loop
+    print n
+    return n
+

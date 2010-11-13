@@ -248,6 +248,7 @@ class TestDockPaned(unittest.TestCase):
         dockgroup2 = DockGroup()
 
         dockpaned.insert_item(dockgroup1, expand=True)
+        dockpaned._items[0].min_size = 20
 
         self.assertEquals(1, len(dockpaned._items))
         self.assertEquals(1.0, dockpaned._items[0].weight)
@@ -259,6 +260,7 @@ class TestDockPaned(unittest.TestCase):
         self.assertEquals(None, dockpaned._items[0].weight_request)
 
         dockpaned.insert_item(dockgroup2, expand=True, weight=0.5)
+        dockpaned._items[1].min_size = 20
 
         self.assertTrue(0.5, dockpaned._items[1].weight_request)
 
