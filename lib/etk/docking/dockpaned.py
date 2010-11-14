@@ -844,7 +844,6 @@ class DockPaned(gtk.Container):
         the index specified by `item_num`. If `item_num` is out of bounds for
         the item range of the dockpaned this method returns :const:`None`.
         '''
-        self.__getitem__(item_num)
         if item_num >= 0 and item_num <= self.get_n_items() - 1:
             return self._items[item_num].child
         else:

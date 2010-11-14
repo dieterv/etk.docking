@@ -535,13 +535,15 @@ def dock_paned_cleanup(self):
 
     if len(self._items) == 1:
         parent = self.get_parent()
-        child = self._items[0].child
+        child = self[0]
 
         if isinstance(parent, DockPaned):
             position = [i.child for i in parent._items].index(self)
+            expand = parent.child_get_property(self, 'expand')
+            weight = parent.child_get_property(self, 'weight')
             child.unparent()
             parent.remove(self)
-            parent.insert_item(child, position)
+            parent.insert_item(child, position=position, expand=expand, weight=weight)
             assert child.get_parent() is parent, (child.get_parent(), parent)
         else:
             child.unparent()
