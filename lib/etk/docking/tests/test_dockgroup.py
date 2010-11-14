@@ -186,11 +186,11 @@ class TestDockGroup(unittest.TestCase):
 
     def test_get_n_items(self):
         dockgroup = DockGroup()
-        self.assertTrue(dockgroup.get_n_items() == 0)
+        self.assertTrue(len(dockgroup) == 0)
 
         dockitem = DockItem()
         dockgroup.add(dockitem)
-        self.assertTrue(dockgroup.get_n_items() == 1)
+        self.assertTrue(len(dockgroup) == 1)
 
         dockitem.destroy()
         dockgroup.destroy()
@@ -240,8 +240,8 @@ class TestDockGroup(unittest.TestCase):
         dockgroup.set_current_item(0)
         self.assertTrue(dockgroup.get_current_item() == 0)
 
-        dockgroup.set_current_item(dockgroup.get_n_items() + 10)
-        self.assertTrue(dockgroup.get_current_item() == dockgroup.get_n_items() - 1)
+        dockgroup.set_current_item(len(dockgroup) + 10)
+        self.assertTrue(dockgroup.get_current_item() == len(dockgroup) - 1)
 
         dockgroup.set_current_item(-1)
         self.assertTrue(dockgroup.get_current_item() == 0)

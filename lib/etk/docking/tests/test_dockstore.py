@@ -54,10 +54,10 @@ class LoadingTestCase(unittest.TestCase):
         frame = iter(layout.frames).next()
         assert frame.child
         paned = frame.child
-        assert paned.get_n_items()
+        assert len(paned)
         group = paned.get_nth_item(0)
         assert isinstance(group, DockGroup), group
-        assert group.get_n_items()
+        assert len(group)
         item = group.get_nth_item(0)
         assert isinstance(item, DockItem)
         button = item.child

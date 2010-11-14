@@ -125,6 +125,9 @@ class DockGroup(gtk.Container):
         self._list_menu.attach_to_widget(self._list_button, None)
         gtk.widget_pop_composite_child()
 
+    def __len__(self):
+        return len(self._tabs)
+
     ############################################################################
     # GObject
     ############################################################################
@@ -835,7 +838,7 @@ class DockGroup(gtk.Container):
         assert self.item_num(item) is None
 
         if position is None or position < 0:
-            position = self.get_n_items()
+            position = len(self)
 
         # Create composite children for tab
         gtk.widget_push_composite_child()
@@ -911,15 +914,6 @@ class DockGroup(gtk.Container):
             if tab.item is item:
                 return self._tabs.index(tab)
         return None
-
-    def get_n_items(self):
-        '''
-        :returns: the number of item tabs in the DockGroup.
-
-        The get_n_items() method returns the number of item tabs in the
-        DockGroup.
-        '''
-        return len(self._tabs)
 
     def get_nth_item(self, item_num):
         '''
@@ -999,7 +993,7 @@ class DockGroup(gtk.Container):
         '''
         ci = self.get_current_item()
 
-        if not ci == self.get_n_items() - 1:
+        if not ci == len(self) - 1:
             self.set_current_item(ci + 1)
 
     def prev_item(self):
@@ -1027,8 +1021,8 @@ class DockGroup(gtk.Container):
 
         if position < 0:
             position = 0
-        elif position > self.get_n_items() - 1:
-            position = self.get_n_items()
+        elif position > len(self) - 1:
+            position = len(self)
 
         tab = self._tabs[self.item_num(item)]
         self._tabs.remove(tab)

@@ -191,7 +191,7 @@ class DockPaned(gtk.Container):
         assert not child.get_parent()
 
         if position is None or position < 0:
-            position = self.get_n_items()
+            position = len(self)
 
         # Create new _DockPanedItem
         item = _DockPanedItem()
@@ -205,7 +205,7 @@ class DockPaned(gtk.Container):
         self._items.insert(position, item)
 
         # Create a _DockPanedHandle if needed
-        if self.get_n_items() > 1:
+        if len(self) > 1:
             self._insert_handle(position - 1)
 
         assert len(self._items) == len(self._handles) + 1
@@ -809,7 +809,7 @@ class DockPaned(gtk.Container):
         will be removed.
         '''
         if item_num is None or item_num < 0:
-            child = self.get_nth_item(self.get_n_items() - 1)
+            child = self.get_nth_item(len(self) - 1)
         else:
             child = self.get_nth_item(item_num)
 
@@ -831,15 +831,6 @@ class DockPaned(gtk.Container):
         else:
             return None
 
-    def get_n_items(self):
-        '''
-        :returns: the number of child widgets in the dockpaned.
-
-        The :meth:`get_n_items` method returns the number of child widgets in
-        the dockpaned.
-        '''
-        return len(self._items)
-
     def get_nth_item(self, item_num):
         '''
         :param item_num: the index of an item in the dockpaned.
@@ -850,7 +841,7 @@ class DockPaned(gtk.Container):
         the index specified by `item_num`. If `item_num` is out of bounds for
         the item range of the dockpaned this method returns :const:`None`.
         '''
-        if item_num >= 0 and item_num <= self.get_n_items() - 1:
+        if item_num >= 0 and item_num <= len(self) - 1:
             return self._items[item_num].child
         else:
             return None
@@ -887,8 +878,8 @@ class DockPaned(gtk.Container):
         item_num = self.item_num(child)
         assert item_num is not None
 
-        if position is None or position < 0 or position > self.get_n_items() - 1:
-            position = self.get_n_items()
+        if position is None or position < 0 or position > len(self) - 1:
+            position = len(self)
 
         item = self._items[item_num]
         self._items.remove(item)

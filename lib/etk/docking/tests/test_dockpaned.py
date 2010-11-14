@@ -424,14 +424,14 @@ class TestDockPaned(unittest.TestCase):
         dockgroup1.destroy()
         dockpaned.destroy()
 
-    def test_get_n_items(self):
+    def test_len(self):
         dockgroup1 = DockGroup()
         dockgroup2 = DockGroup()
         dockpaned = DockPaned()
         dockpaned.add(dockgroup1)
         dockpaned.add(dockgroup2)
 
-        self.assertTrue(dockpaned.get_n_items() == 2)
+        self.assertTrue(len(dockpaned) == 2)
 
         dockgroup2.destroy()
         dockgroup1.destroy()
@@ -516,11 +516,11 @@ class TestDockPaned(unittest.TestCase):
         dockpaned = DockPaned()
         dockpaned.add(dockgroup)
 
-        self.assertTrue(dockpaned.get_n_items() == len(dockpaned._items) == 1)
+        self.assertTrue(len(dockpaned) == len(dockpaned._items) == 1)
 
         dockgroup.destroy()
 
-        self.assertTrue(dockpaned.get_n_items() == len(dockpaned._items) == 0)
+        self.assertTrue(len(dockpaned) == len(dockpaned._items) == 0)
 
         dockgroup.destroy()
         dockpaned.destroy()
