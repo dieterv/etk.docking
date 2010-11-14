@@ -598,8 +598,10 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
                     new_paned.set_orientation(gtk.ORIENTATION_HORIZONTAL)
 
                 position = self.item_num(current_group)
+                expand = self.child_get_property(current_group, 'expand')
+                weight = self.child_get_property(current_group, 'weight')
                 self.remove(current_group)
-                self.insert_item(new_paned, position)
+                self.insert_item(new_paned, position=position, expand=expand, weight=weight)
                 new_group = DockGroup()
 
                 if min(x, y) < MAGIC_BORDER_SIZE:
