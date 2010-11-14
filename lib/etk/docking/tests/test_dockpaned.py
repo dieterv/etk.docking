@@ -275,6 +275,7 @@ class TestDockPaned(unittest.TestCase):
         dockgroup2 = DockGroup()
 
         dockpaned.insert_item(dockgroup1, expand=True, weight=0.5)
+        dockpaned._items[0].min_size = 20
 
         self.assertEquals(1, len(dockpaned._items))
         self.assertEquals(None, dockpaned._items[0].weight)
@@ -286,6 +287,7 @@ class TestDockPaned(unittest.TestCase):
         self.assertEquals(None, dockpaned._items[0].weight_request)
 
         dockpaned.insert_item(dockgroup2, expand=True, weight=0.5)
+        dockpaned._items[1].min_size = 20
 
         self.assertTrue(0.5, dockpaned._items[1].weight_request)
 
@@ -317,6 +319,23 @@ class TestDockPaned(unittest.TestCase):
         self.assertTrue(dockgroup not in dockpaned)
 
         dockgroup.destroy()
+        dockpaned.destroy()
+
+    def test_delitem(self):
+        dg = DockGroup()
+        dockpaned = DockPaned()
+        dockpaned.add(DockGroup())
+        dockpaned.add(dg)
+        dockpaned.add(DockGroup())
+        
+        assert dg in dockpaned
+        assert len(dockpaned) == 3
+        assert dg is dockpaned[1]
+        del dockpaned[1]
+        assert len(dockpaned) == 2
+        assert dg not in dockpaned
+
+        dg.destroy()
         dockpaned.destroy()
 
     def test_append_item(self):

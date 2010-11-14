@@ -423,6 +423,24 @@ class DockPaned(gtk.Container):
         
 
     ############################################################################
+
+    def __getitem__(self, index):
+        return self._items[index].child
+
+    def __delitem__(self, index):
+        child = self[index]
+        self._remove_item(child)
+
+    def __len__(self):
+        return len(self._items)
+
+    def __contains__(self, child):
+        for i in self._items:
+            if i.child is child:
+                return True
+        return False
+
+    ############################################################################
     # GObject
     ############################################################################
     def do_get_property(self, pspec):
@@ -826,6 +844,7 @@ class DockPaned(gtk.Container):
         the index specified by `item_num`. If `item_num` is out of bounds for
         the item range of the dockpaned this method returns :const:`None`.
         '''
+        self.__getitem__(item_num)
         if item_num >= 0 and item_num <= self.get_n_items() - 1:
             return self._items[item_num].child
         else:
@@ -893,7 +912,6 @@ def fair_scale(weight, wmpairs):
     >>> fair_scale(.4, ((.3, .2), (.5, .1)))
     [0.20000000000000001, 0.20000000000000001]
     """
-    print 'wmpairs', weight, wmpairs,
     # List of new weights
     n = [0] * len(wmpairs)
     # Values that have been assigned their min_weight end up in this list:
@@ -914,6 +932,5 @@ def fair_scale(weight, wmpairs):
                 break
         else:
             break # quit while loop
-    print n
     return n
 
