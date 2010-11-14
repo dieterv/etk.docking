@@ -440,6 +440,12 @@ class DockPaned(gtk.Container):
                 return True
         return False
 
+    def __iter__(self):
+        print 'iter'
+        for i in self._items:
+            print 'yield', i.child
+            yield i.child
+
     ############################################################################
     # GObject
     ############################################################################

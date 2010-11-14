@@ -528,17 +528,17 @@ def dock_paned_drag_motion(self, context, x, y, timestamp):
 
 @cleanup.when_type(DockPaned)
 def dock_paned_cleanup(self):
-    if not self._items:
+    if not len(self):
         parent = self.get_parent()
         self.destroy()
         return parent and cleanup(parent)
 
-    if len(self._items) == 1:
+    if len(self) == 1:
         parent = self.get_parent()
         child = self[0]
 
         if isinstance(parent, DockPaned):
-            position = [i.child for i in parent._items].index(self)
+            position = [c for c in parent].index(self)
             expand = parent.child_get_property(self, 'expand')
             weight = parent.child_get_property(self, 'weight')
             child.unparent()
