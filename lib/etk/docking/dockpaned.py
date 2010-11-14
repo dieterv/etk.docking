@@ -441,9 +441,7 @@ class DockPaned(gtk.Container):
         return False
 
     def __iter__(self):
-        print 'iter'
         for i in self._items:
-            print 'yield', i.child
             yield i.child
 
     ############################################################################
@@ -579,7 +577,6 @@ class DockPaned(gtk.Container):
                         if child is self._items[-1]:
                             rect.height += allocation.height - cy
 
-                    print 'SIZE', child, s, rect.width, rect.height
                     child.child.size_allocate(rect)
 
                 elif isinstance(child, _DockPanedHandle):
