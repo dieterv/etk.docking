@@ -595,8 +595,9 @@ class DockGroup(gtk.Container):
                 else:
                     self.dragcontext.dragged_object = [t.item for t in self._tabs]
 
-                self.drag_begin([DRAG_TARGET_ITEM_LIST], gdk.ACTION_MOVE,
-                                self.dragcontext.source_button, event)
+                if self.dragcontext.dragged_object:
+                    self.drag_begin([DRAG_TARGET_ITEM_LIST], gdk.ACTION_MOVE,
+                                    self.dragcontext.source_button, event)
 
             # Update tab state
             for tab in self._visible_tabs:
@@ -693,23 +694,6 @@ class DockGroup(gtk.Container):
         # Let this be handled by the DockLayout
         pass
 
-    def do_drag_failed(self, context, result):
-        '''
-        :param context: the gdk.DragContext
-        :param result: the result of the drag operation
-        :returns: True if the failed drag operation has been already handled.
-
-        The do_drag_failed() signal handler is executed on the drag source when
-        a drag has failed. The handler may hook custom code to handle a failed
-        DND operation based on the type of error. It returns True if the
-        failure has been already handled (not showing the default
-        "drag operation failed" animation), otherwise it returns False.
-        '''
-
-        # Put back the item removed in do_drag_data_get()
-        #context.drop_finish(False, 0)
-        return True
-
     def do_drag_end(self, context):
         '''
         :param context: the gdk.DragContext
@@ -717,7 +701,14 @@ class DockGroup(gtk.Container):
         The do_drag_end() signal handler is executed when the drag operation is
         completed. A typical reason to use this signal handler is to undo things
         done in the do_drag_begin() handler.
+
+        In this case, items distached on drag-begin are connected to the group
+        again, if not attached to some other widget already.
         '''
+        if self.dragcontext.dragging and self.dragcontext.dragged_object:
+            for item in self.dragcontext.dragged_object:
+                if not item.get_parent():
+                    self.insert_item(item)
 
         self.dragcontext.reset()
         self.queue_resize()

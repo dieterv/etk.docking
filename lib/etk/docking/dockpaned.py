@@ -405,6 +405,7 @@ class DockPaned(gtk.Container):
         min_size = sum(i.min_size for i in items)
         if min_size > size:
             sf = size / min_size
+            self.log.warn('Size scaling required (factor=%f)' % sf)
         else:
             sf = 1.0
 
@@ -420,7 +421,7 @@ class DockPaned(gtk.Container):
                                    [(i.weight_request, sf * i.min_size / size) for i in requested_items])):
             i.weight = w
             i.weight_request = None
-        
+
 
     ############################################################################
 
