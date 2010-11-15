@@ -521,7 +521,7 @@ class DockPaned(gtk.Container):
                 width = max(width, w)
                 height += h
                 # Store the minimum weight for usage in do_size_allocate
-                item.min_size = w
+                item.min_size = h
 
         # Add handles
         if self._orientation == gtk.ORIENTATION_HORIZONTAL:
