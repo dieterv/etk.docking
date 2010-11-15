@@ -4,7 +4,7 @@ Release 0.1: "must have"
   possible, ie change DockPaned.insert_item(item, ...) to
   DockPaned.insert_item(child, ...), etc
 
-- fix DockPaned once and for all
+v fix DockPaned once and for all
 
 - fix the DockGroup tab rendering bug
     > implies reviewing the _tabs/_visible_tabs system and it's interaction
@@ -21,13 +21,13 @@ Release 0.1: "must have"
     - ???
 
 - implement full signal set on DockGroup, DockPaned, ???:
-    - item-added
-    - item-removed
-    - item-reordered
-    - item-selected
+    v item-added
+    v item-removed
+    x item-reordered --> maybe in DockLayout
+    v item-selected
 
-    > reemit by DockFrame so the end user only needs to concern himself with
-      DockFrame and DockItem widgets (beside designing an initial layout)
+    > reemit by DockLayout so the end user only needs to concern himself with
+      DockLayout and DockItem widgets (beside designing an initial layout)
 
 
 Release 0.2: "no rush"

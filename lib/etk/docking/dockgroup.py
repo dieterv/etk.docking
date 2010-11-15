@@ -94,6 +94,10 @@ class DockGroup(gtk.Container):
                     'item-removed':
                         (gobject.SIGNAL_RUN_LAST,
                          gobject.TYPE_NONE,
+                         (gobject.TYPE_OBJECT, gobject.TYPE_UINT)),
+                    'item-selected':
+                        (gobject.SIGNAL_RUN_LAST,
+                         gobject.TYPE_NONE,
                          (gobject.TYPE_OBJECT, gobject.TYPE_UINT))}
 
     def __init__(self):
@@ -988,6 +992,7 @@ class DockGroup(gtk.Container):
             # Update properties on new current tab
             self._on_item_title_changed(self._current_tab)
             self._on_item_title_tooltip_text_changed(self._current_tab)
+            self.emit('item-selected', self._current_tab.item, current_tab_index)
         else:
             self._current_tab = None
 
@@ -998,6 +1003,7 @@ class DockGroup(gtk.Container):
 
         # Refresh ourselves
         self.queue_resize()
+
 
     def next_item(self):
         '''

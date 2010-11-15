@@ -105,7 +105,8 @@ class DockLayout(gobject.GObject):
             signals = ()
 
         if isinstance(widget, DockGroup):
-            signals = signals + (('item-closed', self.on_dockgroup_item_closed),)
+            signals = signals + (('item-closed', self.on_dockgroup_item_closed),
+                                 ('item-selected', self.on_dockgroup_item_selected))
 
         return signals + (('drag-motion', self.on_widget_drag_motion),
                           ('drag-leave', self.on_widget_drag_leave),
@@ -233,6 +234,9 @@ class DockLayout(gobject.GObject):
     def on_dockgroup_item_closed(self, group, item):
         self.emit('item-closed', group, item)
 
+    def on_dockgroup_item_selected(self, group, item, current_index):
+        self.log.debug('Group %s item-selected: "%s" %d' % (group, item.title, current_index))
+        # TODO: Use this callback to grey out the selection on all but the active selection?
 
 def _propagate_to_parent(func, widget, context, x, y, timestamp):
     '''
