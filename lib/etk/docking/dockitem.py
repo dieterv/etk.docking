@@ -87,6 +87,8 @@ class DockItem(gtk.Bin):
         self._icon_name = value
         self.notify('icon-name')
 
+    icon_name = property(get_icon_name, set_icon_name)
+
     def get_title(self):
         return self._title
 
@@ -94,12 +96,16 @@ class DockItem(gtk.Bin):
         self._title = value
         self.notify('title')
 
+    title = property(get_title, set_title)
+
     def get_title_tooltip_text(self):
         return self._title_tooltip_text
 
     def set_title_tooltip_text(self, value):
         self._title_tooltip_text = value
         self.notify('title-tooltip-text')
+
+    title_tooltip_text = property(get_title_tooltip_text, set_title_tooltip_text)
 
     ############################################################################
     # GtkWidget
