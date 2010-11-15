@@ -62,6 +62,61 @@ class TestDockGroup(unittest.TestCase):
 
         dockgroup.destroy()
 
+
+    ############################################################################
+    # Test signals
+    ############################################################################
+    def test_remove_signal(self):
+        remove_events = []
+        item_removed_events = []
+
+        def on_remove(self, widget):
+            remove_events.append(widget)
+
+        def on_item_removed(dockgroup, child, position):
+            item_removed_events.append(child)
+
+        dockitem = DockItem()
+        dockitem.add(gtk.Button())
+        dockgroup = DockGroup()
+        dockgroup.connect('remove', on_remove)
+        dockgroup.connect('item-removed', on_item_removed)
+        dockgroup.add(dockitem)
+        dockgroup.remove(dockitem)
+
+        self.assertTrue(dockitem in remove_events)
+        self.assertTrue(dockitem in item_removed_events)
+
+        dockitem.destroy()
+        dockgroup.destroy()
+
+    def test_item_added_signal(self):
+        add_events = []
+        item_added_events = []
+
+        def on_add(self, widget):
+            add_events.append(widget)
+
+        def on_item_added(dockgroup, child, position):
+            item_added_events.append(child)
+
+        dockitem1 = DockItem()
+        dockitem2 = DockItem()
+        dockgroup = DockGroup()
+        dockgroup.connect('add', on_add)
+        dockgroup.connect('item-added', on_item_added)
+        dockgroup.add(dockitem1)
+        dockgroup.insert_item(dockitem2)
+
+        self.assertTrue(dockitem1 in item_added_events)
+        self.assertTrue(dockitem1 in add_events)
+        self.assertTrue(dockitem2 in item_added_events)
+        self.assertFalse(dockitem2 in add_events)
+
+        dockitem2.destroy()
+        dockitem1.destroy()
+        dockgroup.destroy()
+
     ############################################################################
     # Test public api
     ############################################################################
@@ -331,54 +386,9 @@ class TestDockGroup(unittest.TestCase):
 
         dockitem2 = DockItem()
         dockgroup.insert_item(dockitem2)
-        self.assertEquals([dockitem1, dockitem2], events)
-        self.assertEquals([True, True], item_in)
-        self.assertEquals([True, True], item_in_after)
-
-        dockitem3 = DockItem()
-        dockgroup.append_item(dockitem3)
-        self.assertEquals([dockitem1, dockitem2, dockitem3], events)
-        self.assertEquals([True, True, True], item_in)
-        self.assertEquals([True, True, True], item_in_after)
-
-        dockitem4 = DockItem()
-        dockgroup.prepend_item(dockitem4)
-        self.assertEquals([dockitem1, dockitem2, dockitem3, dockitem4], events)
-        self.assertEquals([True, True, True, True], item_in)
-        self.assertEquals([True, True, True, True], item_in_after)
-
-    def test_remove_signal(self):
-        events = []
-        item_in = []
-        item_in_after = []
-        def event_handler(self, w):
-            print 'TRY', w
-            print w in self.items
-            events.append(w)
-            item_in.append(w in self.items)
-
-        def event_handler_after(self, w):
-            item_in_after.append(w in self.items)
-
-        dockgroup = DockGroup()
-        dockgroup.connect('remove', event_handler)
-        dockgroup.connect_after('remove', event_handler_after)
-
-        dockitem1 = DockItem()
-        dockitem2 = DockItem()
-        dockgroup.add(dockitem1)
-        dockgroup.add(dockitem2)
-
-        dockgroup.remove(dockitem1)
-        self.assertTrue(dockitem1 not in dockgroup)
         self.assertEquals([dockitem1], events)
-        self.assertEquals([False], item_in)
-        self.assertEquals([False], item_in_after)
-
-        dockgroup.remove_item(0)
-        self.assertEquals([dockitem1, dockitem2], events)
-        self.assertEquals([False, False], item_in)
-        self.assertEquals([False, False], item_in_after)
+        self.assertEquals([True], item_in)
+        self.assertEquals([True], item_in_after)
 
     def test_drag_begin(self):
         dockitem1 = DockItem()

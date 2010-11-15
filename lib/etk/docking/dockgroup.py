@@ -86,7 +86,15 @@ class DockGroup(gtk.Container):
     __gsignals__ = {'item-closed':
                         (gobject.SIGNAL_RUN_LAST,
                          gobject.TYPE_NONE,
-                         (gobject.TYPE_OBJECT,))}
+                         (gobject.TYPE_OBJECT,)),
+                    'item-added':
+                        (gobject.SIGNAL_RUN_LAST,
+                         gobject.TYPE_NONE,
+                         (gobject.TYPE_OBJECT, gobject.TYPE_UINT)),
+                    'item-removed':
+                        (gobject.SIGNAL_RUN_LAST,
+                         gobject.TYPE_NONE,
+                         (gobject.TYPE_OBJECT, gobject.TYPE_UINT))}
 
     def __init__(self):
         gtk.Container.__init__(self)
@@ -734,9 +742,12 @@ class DockGroup(gtk.Container):
             self._insert_item(widget)
 
     def do_remove(self, widget):
-        assert widget in (tab.item for tab in self._tabs)
+        self._remove_item(widget)
 
-        item_num = self.item_num(widget)
+    def _remove_item(self, child):
+        assert child in (tab.item for tab in self._tabs)
+
+        item_num = self.item_num(child)
         tab = self._tabs[item_num]
 
         # We need this to reset the current item below
@@ -765,7 +776,7 @@ class DockGroup(gtk.Container):
             item_num = current_tab_index - 1
 
         self.set_current_item(item_num)
-
+        self.emit('item-removed', child, item_num)
 
     ############################################################################
     # EtkDockGroup
@@ -830,7 +841,6 @@ class DockGroup(gtk.Container):
         DockGroup.
         '''
         index = self._insert_item(item, position, visible_position)
-        self.emit('add', item)
         return index
 
     def _insert_item(self, item, position=None, visible_position=None):
@@ -883,6 +893,9 @@ class DockGroup(gtk.Container):
 
         item_num = self.item_num(item)
         self.set_current_item(item_num)
+
+        self.emit('item-added', item, item_num)
+
         return item_num
 
     def remove_item(self, item_num):
@@ -899,7 +912,7 @@ class DockGroup(gtk.Container):
             tab = self._tabs[item_num]
         item = tab.item
 
-        self.emit('remove', item)
+        self._remove_item(item)
 
     def item_num(self, item):
         '''
