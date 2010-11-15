@@ -288,8 +288,7 @@ class DockGroup(gtk.Container):
         else:
             # Compute available tab area width
             available_width = (allocation.width - self._frame_width - self._spacing -
-                               max_w - min_w - list_w - self._spacing -
-                               self._current_tab.area.width)
+                               max_w - min_w - list_w - self._spacing)
 
             # TODO: get previous tab position, use that to insert _current_tab
             if self._current_tab and self._current_tab not in self._visible_tabs:
@@ -304,19 +303,20 @@ class DockGroup(gtk.Container):
             for tab in self._visible_tabs:
                 calculated_width += tab.area.width
 
-            if calculated_width > available_width:
-                tab_age = sorted(self._visible_tabs, key=attrgetter('last_focused'))
-                while len(tab_age) > 1 and calculated_width > available_width + tab_age[0].area.width:
-                    calculated_width -= tab_age[0].area.width
-                    self._visible_tabs.remove(tab_age[0])
-                    del tab_age[0]
-            elif calculated_width < available_width \
+            if calculated_width < available_width \
                     and len(self._visible_tabs) < len(self._tabs):
                 tab_age = sorted(self._tabs, key=attrgetter('last_focused'), reverse=True)
-                while tab_age and calculated_width < available_width + tab_age[0].area.width:
+                while tab_age and calculated_width < available_width:
                     if tab_age[0] not in self._visible_tabs:
                         calculated_width += tab_age[0].area.width
                         self._visible_tabs.append(tab_age[0])
+                    del tab_age[0]
+
+            if calculated_width > available_width:
+                tab_age = sorted(self._visible_tabs, key=attrgetter('last_focused'))
+                while len(tab_age) > 1 and calculated_width > available_width:
+                    calculated_width -= tab_age[0].area.width
+                    self._visible_tabs.remove(tab_age[0])
                     del tab_age[0]
 
             # If the current item's tab is the only visible tab,

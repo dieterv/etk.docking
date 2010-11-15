@@ -6,7 +6,7 @@ Release 0.1: "must have"
 
 v fix DockPaned once and for all
 
-- fix the DockGroup tab rendering bug
+v fix the DockGroup tab rendering bug
     > implies reviewing the _tabs/_visible_tabs system and it's interaction
       with tab ordering...
     > right moment to implement "tab order" property (alphabetical,
