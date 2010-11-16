@@ -587,6 +587,7 @@ def dock_paned_drag_motion(self, context, x, y, timestamp):
 def dock_paned_cleanup(self, layout):
     if not len(self):
         parent = self.get_parent()
+        self.log.debug('removing empty paned')
         self.destroy()
         return parent and cleanup(parent, layout)
 
@@ -603,9 +604,12 @@ def dock_paned_cleanup(self, layout):
             parent.insert_item(child, position=position, expand=expand, weight=weight)
             assert child.get_parent() is parent, (child.get_parent(), parent)
         else:
-            child.unparent()
+            #does not work: child.unparent()
+            self.remove(child)
             parent.remove(self)
             parent.add(child)
+        self.log.debug('removing empty paned - moved child to parent first')
+        self.destroy()
 
 # Attached to drag *source*
 @drag_end.when_type(DockPaned)
@@ -719,6 +723,7 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
 def dock_frame_cleanup(self, layout):
     if not self.get_children():
         parent = self.get_parent()
+        layout.remove(self)
         self.destroy()
         try:
             if parent.get_transient_for():
