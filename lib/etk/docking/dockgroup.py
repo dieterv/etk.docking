@@ -76,12 +76,10 @@ class DockGroup(gtk.Container):
     '''
     __gtype_name__ = 'EtkDockGroup'
     __gproperties__ = {'group-id':
-                           (gobject.TYPE_UINT,
+                           (gobject.TYPE_STRING,
                             'group id',
                             'group id',
-                            0,
-                            gobject.G_MAXUINT,
-                            0,
+                            None,
                             gobject.PARAM_READWRITE)}
     __gsignals__ = {'item-closed':
                         (gobject.SIGNAL_RUN_LAST,

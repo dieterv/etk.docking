@@ -178,7 +178,7 @@ def dock_group_factory(parent, expand=None, weight=None, group_id=None):
     else:
         parent.add(group)
     if group_id:
-        group.props.group_id = group_id
+        group.group_id = group_id
 
     return group
 

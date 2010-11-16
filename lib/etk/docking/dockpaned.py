@@ -398,6 +398,13 @@ class DockPaned(gtk.Container):
         items = self._items
         size = float(size)
 
+        # Scale non-expandable items, so their size does not change effectively
+        if self.allocation:
+            f = self._effective_size(self.allocation) / size
+            for i in self._items:
+                if i.weight and not i.expand and not i.weight_request:
+                    i.weight_request = i.weight * f
+
         requested_items = [ i for i in items if i.weight_request ]
         other_items = [ i for i in items if not i.weight_request ]
 
