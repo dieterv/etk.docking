@@ -39,6 +39,45 @@ MAGIC_BORDER_SIZE = 10
 
 DragData = namedtuple('DragData', 'drop_widget leave received')
 
+class LayoutSettings(object):
+    '''
+    Container for group specific settings.
+    The following settings can be set:
+
+    * auto_remove: group is removed if if empty.
+    * can_float: Group can be a floating group.
+    * inherit_group_id: new groups constructed from items dragged from a group should
+    get the same group-id.
+    '''
+    def __init__(self, auto_remove=True, can_float=True, inherit_group_id=True):
+        self.auto_remove = auto_remove
+        self.can_float = can_float
+        self.inherit_group_id = inherit_group_id
+
+class LayoutSettingsDict(object):
+    '''
+    Settings container. Adheres partly to the dict protocol, only get() and setitem are
+    supported.
+    '''
+    def __init__(self):
+        self._settings = {} # Map group-id -> layout settings
+
+    def _get_group_id(self, target):
+        if isinstance(target, DockGroup):
+            target = target.get_group_id()
+        return target
+
+    def get(self, target):
+        return self[target]
+
+    def __getitem__(self, target):
+        settings = self._settings.get(self._get_group_id(target))
+        if not settings:
+            settings = self._settings[target] = LayoutSettings()
+        return settings
+
+    def __setitem__(self, target, settings):
+        self._settings[self._get_group_id(target)] = settings
 
 class DockLayout(gobject.GObject):
     """
@@ -62,6 +101,7 @@ class DockLayout(gobject.GObject):
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
 
         self.frames = set()
+        self.settings = LayoutSettingsDict() # Map group-id -> LayoutSettings
         self._signal_handlers = {} # Map widget -> set([signals, ...])
         self._drag_data = None
 
@@ -162,7 +202,7 @@ class DockLayout(gobject.GObject):
         """
         If an item is closed, perform maintenance cleanup.
         """
-        cleanup(group)
+        cleanup(group, self)
 
     def on_widget_add(self, container, widget, item_num=None):
         """
@@ -324,7 +364,7 @@ def drag_motion(widget, context, x, y, timestamp):
     return _propagate_to_parent(drag_motion, widget, context, x, y, timestamp)
 
 @generic
-def cleanup(widget):
+def cleanup(widget, layout):
     '''
     :param widget: widget that may require cleanup.
 
@@ -332,7 +372,7 @@ def cleanup(widget):
     operation or when a dock-item is closed.
     '''
     parent = widget.get_parent()
-    return parent and cleanup(parent)
+    return parent and cleanup(parent, layout)
 
 @generic
 def drag_end(widget, context):
@@ -365,6 +405,16 @@ def drag_failed(widget, context, result):
 ################################################################################
 # DockGroup
 ################################################################################
+
+def new_dock_group(old_group=None, layout=None):
+    '''
+    Create a new DockGroup. Set the group-id if required.
+    '''
+    new_group = DockGroup()
+    if old_group and layout and layout.settings[old_group].inherit_group_id:
+            new_group.group_id = old_group.group_id
+    return new_group
+
 def dock_group_expose_highlight(self, event):
     try:
         tab = self._visible_tabs[self._drop_tab_index]
@@ -429,23 +479,24 @@ def dock_group_drag_motion(self, context, x, y, timestamp):
     return DragData(self, dock_unhighlight, dock_group_drag_data_received)
 
 @cleanup.when_type(DockGroup)
-def dock_group_cleanup(self):
-    if not self.items:
+def dock_group_cleanup(self, layout):
+    self.log.debug('Cleanup required [%s]? %s' % (self.group_id, layout.settings[self.group_id].auto_remove))
+    if not self.items and layout.settings[self.group_id].auto_remove:
         parent = self.get_parent()
         self.log.debug('removing empty group')
         self.destroy()
-        return parent and cleanup(parent)
+        return parent and cleanup(parent, layout)
 
 # Attached to drag *source*
 @drag_end.when_type(DockGroup)
 def dock_group_drag_end(self, context):
-    cleanup(self)
+    cleanup(self, context.docklayout)
 
 # Attached to drag *source*
 @drag_failed.when_type(DockGroup)
 def dock_group_drag_failed(self, context, result):
     self.log.debug('%s, %s' % (context, result))
-    if result == 1: #gtk.DRAG_RESULT_NO_TARGET
+    if result == 1 and context.docklayout.settings[self].can_float: #gtk.DRAG_RESULT_NO_TARGET
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.move(*self.get_pointer())
         window.set_resizable(True)
@@ -454,7 +505,7 @@ def dock_group_drag_failed(self, context, result):
         window.set_transient_for(self.get_toplevel())
         frame = DockFrame()
         window.add(frame)
-        group = DockGroup()
+        group = new_dock_group(context.get_source_widget(), context.docklayout)
         frame.add(group)
         window.show()
         frame.show()
@@ -521,23 +572,23 @@ def dock_paned_drag_motion(self, context, x, y, timestamp):
 
         self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
         # If on handle: create new DockGroup and add items
-        dock_group = DockGroup()
-        self.insert_item(dock_group, self._drop_handle_index + 1)
-        dock_group.show()
+        new_group = new_dock_group(source, context.docklayout)
+        self.insert_item(new_group, self._drop_handle_index + 1)
+        new_group.show()
 
         for item in source.dragcontext.dragged_object:
-            dock_group.insert_item(item)
+            new_group.insert_item(item)
 
         context.finish(True, True, timestamp) # success, delete, time
 
     return DragData(self, dock_unhighlight, dock_paned_drag_data_received)
 
 @cleanup.when_type(DockPaned)
-def dock_paned_cleanup(self):
+def dock_paned_cleanup(self, layout):
     if not len(self):
         parent = self.get_parent()
         self.destroy()
-        return parent and cleanup(parent)
+        return parent and cleanup(parent, layout)
 
     if len(self) == 1:
         parent = self.get_parent()
@@ -559,7 +610,7 @@ def dock_paned_cleanup(self):
 # Attached to drag *source*
 @drag_end.when_type(DockPaned)
 def dock_paned_drag_end(self, context):
-    cleanup(self)
+    cleanup(self, context.docklayout)
 
 def dock_paned_magic_borders_leave(self):
     self.get_ancestor(DockFrame).set_placeholder(None)
@@ -610,7 +661,7 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
                 weight = self.child_get_property(current_group, 'weight')
                 self.remove(current_group)
                 self.insert_item(new_paned, position=position, expand=expand, weight=weight)
-                new_group = DockGroup()
+                new_group = new_dock_group(source, context.docklayout)
 
                 if min(x, y) < MAGIC_BORDER_SIZE:
                     new_paned.insert_item(new_group)
@@ -640,7 +691,7 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
         def add_group_receiver(selection_data, info):
             source = context.get_source_widget()
             assert source
-            new_group = DockGroup()
+            new_group = new_dock_group(source, context.docklayout)
             self.insert_item(new_group, position)
             new_group.show()
             self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
@@ -665,7 +716,7 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
 # DockFrame
 ################################################################################
 @cleanup.when_type(DockFrame)
-def dock_frame_cleanup(self):
+def dock_frame_cleanup(self, layout):
     if not self.get_children():
         parent = self.get_parent()
         self.destroy()
@@ -677,7 +728,7 @@ def dock_frame_cleanup(self):
 
 @drag_end.when_type(DockFrame)
 def dock_frame_drag_end(self, context):
-    cleanup(self)
+    cleanup(self, context.docklayout)
 
 def dock_frame_magic_borders_leave(self):
     self.set_placeholder(None)
@@ -733,7 +784,7 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
         assert current_child
         self.remove(current_child)
         self.add(new_paned)
-        new_group = DockGroup()
+        new_group = new_dock_group(source, context.docklayout)
         new_paned.insert_item(current_child)
         current_child.queue_resize()
         new_paned.insert_item(new_group, position)

@@ -67,9 +67,14 @@ class MainWindow(gtk.Window):
         else:
             self.dockframe = DockFrame()
             self.dockframe.set_border_width(8)
-            self.dockframe.add(DockGroup())
+            g = DockGroup()
+            g.group_id = 'default'
+            self.dockframe.add(g)
             self.docklayout = DockLayout()
             self.docklayout.add(self.dockframe)
+
+        self.docklayout.settings['default'].auto_remove = False
+        self.docklayout.settings['default'].can_float = False
 
         vbox.pack_start(self.dockframe)
         self.docklayout.connect('item-closed', lambda layout, group, item: item.destroy())

@@ -128,7 +128,11 @@ def dock_item_attributes(widget):
 
 @attributes.when_type(DockGroup)
 def dock_group_attributes(widget):
-    return parent_attributes(widget)
+    d = parent_attributes(widget)
+    group_id = widget.get_group_id()
+    if group_id:
+        d['group_id'] = group_id
+    return d
 
 @attributes.when_type(DockPaned)
 def dock_paned_attributes(widget):
@@ -166,13 +170,15 @@ def dock_item_factory(parent, icon, title, tooltip, pos=None, vispos=None, curre
     return item
 
 @factory('dockgroup')
-def dock_group_factory(parent, expand=None, weight=None):
+def dock_group_factory(parent, expand=None, weight=None, group_id=None):
     group = DockGroup()
 
     if weight is not None:
         parent.insert_item(group, expand=(expand == 'true'), weight=float(weight) / 100.)
     else:
         parent.add(group)
+    if group_id:
+        group.props.group_id = group_id
 
     return group
 

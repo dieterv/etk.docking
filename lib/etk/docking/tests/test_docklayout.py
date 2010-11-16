@@ -83,8 +83,23 @@ class TestDockLayout(unittest.TestCase):
         assert item not in layout._signal_handlers.keys(), layout._signal_handlers
         assert frame in layout.frames
 
+    def test_settings(self):
+        layout = DockLayout()
+        settings = layout.settings['gid']
+        assert settings.auto_remove is True
+        assert settings.can_float is True
+        assert settings.inherit_group_id is True
 
+        # On subsequent fetches, get the same settings.
+        assert settings is layout.settings['gid']
 
+        settings2 = layout.settings['other-gid']
+        assert settings2 is not settings
+        assert settings.auto_remove is True
+        assert settings.can_float is True
+        assert settings.inherit_group_id is True
+
+        
 class StubContext(object):
     def __init__(self, source_widget, items):
         self.targets = [ DRAG_TARGET_ITEM_LIST[0] ]

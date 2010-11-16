@@ -108,7 +108,7 @@ class DockGroup(gtk.Container):
 
         # Internal housekeeping
         self.set_border_width(2)
-        self.set_group_id(0)
+        self._group_id = None
         self._frame_width = 1
         self._spacing = 3
         self._decoration_area = gdk.Rectangle()
@@ -157,6 +157,8 @@ class DockGroup(gtk.Container):
     def set_group_id(self, value):
         self._group_id = value
         self.notify('group-id')
+
+    group_id = property(get_group_id, set_group_id)
 
     ############################################################################
     # GtkWidget
