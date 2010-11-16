@@ -98,15 +98,17 @@ class DockLayout(gobject.GObject):
         if isinstance(widget, DockPaned):
             signals = (('item-added', self.on_widget_add),
                        ('item-removed', self.on_widget_remove))
+        elif isinstance(widget, DockGroup):
+            signals = (('item-added', self.on_widget_add),
+                       ('item-removed', self.on_widget_remove),
+                       ('item-closed', self.on_dockgroup_item_closed),
+                       ('item-selected', self.on_dockgroup_item_selected))
         elif isinstance(widget, gtk.Container):
             signals = (('add', self.on_widget_add),
                        ('remove', self.on_widget_remove))
         else:
             signals = ()
 
-        if isinstance(widget, DockGroup):
-            signals = signals + (('item-closed', self.on_dockgroup_item_closed),
-                                 ('item-selected', self.on_dockgroup_item_selected))
 
         return signals + (('drag-motion', self.on_widget_drag_motion),
                           ('drag-leave', self.on_widget_drag_leave),
