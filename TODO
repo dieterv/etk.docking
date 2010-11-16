@@ -1,6 +1,6 @@
 Release 0.1: "must have"
 ========================
-- take a deep breath and a long look at the GTK+ api, follow it as much as
+v take a deep breath and a long look at the GTK+ api, follow it as much as
   possible, ie change DockPaned.insert_item(item, ...) to
   DockPaned.insert_item(child, ...), etc
 
@@ -12,7 +12,7 @@ v fix the DockGroup tab rendering bug
     > right moment to implement "tab order" property (alphabetical,
       opening order, last used, more?)
 
-- implement the group-id system, can be used to configure:
+v implement the group-id system, can be used to configure:
     - auto remove empty dockgroups
     - can float
     - expand (so you can have a group-id=documents with expand=True and
