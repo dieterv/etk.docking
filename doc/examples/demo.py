@@ -68,13 +68,18 @@ class MainWindow(gtk.Window):
             self.dockframe = DockFrame()
             self.dockframe.set_border_width(8)
             g = DockGroup()
-            g.group_id = 'default'
+            g.group_id = 'main'
             self.dockframe.add(g)
             self.docklayout = DockLayout()
             self.docklayout.add(self.dockframe)
 
-        self.docklayout.settings['default'].auto_remove = False
-        self.docklayout.settings['default'].can_float = False
+        self.docklayout.settings['main'].auto_remove = False
+        self.docklayout.settings['main'].can_float = True
+        self.docklayout.settings['main'].inherit_group_id = False
+
+
+        # To change default group behaviour:
+        #self.docklayout.settings[None].inherit_group_id = False
 
         vbox.pack_start(self.dockframe)
         self.docklayout.connect('item-closed', lambda layout, group, item: item.destroy())
