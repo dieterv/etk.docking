@@ -171,12 +171,12 @@ class MainWindow(gtk.Window):
         return scrolledwindow
 
     def _add_dockitems(self, dockgroup):
-        examples = [('calc', 'calculator', '#!/usr/bin/env python\n\nprint \'Hello!\''),
-                    ('file-manager', 'Hi!', 'Hello!'),
-                    ('fonts', 'ABC', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'),
-                    ('style', 'abc', 'abcdefghijklmnopqrstuvwxyz'),
-                    ('web-browser', 'browser', '0123456789'),
-                    ('date', 'today', '9876543210')]
+        examples = [('gtk-execute', 'calculator', '#!/usr/bin/env python\n\nprint \'Hello!\''),
+                    ('gtk-open', 'Hi!', 'Hello!'),
+                    ('gtk-file', 'ABC', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'),
+                    ('gtk-find', 'abc', 'abcdefghijklmnopqrstuvwxyz'),
+                    ('gtk-harddisk', 'browser', '0123456789'),
+                    ('gtk-home', 'today', '9876543210')]
 
         for i in range(random.randrange(1, 10, 1)):
 
