@@ -47,15 +47,15 @@ class TestDockGroup(unittest.TestCase):
                         msg='group-id property change notification failed when using set_group_id method')
 
         notify_called = False
-        dockgroup.set_property('group-id', 2)
-        self.assertEquals(dockgroup.get_property('group-id'), 2,
+        dockgroup.set_property('group-id', '2')
+        self.assertEquals(dockgroup.get_property('group-id'), '2',
                           msg='get_property method did not return expected value')
         self.assertTrue(notify_called,
                         msg='group-id property change notification failed when using set_property method')
 
         notify_called = False
-        dockgroup.props.group_id = 3
-        self.assertEquals(dockgroup.props.group_id, 3,
+        dockgroup.props.group_id = '3'
+        self.assertEquals(dockgroup.props.group_id, '3',
                           msg='.props attribute did not return expected value')
         self.assertTrue(notify_called,
                         msg='group-id property change notification failed when using .props attribute')

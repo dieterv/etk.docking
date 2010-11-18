@@ -46,13 +46,14 @@ class LayoutSettings(object):
 
     * auto_remove: group is removed if if empty.
     * can_float: Group can be a floating group.
-    * inherit_group_id: new groups constructed from items dragged from a group should
+    * inherit_settings: new groups constructed from items dragged from a group should
     get the same group-id.
     '''
-    def __init__(self, auto_remove=True, can_float=True, inherit_group_id=True):
+    def __init__(self, auto_remove=True, can_float=True, expand=True, inherit_settings=True):
         self.auto_remove = auto_remove
         self.can_float = can_float
-        self.inherit_group_id = inherit_group_id
+        self.expand = expand
+        self.inherit_settings = inherit_settings
 
 class LayoutSettingsDict(object):
     '''
@@ -411,7 +412,7 @@ def new_dock_group(old_group=None, layout=None):
     Create a new DockGroup. Set the group-id if required.
     '''
     new_group = DockGroup()
-    if old_group and layout and layout.settings[old_group].inherit_group_id:
+    if old_group and layout and layout.settings[old_group].inherit_settings:
             new_group.group_id = old_group.group_id
     return new_group
 
@@ -599,7 +600,7 @@ def dock_paned_cleanup(self, layout):
             position = [c for c in parent].index(self)
             expand = parent.child_get_property(self, 'expand')
             weight = parent.child_get_property(self, 'weight')
-            child.unparent()
+            self.remove(child)
             parent.remove(self)
             parent.insert_item(child, position=position, expand=expand, weight=weight)
             assert child.get_parent() is parent, (child.get_parent(), parent)

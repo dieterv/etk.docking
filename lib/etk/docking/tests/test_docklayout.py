@@ -88,7 +88,7 @@ class TestDockLayout(unittest.TestCase):
         settings = layout.settings['gid']
         assert settings.auto_remove is True
         assert settings.can_float is True
-        assert settings.inherit_group_id is True
+        assert settings.inherit_settings is True
 
         # On subsequent fetches, get the same settings.
         assert settings is layout.settings['gid']
@@ -97,9 +97,27 @@ class TestDockLayout(unittest.TestCase):
         assert settings2 is not settings
         assert settings.auto_remove is True
         assert settings.can_float is True
-        assert settings.inherit_group_id is True
+        assert settings.inherit_settings is True
 
-        
+# TODO: We need a way to get expand property setting exposed in _DockPanedItem
+#    def test_expand_setting(self):
+#        from etk.docking import expand_setting
+#        layout = DockLayout()
+#        frame = DockFrame()
+#        paned = DockPaned()
+#        group = DockGroup()
+#
+#        layout.add(frame)
+#        frame.add(paned)
+#        paned.insert_item(group, expand=expand_setting(layout))
+#
+#        self.assertTrue(paned.child_get_property(group, 'expand'))
+#
+#        layout.settings[None].expand = False
+#
+#        self.assertEquals(False, paned._items[0].expand.__get__)
+#        self.assertFalse(paned.child_get_property(group, 'expand'))
+
 class StubContext(object):
     def __init__(self, source_widget, items):
         self.targets = [ DRAG_TARGET_ITEM_LIST[0] ]
