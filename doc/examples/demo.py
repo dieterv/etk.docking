@@ -41,7 +41,7 @@ except ImportError:
     del os, sys
 finally:
     from etk.docking import DockLayout, DockFrame, DockPaned, \
-                            DockGroup, DockItem, dockstore
+                            DockGroup, DockItem, dockstore, settings
 
 
 class MainWindow(gtk.Window):
@@ -68,14 +68,15 @@ class MainWindow(gtk.Window):
             self.dockframe = DockFrame()
             self.dockframe.set_border_width(8)
             g = DockGroup()
-            g.group_id = 'main'
+            g.set_name('main')
             self.dockframe.add(g)
             self.docklayout = DockLayout()
             self.docklayout.add(self.dockframe)
 
-        self.docklayout.settings['main'].auto_remove = False
-        self.docklayout.settings['main'].can_float = True
-        self.docklayout.settings['main'].inherit_settings = False
+        settings['main'].auto_remove = False
+        settings['main'].can_float = True
+        settings['main'].inherit_settings = False
+        settings['main'].expand = False
 
 
         # To change default group behaviour:

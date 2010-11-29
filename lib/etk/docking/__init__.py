@@ -22,7 +22,7 @@
 from __future__ import absolute_import
 
 
-__all__ = ['DockLayout', 'DockFrame', 'DockPaned', 'DockGroup', 'DockItem']
+__all__ = ['DockLayout', 'DockFrame', 'DockPaned', 'DockGroup', 'DockItem', 'settings']
 __version__ = '0.0.1'
 __docformat__ = 'restructuredtext'
 
@@ -66,3 +66,4 @@ from .dockframe import DockFrame
 from .dockpaned import DockPaned
 from .dockgroup import DockGroup
 from .dockitem import DockItem
+from .docksettings import settings
