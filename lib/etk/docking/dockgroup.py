@@ -49,7 +49,6 @@ class _DockGroupTab(object):
                  'label',               # title (gtk.Label)
                  'button',              # close button (etk.docking.CompactButton)
                  'menu_item',           # menu item (gtk.ImageMenuItem)
-                 'state',               # state (one of the GTK State Type Constants)
                  'area',                # area, used for hit testing (gdk.Rectangle)
                  'last_focused']        # timestamp set last time a tab was focused
 
@@ -322,10 +321,6 @@ class DockGroup(gtk.Container):
                 elif tab in self._visible_tabs:
                     tab.item.hide()
                     tab.image.show()
-                    if tab.state == gtk.STATE_PRELIGHT:
-                        tab.button.show()
-                    else:
-                        tab.button.hide()
                     tab.label.show()
                 else:
                     if tab.item.flags() & gtk.VISIBLE:
@@ -572,21 +567,15 @@ class DockGroup(gtk.Container):
                     self.drag_begin([DRAG_TARGET_ITEM_LIST], gdk.ACTION_MOVE,
                                     self.dragcontext.source_button, event)
 
-            # Update tab state
+            # Update tab button visibility
             for tab in self._visible_tabs:
                 if (event.x, event.y) in tab:
                     # Update tooltip for tab under the cursor
                     self.set_tooltip_text(tab.item.get_title_tooltip_text())
 
-                    if tab.state == gtk.STATE_NORMAL:
-                        tab.state = gtk.STATE_PRELIGHT
-                        self.queue_resize()
-                # Doing this as an elif above might seem tempting, but this way
-                # reduces flicker on the close button while the pointer moves
-                # over an inactive tab...
+                    tab.button.show()
                 else:
-                    tab.state = gtk.STATE_NORMAL
-                    self.queue_resize()
+                    tab.button.hide()
 
         return True
 
@@ -843,7 +832,6 @@ class DockGroup(gtk.Container):
         tab.menu_item.set_label(item.get_title())
         tab.menu_item.connect('activate', self._on_list_menu_item_activated, tab)
         self._list_menu.append(tab.menu_item)
-        tab.state = gtk.STATE_NORMAL
         tab.area = gdk.Rectangle()
         tab.last_focused = time()
 
