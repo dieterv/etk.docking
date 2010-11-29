@@ -34,7 +34,7 @@ from .dockframe import DockFrame
 from .dockpaned import DockPaned
 from .dockgroup import DockGroup
 from .dockitem import DockItem
-from .docksettings import DockSettingsDict
+from .docksettings import settings
 
 MAGIC_BORDER_SIZE = 10
 
@@ -62,7 +62,6 @@ class DockLayout(gobject.GObject):
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
 
         self.frames = set()
-        self.settings = DockSettingsDict() # Map group-id -> DockSettings
         self._signal_handlers = {} # Map widget -> set([signals, ...])
         self._drag_data = None
 
@@ -163,7 +162,7 @@ class DockLayout(gobject.GObject):
         """
         If an item is closed, perform maintenance cleanup.
         """
-        if self.settings[item].auto_remove:
+        if settings[item].auto_remove or settings[group].auto_remove:
             cleanup(group, self)
 
     def on_widget_add(self, container, widget, item_num=None):
@@ -455,7 +454,7 @@ def dock_group_drag_end(self, context):
 @drag_failed.when_type(DockGroup)
 def dock_group_drag_failed(self, context, result):
     self.log.debug('%s, %s' % (context, result))
-    if result == 1 and context.docklayout.settings[self].can_float: #gtk.DRAG_RESULT_NO_TARGET
+    if result == 1 and settings[self].can_float: #gtk.DRAG_RESULT_NO_TARGET
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.move(*self.get_pointer())
         window.set_resizable(True)

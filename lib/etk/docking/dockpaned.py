@@ -28,7 +28,7 @@ import gtk.gdk as gdk
 
 from .dnd import DockDragContext
 from .util import rect_overlaps
-
+from .docksettings import settings
 
 # The weight we allocate to a newly added item if we can't come up with anything else
 FALLBACK_WEIGHT = 0.2
@@ -377,7 +377,7 @@ class DockPaned(gtk.Container):
             f = self._effective_size(self.allocation) / size
             for i in self._items:
                 #if i.weight and not i.expand and not i.weight_request:
-                if i.weight and not i.weight_request:
+                if i.weight and not settings[i.child].expand and not i.weight_request:
                     i.weight_request = i.weight * f
 
         requested_items = [ i for i in items if i.weight_request ]

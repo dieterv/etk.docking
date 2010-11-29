@@ -128,9 +128,9 @@ def dock_item_attributes(widget):
 @attributes.when_type(DockGroup)
 def dock_group_attributes(widget):
     d = parent_attributes(widget)
-    #group_id = widget.get_group_id()
-    #if group_id:
-    #    d['group_id'] = group_id
+    name = widget.get_name()
+    if name != widget.__gtype__.name:
+        d['name'] = name
     return d
 
 @attributes.when_type(DockPaned)
@@ -161,29 +161,37 @@ def factory(typename):
     return _factory
 
 @factory('dockitem')
-def dock_item_factory(parent, icon, title, tooltip, pos=None, vispos=None, current=None):
+def dock_item_factory(parent, icon, title, tooltip, pos=None, vispos=None, current=None, name=None):
     item = DockItem(icon, title, tooltip)
-    if pos: pos = int(pos)
-    if vispos: vispos = int(vispos)
+    if name:
+        item.set_name(name)
+    if pos:
+        pos = int(pos)
+    if vispos:
+        vispos = int(vispos)
     parent.insert_item(item, pos, vispos)
     return item
 
 @factory('dockgroup')
-def dock_group_factory(parent, weight=None, group_id=None):
+def dock_group_factory(parent, weight=None, name=None):
     group = DockGroup()
+
+    if name:
+        group.set_name(name)
 
     if weight is not None:
         parent.insert_item(group, weight=float(weight) / 100.)
     else:
         parent.add(group)
-    #if group_id:
-    #    group.group_id = group_id
 
     return group
 
 @factory('dockpaned')
-def dock_paned_factory(parent, orientation, weight=None):
+def dock_paned_factory(parent, orientation, weight=None, name=None):
     paned = DockPaned()
+
+    if name:
+        paned.set_name(name)
 
     if orientation == 'horizontal':
         paned.set_orientation(gtk.ORIENTATION_HORIZONTAL)

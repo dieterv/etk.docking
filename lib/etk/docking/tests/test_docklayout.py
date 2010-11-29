@@ -83,22 +83,6 @@ class TestDockLayout(unittest.TestCase):
         assert item not in layout._signal_handlers.keys(), layout._signal_handlers
         assert frame in layout.frames
 
-    def test_settings(self):
-        layout = DockLayout()
-        settings = layout.settings['gid']
-        assert settings.auto_remove is True
-        assert settings.can_float is True
-        assert settings.inherit_settings is True
-
-        # On subsequent fetches, get the same settings.
-        assert settings is layout.settings['gid']
-
-        settings2 = layout.settings['other-gid']
-        assert settings2 is not settings
-        assert settings.auto_remove is True
-        assert settings.can_float is True
-        assert settings.inherit_settings is True
-
 # TODO: We need a way to get expand property setting exposed in _DockPanedItem
 #    def test_expand_setting(self):
 #        from etk.docking import expand_setting

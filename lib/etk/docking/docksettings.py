@@ -36,7 +36,7 @@ class DockSettings(object):
     * can_float: Group can be a floating group.
     * expand: expand/shrink on resize.
     * inherit_settings: new groups constructed from items dragged from a group should
-    get the same group-id.
+    get the same group name.
     '''
 
     def __init__(self, auto_remove=True, can_float=True, expand=True, inherit_settings=True):
@@ -72,4 +72,5 @@ class DockSettingsDict(object):
     def __setitem__(self, target, settings):
         self._settings[self._get_name(target)] = settings
 
+settings = DockSettingsDict()
 
