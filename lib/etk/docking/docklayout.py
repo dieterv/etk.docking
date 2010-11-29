@@ -31,8 +31,9 @@ import gtk.gdk as gdk
 
 from .dnd import DRAG_TARGET_ITEM_LIST, Placeholder
 from .dockframe import DockFrame
-from .dockgroup import DockGroup
 from .dockpaned import DockPaned
+from .dockgroup import DockGroup
+from .dockitem import DockItem
 
 
 MAGIC_BORDER_SIZE = 10
@@ -64,7 +65,7 @@ class LayoutSettingsDict(object):
         self._settings = {} # Map group-id -> layout settings
 
     def _get_group_id(self, target):
-        if isinstance(target, DockGroup):
+        if isinstance(target, DockItem):
             target = target.get_group_id()
         return target
 
@@ -203,7 +204,8 @@ class DockLayout(gobject.GObject):
         """
         If an item is closed, perform maintenance cleanup.
         """
-        cleanup(group, self)
+        if self.settings[item].auto_remove:
+            cleanup(group, self)
 
     def on_widget_add(self, container, widget, item_num=None):
         """
@@ -412,8 +414,6 @@ def new_dock_group(old_group=None, layout=None):
     Create a new DockGroup. Set the group-id if required.
     '''
     new_group = DockGroup()
-    if old_group and layout and layout.settings[old_group].inherit_settings:
-            new_group.group_id = old_group.group_id
     return new_group
 
 def dock_group_expose_highlight(self, event):
@@ -481,8 +481,7 @@ def dock_group_drag_motion(self, context, x, y, timestamp):
 
 @cleanup.when_type(DockGroup)
 def dock_group_cleanup(self, layout):
-    self.log.debug('Cleanup required [%s]? %s' % (self.group_id, layout.settings[self.group_id].auto_remove))
-    if not self.items and layout.settings[self.group_id].auto_remove:
+    if not self.items: # and auto_remove
         parent = self.get_parent()
         self.log.debug('removing empty group')
         self.destroy()
@@ -598,11 +597,11 @@ def dock_paned_cleanup(self, layout):
 
         if isinstance(parent, DockPaned):
             position = [c for c in parent].index(self)
-            expand = parent.child_get_property(self, 'expand')
+            #expand = parent.child_get_property(self, 'expand')
             weight = parent.child_get_property(self, 'weight')
             self.remove(child)
             parent.remove(self)
-            parent.insert_item(child, position=position, expand=expand, weight=weight)
+            parent.insert_item(child, position=position, weight=weight)
             assert child.get_parent() is parent, (child.get_parent(), parent)
         else:
             #does not work: child.unparent()
@@ -662,10 +661,10 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
                     new_paned.set_orientation(gtk.ORIENTATION_HORIZONTAL)
 
                 position = self.item_num(current_group)
-                expand = self.child_get_property(current_group, 'expand')
+                #expand = self.child_get_property(current_group, 'expand')
                 weight = self.child_get_property(current_group, 'weight')
                 self.remove(current_group)
-                self.insert_item(new_paned, position=position, expand=expand, weight=weight)
+                self.insert_item(new_paned, position=position, weight=weight)
                 new_group = new_dock_group(source, context.docklayout)
 
                 if min(x, y) < MAGIC_BORDER_SIZE:

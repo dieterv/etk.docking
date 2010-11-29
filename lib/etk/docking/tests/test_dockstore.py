@@ -29,7 +29,7 @@ class LoadingTestCase(unittest.TestCase):
         s = serialize(layout)
         assert '<layout><dockframe height="1" width="1">'\
         '<dockpaned orientation="horizontal">'\
-        '<dockgroup expand="true" weight="100">'\
+        '<dockgroup weight="100">'\
         '<dockitem icon="icon" title="t" tooltip="xx" />'\
         '</dockgroup></dockpaned></dockframe></layout>' == s, s
 
@@ -39,7 +39,7 @@ class LoadingTestCase(unittest.TestCase):
         <layout>
           <dockframe height="120" width="200">
             <dockpaned orientation="horizontal">
-              <dockgroup expand="true" weight="100">
+              <dockgroup weight="100">
                 <dockitem icon="icon" title="t" tooltip="xx">
                   <widget name="fillme" />
                 </dockitem>
@@ -77,10 +77,10 @@ class LoadingTestCase(unittest.TestCase):
         <layout>
           <dockframe height="100" width="492">
             <dockpaned orientation="horizontal">
-              <dockgroup expand="true" weight="45">
+              <dockgroup weight="45">
                 <dockitem icon="file-manager" title="New 3" tooltip="Hi!"/>
               </dockgroup>
-              <dockgroup expand="true" weight="55">
+              <dockgroup weight="55">
                 <dockitem icon="web-browser" title="New 1" tooltip="browser"/>
                 <dockitem icon="web-browser" title="New 4" tooltip="browser"/>
               </dockgroup>

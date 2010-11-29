@@ -53,15 +53,13 @@ class _DockPanedItem(object):
     __slots__ = ['child',      # child widget
                  'weight',     # relative weight [0..1]
                  'weight_request', # requested weight, processed in size_allocate()
-                 'min_size', # minimum relative weight
-                 'expand']     # used to store the 'expand' child property
+                 'min_size'] # minimum relative weight
 
     def __init__(self):
         self.child = None
         self.weight = None
         self.weight_request = None
         self.min_size = None
-        self.expand = True
 
     def __contains__(self, pos):
         return rect_overlaps(self.child.allocation, *pos)
@@ -78,11 +76,6 @@ class DockPaned(gtk.Container):
     A dockpaned widget draws a separator between it's child widgets and a small
     handle that the user can drag to adjust the division. It does not draw any
     relief around the children or around the separator.
-
-    Each child has an expand option that can be set. If resize is :const:`True`,
-    when the dockpaned is resized, that child will expand or shrink along
-    with the dockpaned widget. If multiple child widgets have the resize
-    property set to :const:`True`, all of them will expand of shrink evenly.
     '''
     __gtype_name__ = 'EtkDockPaned'
     __gproperties__ = \
@@ -103,13 +96,7 @@ class DockPaned(gtk.Container):
               0,
               gobject.PARAM_READWRITE)}
     __gchild_properties__ = \
-        {'expand':
-             (gobject.TYPE_BOOLEAN,
-              'expand',
-              'expand',
-              True,
-              gobject.PARAM_READWRITE),
-         'weight':
+         {'weight':
              (gobject.TYPE_FLOAT,
               'item weight',
               'item weight',
@@ -169,16 +156,12 @@ class DockPaned(gtk.Container):
                 switch = True
                 index += 1
 
-    def _insert_item(self, child, position=None, expand=True, weight=None):
+    def _insert_item(self, child, position=None, weight=None):
         '''
         :param child: a :class:`gtk.Widget` to use as the contents of the item.
         :param position: the index (starting at 0) at which to insert the
                          item, negative or :const:`None` to append the item
                          after all other items.
-        :param expand: :const:`True` if `child` is to be given extra space
-                       allocated to dockpaned. The extra space will be divided
-                       evenly between all children of the dockpaned that use
-                       this option.
         :param weight: The relative amount of space the child should get. No guarantees.
         :returns: the index number of the item in the dockpaned.
 
@@ -197,7 +180,6 @@ class DockPaned(gtk.Container):
         item = _DockPanedItem()
         item.child = child
         item.child.set_parent(self)
-        item.expand = expand
 
         if self.flags() & gtk.REALIZED:
             item.child.set_parent_window(self.window)
@@ -317,14 +299,6 @@ class DockPaned(gtk.Container):
                 return item
         raise ValueError('child widget %s not in paned' % child)
 
-    def _get_expandable_items(self):
-        for item in self._items:
-            if item.expand:
-                yield item
-
-    def _get_n_expandable_items(self):
-        return len(list(self._get_expandable_items()))
-
     def _size(self, allocation):
         '''
         Get the size (width or height) required in calculations, depending on the
@@ -402,7 +376,8 @@ class DockPaned(gtk.Container):
         if self.allocation:
             f = self._effective_size(self.allocation) / size
             for i in self._items:
-                if i.weight and not i.expand and not i.weight_request:
+                #if i.weight and not i.expand and not i.weight_request:
+                if i.weight and not i.weight_request:
                     i.weight_request = i.weight * f
 
         requested_items = [ i for i in items if i.weight_request ]
@@ -698,7 +673,7 @@ class DockPaned(gtk.Container):
     # GtkContainer
     ############################################################################
     def do_add(self, widget):
-        self._insert_item(widget, expand=True)
+        self._insert_item(widget)
 
     def do_remove(self, widget):
         self._remove_item(widget)
@@ -712,17 +687,12 @@ class DockPaned(gtk.Container):
 
     def do_get_child_property(self, child, property_id, pspec):
         item = self._item_for_child(child)
-        if pspec.name == 'expand':
-            return item.expand
-        elif pspec.name == 'weight':
+        if pspec.name == 'weight':
             return item.weight_request or item.weight
 
     def do_set_child_property(self, child, property_id, value, pspec):
         item = self._item_for_child(child)
-        if pspec.name == 'expand':
-            item.expand = value
-            child.child_notify('expand')
-        elif pspec.name == 'weight':
+        if pspec.name == 'weight':
             item.weight_request = value
             child.child_notify('weight')
 
@@ -783,16 +753,12 @@ class DockPaned(gtk.Container):
         '''
         return self._insert_item(child, 0)
 
-    def insert_item(self, child, position=None, expand=True, weight=None):
+    def insert_item(self, child, position=None, weight=None):
         '''
         :param child: a :class:`gtk.Widget`` to use as the contents of the item.
         :param position: the index (starting at 0) at which to insert the item,
                          negative or :const:`None` to append the item after all
                          other items.
-        :param expand: :const:`True` if `child` is to be given extra space
-                       allocated to dockpaned. The extra space will be divided
-                       evenly between all children of the dockpaned that use
-                       this option.
         :param weight: The relative amount of space the child should get. No guarantees.
         :returns: the index number of the item in the dockpaned.
 
@@ -801,7 +767,7 @@ class DockPaned(gtk.Container):
         widget to use as the contents of the item. If position is negative or
         :const:`None` the item is appended to the dockpaned.
         '''
-        return self._insert_item(child, position, expand, weight)
+        return self._insert_item(child, position, weight)
 
     def remove_item(self, item_num):
         '''

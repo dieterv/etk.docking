@@ -106,7 +106,6 @@ def parent_attributes(widget):
 
     if isinstance(container, DockPaned):
         paned_item = [i for i in container._items if i.child is widget][0]
-        d['expand'] = str(paned_item.expand).lower()
         if paned_item.weight:
             d['weight'] = str(int(paned_item.weight * 100))
 
@@ -170,11 +169,11 @@ def dock_item_factory(parent, icon, title, tooltip, pos=None, vispos=None, curre
     return item
 
 @factory('dockgroup')
-def dock_group_factory(parent, expand=None, weight=None, group_id=None):
+def dock_group_factory(parent, weight=None, group_id=None):
     group = DockGroup()
 
     if weight is not None:
-        parent.insert_item(group, expand=(expand == 'true'), weight=float(weight) / 100.)
+        parent.insert_item(group, weight=float(weight) / 100.)
     else:
         parent.add(group)
     if group_id:
@@ -183,7 +182,7 @@ def dock_group_factory(parent, expand=None, weight=None, group_id=None):
     return group
 
 @factory('dockpaned')
-def dock_paned_factory(parent, orientation, expand=None, weight=None):
+def dock_paned_factory(parent, orientation, weight=None):
     paned = DockPaned()
 
     if orientation == 'horizontal':
@@ -192,7 +191,7 @@ def dock_paned_factory(parent, orientation, expand=None, weight=None):
         paned.set_orientation(gtk.ORIENTATION_VERTICAL)
 
     if weight is not None:
-        item = parent.insert_item(paned, expand=(expand == 'true'), weight=float(weight) / 100.)
+        item = parent.insert_item(paned, weight=float(weight) / 100.)
     else:
         parent.add(paned)
 

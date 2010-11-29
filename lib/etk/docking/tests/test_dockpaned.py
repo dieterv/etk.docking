@@ -100,26 +100,6 @@ class TestDockPaned(unittest.TestCase):
     ############################################################################
     # Test child properties
     ############################################################################
-    def test_child_prop_expand(self):
-        global child_notify_called
-
-        def _on_child_notify(gobject, pspec):
-            global child_notify_called
-            child_notify_called = True
-
-        dockpaned = DockPaned()
-        dockgroup = DockGroup()
-        dockgroup.connect('child-notify::expand', _on_child_notify)
-        dockpaned.add(dockgroup)
-
-        child_notify_called = False
-        dockpaned.child_set_property(dockgroup, 'expand', True)
-        self.assertTrue(child_notify_called,
-                        msg='expand child property change notification failed')
-
-        dockgroup.destroy()
-        dockpaned.destroy()
-
     def test_child_prop_weight(self):
         global child_notify_called
 
@@ -247,7 +227,7 @@ class TestDockPaned(unittest.TestCase):
         dockgroup1 = DockGroup()
         dockgroup2 = DockGroup()
 
-        dockpaned.insert_item(dockgroup1, expand=True)
+        dockpaned.insert_item(dockgroup1)
         dockpaned._items[0].min_size = 20
 
         self.assertEquals(1, len(dockpaned._items))
@@ -259,7 +239,7 @@ class TestDockPaned(unittest.TestCase):
         self.assertEquals(1.0, dockpaned._items[0].weight)
         self.assertEquals(None, dockpaned._items[0].weight_request)
 
-        dockpaned.insert_item(dockgroup2, expand=True, weight=0.5)
+        dockpaned.insert_item(dockgroup2, weight=0.5)
         dockpaned._items[1].min_size = 20
 
         self.assertTrue(0.5, dockpaned._items[1].weight_request)
@@ -274,7 +254,7 @@ class TestDockPaned(unittest.TestCase):
         dockgroup1 = DockGroup()
         dockgroup2 = DockGroup()
 
-        dockpaned.insert_item(dockgroup1, expand=True, weight=0.5)
+        dockpaned.insert_item(dockgroup1, weight=0.5)
         dockpaned._items[0].min_size = 20
 
         self.assertEquals(1, len(dockpaned._items))
@@ -286,7 +266,7 @@ class TestDockPaned(unittest.TestCase):
         self.assertEquals(1.0, dockpaned._items[0].weight)
         self.assertEquals(None, dockpaned._items[0].weight_request)
 
-        dockpaned.insert_item(dockgroup2, expand=True, weight=0.5)
+        dockpaned.insert_item(dockgroup2, weight=0.5)
         dockpaned._items[1].min_size = 20
 
         self.assertTrue(0.5, dockpaned._items[1].weight_request)

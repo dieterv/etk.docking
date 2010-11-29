@@ -75,12 +75,6 @@ class DockGroup(gtk.Container):
     etk.DockGroup.
     '''
     __gtype_name__ = 'EtkDockGroup'
-    __gproperties__ = {'group-id':
-                           (gobject.TYPE_STRING,
-                            'group id',
-                            'group id',
-                            None,
-                            gobject.PARAM_READWRITE)}
     __gsignals__ = {'item-closed':
                         (gobject.SIGNAL_RUN_LAST,
                          gobject.TYPE_NONE,
@@ -106,7 +100,6 @@ class DockGroup(gtk.Container):
 
         # Internal housekeeping
         self.set_border_width(2)
-        self._group_id = None
         self._frame_width = 1
         self._spacing = 3
         self._decoration_area = gdk.Rectangle()
@@ -137,26 +130,6 @@ class DockGroup(gtk.Container):
 
     def __len__(self):
         return len(self._tabs)
-
-    ############################################################################
-    # GObject
-    ############################################################################
-    def do_get_property(self, pspec):
-        if pspec.name == 'group-id':
-            return self.get_group_id()
-
-    def do_set_property(self, pspec, value):
-        if pspec.name == 'group-id':
-            self.set_group_id(value)
-
-    def get_group_id(self):
-        return self._group_id
-
-    def set_group_id(self, value):
-        self._group_id = value
-        self.notify('group-id')
-
-    group_id = property(get_group_id, set_group_id)
 
     ############################################################################
     # GtkWidget
