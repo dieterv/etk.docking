@@ -34,52 +34,11 @@ from .dockframe import DockFrame
 from .dockpaned import DockPaned
 from .dockgroup import DockGroup
 from .dockitem import DockItem
-
+from .docksettings import DockSettingsDict
 
 MAGIC_BORDER_SIZE = 10
 
 DragData = namedtuple('DragData', 'drop_widget leave received')
-
-class LayoutSettings(object):
-    '''
-    Container for group specific settings.
-    The following settings can be set:
-
-    * auto_remove: group is removed if if empty.
-    * can_float: Group can be a floating group.
-    * inherit_settings: new groups constructed from items dragged from a group should
-    get the same group-id.
-    '''
-    def __init__(self, auto_remove=True, can_float=True, expand=True, inherit_settings=True):
-        self.auto_remove = auto_remove
-        self.can_float = can_float
-        self.expand = expand
-        self.inherit_settings = inherit_settings
-
-class LayoutSettingsDict(object):
-    '''
-    Settings container. Adheres partly to the dict protocol, only get() and setitem are
-    supported.
-    '''
-    def __init__(self):
-        self._settings = {} # Map group-id -> layout settings
-
-    def _get_group_id(self, target):
-        if isinstance(target, DockItem):
-            target = target.get_group_id()
-        return target
-
-    def get(self, target):
-        return self[target]
-
-    def __getitem__(self, target):
-        settings = self._settings.get(self._get_group_id(target))
-        if not settings:
-            settings = self._settings[target] = LayoutSettings()
-        return settings
-
-    def __setitem__(self, target, settings):
-        self._settings[self._get_group_id(target)] = settings
 
 class DockLayout(gobject.GObject):
     """
@@ -103,7 +62,7 @@ class DockLayout(gobject.GObject):
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
 
         self.frames = set()
-        self.settings = LayoutSettingsDict() # Map group-id -> LayoutSettings
+        self.settings = DockSettingsDict() # Map group-id -> DockSettings
         self._signal_handlers = {} # Map widget -> set([signals, ...])
         self._drag_data = None
 

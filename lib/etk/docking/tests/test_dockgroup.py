@@ -26,42 +26,6 @@ from etk.docking import DockItem, DockGroup
 
 
 class TestDockGroup(unittest.TestCase):
-    ############################################################################
-    # Test properties
-    ############################################################################
-    def test_prop_group_id(self):
-        global notify_called
-
-        def _on_notify(gobject, pspec):
-            global notify_called
-            notify_called = True
-
-        dockgroup = DockGroup()
-        dockgroup.connect('notify::group-id', _on_notify)
-
-        notify_called = False
-        dockgroup.set_group_id(1)
-        self.assertEquals(dockgroup.get_group_id(), 1,
-                          msg='get_group_id method did not return expected value')
-        self.assertTrue(notify_called,
-                        msg='group-id property change notification failed when using set_group_id method')
-
-        notify_called = False
-        dockgroup.set_property('group-id', '2')
-        self.assertEquals(dockgroup.get_property('group-id'), '2',
-                          msg='get_property method did not return expected value')
-        self.assertTrue(notify_called,
-                        msg='group-id property change notification failed when using set_property method')
-
-        notify_called = False
-        dockgroup.props.group_id = '3'
-        self.assertEquals(dockgroup.props.group_id, '3',
-                          msg='.props attribute did not return expected value')
-        self.assertTrue(notify_called,
-                        msg='group-id property change notification failed when using .props attribute')
-
-        dockgroup.destroy()
-
 
     ############################################################################
     # Test signals
