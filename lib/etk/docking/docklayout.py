@@ -203,14 +203,12 @@ class DockLayout(gobject.GObject):
 
         if DRAG_TARGET_ITEM_LIST[0] in context.targets:
             drag_data = self._drag_data
-        else:
-            drag_data = None
+            if drag_data and drag_data.drop_widget:
+                target = gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0])
+                drag_data.drop_widget.drag_get_data(context, target, timestamp)
+            return drag_data and drag_data.received
+        return False
 
-        if drag_data and drag_data.drop_widget:
-            target = gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0])
-            drag_data.drop_widget.drag_get_data(context, target, timestamp)
-
-        return drag_data and drag_data.received
 
     def on_widget_drag_data_received(self, widget, context, x, y, selection_data, info, timestamp):
         '''
@@ -227,12 +225,14 @@ class DockLayout(gobject.GObject):
             self._drag_data = None
 
     def on_widget_drag_end(self, widget, context):
-        context.docklayout = self
-        return drag_end(widget, context)
+        if DRAG_TARGET_ITEM_LIST[0] in context.targets:
+            context.docklayout = self
+            return drag_end(widget, context)
 
     def on_widget_drag_failed(self, widget, context, result):
-        context.docklayout = self
-        return drag_failed(widget, context, result)
+        if DRAG_TARGET_ITEM_LIST[0] in context.targets:
+            context.docklayout = self
+            return drag_failed(widget, context, result)
 
     def on_dockgroup_item_closed(self, group, item):
         self.emit('item-closed', group, item)
@@ -463,7 +463,7 @@ def dock_group_drag_failed(self, context, result):
         window.set_skip_taskbar_hint(True)
         window.set_type_hint(gdk.WINDOW_TYPE_HINT_UTILITY)
         window.set_transient_for(self.get_toplevel())
-        frame = DockFrame()
+        frame = new(DockFrame)
         window.add(frame)
         group = new(DockGroup, context.get_source_widget(), context.docklayout)
         frame.add(group)
