@@ -34,10 +34,14 @@ class DockSettings(object):
 
     * auto_remove: group is removed if if empty.
     * can_float: Group can be a floating group.
-    * expand: expand/shrink on resize.
+    * expand: A group can expand/shrink on resize.
     * inherit_settings: new groups constructed from items dragged from a group should
     get the same group name.
     '''
+    __slots__ = [ 'auto_remove',
+                  'can_float',
+                  'expand',
+                  'inherit_settings' ]
 
     def __init__(self, auto_remove=True, can_float=True, expand=True, inherit_settings=True):
         self.auto_remove = auto_remove
@@ -49,6 +53,9 @@ class DockSettingsDict(object):
     '''
     Settings container. Adheres partly to the dict protocol, only get() and setitem are
     supported.
+
+    Settings can deal with widget names as well as widgets itself (in which case the
+    name is requested). 
     '''
 
     def __init__(self):
@@ -57,20 +64,20 @@ class DockSettingsDict(object):
     def get(self, target):
         return self[target]
 
-    def _get_name(self, target):
+    def widget_name(self, target):
         if isinstance(target, gtk.Widget):
             return target.get_name()
         return str(target)
 
     def __getitem__(self, target):
-        target = self._get_name(target)
+        target = self.widget_name(target)
         settings = self._settings.get(target)
         if not settings:
             settings = self._settings[target] = DockSettings()
         return settings
 
     def __setitem__(self, target, settings):
-        self._settings[self._get_name(target)] = settings
+        self._settings[self.widget_name(target)] = settings
 
 settings = DockSettingsDict()
 
