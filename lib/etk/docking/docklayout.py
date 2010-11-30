@@ -28,13 +28,14 @@ from simplegeneric import generic
 import gobject
 import gtk
 import gtk.gdk as gdk
+import itertools
 
 from .dnd import DRAG_TARGET_ITEM_LIST, Placeholder
 from .dockframe import DockFrame
 from .dockpaned import DockPaned
 from .dockgroup import DockGroup
-from .dockitem import DockItem
 from .docksettings import settings
+from .util import flatten
 
 MAGIC_BORDER_SIZE = 10
 
@@ -90,6 +91,14 @@ class DockLayout(gobject.GObject):
         return (f for f in self.frames \
                 if isinstance(f.get_parent(), gtk.Window) \
                     and f.get_parent().get_transient_for() )
+
+    def get_widgets(self, name):
+        """
+        Get a set of widgets based on their name.
+        """
+        return filter(lambda w: w.get_name() == name,
+                      *itertools.chain(flatten(frame, gtk.Container.get_children) \
+                                      for frame in self.frames))
 
     def _get_signals(self, widget):
         """

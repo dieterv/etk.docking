@@ -83,24 +83,37 @@ class TestDockLayout(unittest.TestCase):
         assert item not in layout._signal_handlers.keys(), layout._signal_handlers
         assert frame in layout.frames
 
-# TODO: We need a way to get expand property setting exposed in _DockPanedItem
-#    def test_expand_setting(self):
-#        from etk.docking import expand_setting
-#        layout = DockLayout()
-#        frame = DockFrame()
-#        paned = DockPaned()
-#        group = DockGroup()
-#
-#        layout.add(frame)
-#        frame.add(paned)
-#        paned.insert_item(group, expand=expand_setting(layout))
-#
-#        self.assertTrue(paned.child_get_property(group, 'expand'))
-#
-#        layout.settings[None].expand = False
-#
-#        self.assertEquals(False, paned._items[0].expand.__get__)
-#        self.assertFalse(paned.child_get_property(group, 'expand'))
+    def test_get_widgets(self):
+        win = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        frame = DockFrame()
+        paned = DockPaned()
+        group = DockGroup()
+        item = DockItem()
+        label = gtk.Label()
+
+        layout = DockLayout()
+
+        layout.add(frame)
+
+        win.add(frame)
+        frame.add(paned)
+        paned.add(group)
+        group.add(item)
+        item.add(label)
+
+        group2 = DockGroup()
+        paned.add(group2)
+
+        paned.set_name('foo')
+
+        widgets = list(layout.get_widgets('foo'))
+        assert len(widgets) == 1
+        assert widgets[0] is paned
+
+        widgets = list(layout.get_widgets('EtkDockGroup'))
+        assert len(widgets) == 2
+        assert widgets[0] is group
+        assert widgets[1] is group2
 
 class StubContext(object):
     def __init__(self, source_widget, items):

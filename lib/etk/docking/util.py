@@ -61,3 +61,13 @@ def load_icon_image(icon_name, size):
         icon_name = 'gtk-missing-image'
 
     return gtk.image_new_from_icon_name(icon_name, size)
+
+
+def flatten(w, child_getter):
+    yield w
+    try:
+        for c in child_getter(w):
+            for d in flatten(c, child_getter):
+                yield d
+    except TypeError:
+        pass # Not a child of the right type

@@ -55,7 +55,8 @@ class DockSettingsDict(object):
     supported.
 
     Settings can deal with widget names as well as widgets itself (in which case the
-    name is requested). 
+    name is requested). By overriding ``widget_name()`` it is possible to customize
+    the behaviour for settings.
     '''
 
     def __init__(self):
