@@ -85,6 +85,11 @@ class MainWindow(gtk.Window):
         vbox.pack_start(self.dockframe)
         self.docklayout.connect('item-closed', lambda layout, group, item: item.destroy())
 
+        def on_item_selected(layout, group, item):
+            print 'Selected item:', item.title
+
+        self.docklayout.connect('item-selected', on_item_selected)
+
         ########################################################################
         # Testing Tools
         ########################################################################
@@ -113,6 +118,12 @@ class MainWindow(gtk.Window):
         vbox.pack_start(hbox, False, False)
 
         self.show_all()
+
+        #def on_has_toplevel_focus(window, pspec):
+        #    print 'Has toplevel focus', window, pspec
+        #    print 'Focus widget is', window.get_focus()
+
+        #self.connect('notify::has-toplevel-focus', on_has_toplevel_focus)
 
     def _on_add_di_button_clicked(self, button):
         def add_dockitems(child):
@@ -177,13 +188,20 @@ class MainWindow(gtk.Window):
                     ('gtk-file', 'ABC', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'),
                     ('gtk-find', 'abc', 'abcdefghijklmnopqrstuvwxyz'),
                     ('gtk-harddisk', 'browser', '0123456789'),
-                    ('gtk-home', 'today', '9876543210')]
-
+                    ('gtk-home', 'today', '9876543210'),
+                    gtk.Notebook]
         for i in range(random.randrange(1, 10, 1)):
-
-            icon_name, tooltip_text, text = random.choice(examples)
-            child = self._create_content(text)
-            child.set_name(icon_name)
+            example = random.choice(examples)
+            if example is gtk.Notebook:
+                child = gtk.Notebook()
+                child.append_page(gtk.Button('Click me'),
+                                  gtk.Label('New %s' % self.file_counter))
+                icon_name = ''
+                tooltip_text = 'notebook'
+            else:
+                icon_name, tooltip_text, text = example
+                child = self._create_content(text)
+                child.set_name(icon_name)
 
             # Create a DockItem and add our TextView
             di = DockItem(icon_name=icon_name, title='New %s' % self.file_counter, title_tooltip_text=tooltip_text)

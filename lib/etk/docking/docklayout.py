@@ -29,11 +29,13 @@ import gobject
 import gtk
 import gtk.gdk as gdk
 import itertools
+from weakref import WeakKeyDictionary
 
 from .dnd import DRAG_TARGET_ITEM_LIST, Placeholder
 from .dockframe import DockFrame
 from .dockpaned import DockPaned
 from .dockgroup import DockGroup
+from .dockitem import DockItem
 from .docksettings import settings
 from .util import flatten
 
@@ -54,6 +56,8 @@ class DockLayout(gobject.GObject):
     __gsignals__ = {
         'item-closed': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
                       (gobject.TYPE_OBJECT, gobject.TYPE_OBJECT)),
+        'item-selected': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
+                      (gobject.TYPE_OBJECT, gobject.TYPE_OBJECT)),
     }
 
     def __init__(self):
@@ -64,6 +68,10 @@ class DockLayout(gobject.GObject):
 
         self.frames = set()
         self._signal_handlers = {} # Map widget -> set([signals, ...])
+
+        self._focused_item = None
+        self._focus_data = WeakKeyDictionary() # Map item -> last focused widget
+
         self._drag_data = None
 
     def add(self, frame):
@@ -97,8 +105,7 @@ class DockLayout(gobject.GObject):
         Get a set of widgets based on their name.
         """
         return filter(lambda w: w.get_name() == name,
-                      *itertools.chain(flatten(frame, gtk.Container.get_children) \
-                                      for frame in self.frames))
+                      *itertools.chain(flatten(frame) for frame in self.frames))
 
     def _get_signals(self, widget):
         """
@@ -124,7 +131,8 @@ class DockLayout(gobject.GObject):
                           ('drag-drop', self.on_widget_drag_drop),
                           ('drag-data-received', self.on_widget_drag_data_received),
                           ('drag-end', self.on_widget_drag_end),
-                          ('drag-failed', self.on_widget_drag_failed))
+                          ('drag-failed', self.on_widget_drag_failed),
+                          ('notify::is-focus', self.on_widget_is_focus))
 
     def add_signal_handlers(self, widget):
         """
@@ -173,6 +181,10 @@ class DockLayout(gobject.GObject):
         """
         if settings[item].auto_remove:
             cleanup(group, self)
+
+    def do_item_selected(self, group, item):
+        # TODO: Use this callback to grey out the selection on all but the active selection?
+        self._focused_item = item
 
     def on_widget_add(self, container, widget, item_num=None):
         """
@@ -243,12 +255,34 @@ class DockLayout(gobject.GObject):
             context.docklayout = self
             return drag_failed(widget, context, result)
 
+    def on_widget_is_focus(self, widget, pspec):
+        """
+        The input focus moved to another widget.
+        """
+        if isinstance(widget, DockItem):
+            item = widget
+        else:
+            item = widget.get_ancestor(DockItem)
+
+        if item:
+            self._focus_data[item] = widget
+            if item is not self._focused_item:
+                group = item.get_parent()
+                self.emit('item-selected', group, item)
+
     def on_dockgroup_item_closed(self, group, item):
         self.emit('item-closed', group, item)
 
     def on_dockgroup_item_selected(self, group, item, current_index):
-        self.log.debug('Group %s item-selected: "%s" %d' % (group, item.title, current_index))
-        # TODO: Use this callback to grey out the selection on all but the active selection?
+        """
+        An item is selected by clicking on a tab.
+        """
+        focus_child = self._focus_data.get(item)
+        if focus_child:
+            # item-selected is emited by is-focus handler
+            focus_child.set_property('has-focus', True)
+        elif item is not self._focused_item:
+            self.emit('item-selected', group, item)
 
 def _propagate_to_parent(func, widget, context, x, y, timestamp):
     '''

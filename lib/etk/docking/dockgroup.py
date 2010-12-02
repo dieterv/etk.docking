@@ -848,9 +848,10 @@ class DockGroup(gtk.Container):
             tab.button.set_parent_window(self.window)
 
         item_num = self.item_num(item)
-        self.set_current_item(item_num)
 
         self.emit('item-added', item, item_num)
+
+        self.set_current_item(item_num)
 
         return item_num
 

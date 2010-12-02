@@ -63,7 +63,7 @@ def load_icon_image(icon_name, size):
     return gtk.image_new_from_icon_name(icon_name, size)
 
 
-def flatten(w, child_getter):
+def flatten(w, child_getter=gtk.Container.get_children):
     yield w
     try:
         for c in child_getter(w):
