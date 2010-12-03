@@ -806,3 +806,6 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
         context.finish(True, True, timestamp) # success, delete, time
 
     return DragData(self, dock_frame_magic_borders_leave, new_paned_and_group_receiver)
+            else:
+                # attach item again
+                context.finish(False, False, timestamp) # success, delete, time
