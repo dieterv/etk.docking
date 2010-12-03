@@ -107,11 +107,11 @@ class DockPaned(gtk.Container):
     __gsignals__ = {'item-added':
                         (gobject.SIGNAL_RUN_LAST,
                          gobject.TYPE_NONE,
-                         (gobject.TYPE_OBJECT, gobject.TYPE_UINT)),
+                         (gobject.TYPE_OBJECT,)),
                     'item-removed':
                         (gobject.SIGNAL_RUN_LAST,
                          gobject.TYPE_NONE,
-                         (gobject.TYPE_OBJECT, gobject.TYPE_UINT))}
+                         (gobject.TYPE_OBJECT,))}
 
     def __init__(self):
         gtk.Container.__init__(self)
@@ -213,7 +213,7 @@ class DockPaned(gtk.Container):
             item.weight_request = FALLBACK_WEIGHT
 
         self.queue_resize()
-        self.emit('item-added', child, position)
+        self.emit('item-added', child)
         return self.item_num(child)
 
     def _remove_item(self, child):
@@ -239,7 +239,7 @@ class DockPaned(gtk.Container):
                len(self._items) == len(self._handles) == 0
 
         self.queue_resize()
-        self.emit('item-removed', child, item_num)
+        self.emit('item-removed', child)
 
     def _insert_handle(self, position):
         '''
