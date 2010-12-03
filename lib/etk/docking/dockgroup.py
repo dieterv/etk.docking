@@ -56,7 +56,7 @@ class _DockGroupTab(object):
         return rect_contains(self.area, *pos)
 
     def __str__(self):
-        return "<%s object at 0x%x with label '%s' on %s>" % (self.__class__.__name__,
+        return "<%s object at 0x%s with label '%s' on %s>" % (self.__class__.__name__,
                                                               hex(id(self)),
                                                               self.item.get_title(),
                                                               self.area)
@@ -81,15 +81,15 @@ class DockGroup(gtk.Container):
                     'item-added':
                         (gobject.SIGNAL_RUN_LAST,
                          gobject.TYPE_NONE,
-                         (gobject.TYPE_OBJECT, gobject.TYPE_UINT)),
+                         (gobject.TYPE_OBJECT,)),
                     'item-removed':
                         (gobject.SIGNAL_RUN_LAST,
                          gobject.TYPE_NONE,
-                         (gobject.TYPE_OBJECT, gobject.TYPE_UINT)),
+                         (gobject.TYPE_OBJECT,)),
                     'item-selected':
                         (gobject.SIGNAL_RUN_LAST,
                          gobject.TYPE_NONE,
-                         (gobject.TYPE_OBJECT, gobject.TYPE_UINT))}
+                         (gobject.TYPE_OBJECT,))}
 
     def __init__(self):
         gtk.Container.__init__(self)
@@ -105,6 +105,7 @@ class DockGroup(gtk.Container):
 
         self._tabs = []
         self._visible_tabs = []
+        print '3. set current tab to None'
         self._current_tab = None
         self.dragcontext = DockDragContext()
 
@@ -182,6 +183,7 @@ class DockGroup(gtk.Container):
         gtk.Container.do_unmap(self)
 
     def do_size_request(self, requisition):
+        print 'do size request'
         gtk.Container.do_size_request(self, requisition)
 
         # Start with a zero sized decoration area
@@ -237,6 +239,7 @@ class DockGroup(gtk.Container):
         requisition.height = dh + ih
 
     def do_size_allocate(self, allocation):
+        print 'do size allocate'
         self.allocation = allocation
 
         if self.flags() & gtk.REALIZED:
@@ -375,7 +378,16 @@ class DockGroup(gtk.Container):
             ih = max(allocation.height - (2 * self._frame_width) - (2 * self.border_width) - 23, 0)
             self._current_tab.item.size_allocate(gdk.Rectangle(ix, iy, iw, ih))
 
+        assert self._current_tab in self._visible_tabs
+
     def do_expose_event(self, event):
+        print 'do expose event'
+        # Sometimes, expose is called before size calculation is done.
+        # This may happen if an update is done of part of the screen because of
+        # (for example) a popup that is removed. However, if in the meantime the 
+        if self._current_tab not in self._visible_tabs:
+            return
+
         # Prepare colors
         bg = self.style.bg[self.state]
         bg = (bg.red_float, bg.green_float, bg.blue_float)
@@ -733,7 +745,7 @@ class DockGroup(gtk.Container):
             item_num = current_tab_index - 1
 
         self.set_current_item(item_num)
-        self.emit('item-removed', child, item_num)
+        self.emit('item-removed', child)
 
     ############################################################################
     # EtkDockGroup
@@ -835,22 +847,21 @@ class DockGroup(gtk.Container):
         tab.area = gdk.Rectangle()
         tab.last_focused = time()
 
-        self._tabs.insert(position, tab)
-
-        #TODO: get rid of this pronto!
-        if visible_position is not None:
-            self._visible_tabs.insert(visible_position, tab)
-
         if self.flags() & gtk.REALIZED:
             tab.item.set_parent_window(self.window)
             tab.image.set_parent_window(self.window)
             tab.label.set_parent_window(self.window)
             tab.button.set_parent_window(self.window)
 
+        self._tabs.insert(position, tab)
+
+        self.emit('item-added', item)
+
+        #TODO: get rid of this pronto!
+        if visible_position is not None:
+            self._visible_tabs.insert(visible_position, tab)
+
         item_num = self.item_num(item)
-
-        self.emit('item-added', item, item_num)
-
         self.set_current_item(item_num)
 
         return item_num
@@ -939,15 +950,22 @@ class DockGroup(gtk.Container):
             else:
                 current_tab_index = item_num
 
+            print '1. set current tab to', current_tab_index, type(current_tab_index)
+            #print '1. set current tab to', self._tabs[current_tab_index]
             self._current_tab = self._tabs[current_tab_index]
             self._current_tab.last_focused = time()
-
+            print 'passed'
             # Update properties on new current tab
             self._on_item_title_changed(self._current_tab)
             self._on_item_title_tooltip_text_changed(self._current_tab)
-            self.emit('item-selected', self._current_tab.item, current_tab_index)
+            self.emit('item-selected', self._current_tab.item)
         else:
+            print '2. set current tab to None'
             self._current_tab = None
+            #self.emit('item-selected', None, -1)
+
+        if self.allocation:
+            self.do_size_allocate(self.allocation)
 
         # Update properties on old current tab
         if old_tab:

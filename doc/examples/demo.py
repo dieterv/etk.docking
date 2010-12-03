@@ -83,7 +83,12 @@ class MainWindow(gtk.Window):
         #self.docklayout.settings[None].inherit_settings = False
 
         vbox.pack_start(self.dockframe)
-        self.docklayout.connect('item-closed', lambda layout, group, item: item.destroy())
+
+        def on_item_closed(layout, group, item):
+            item.destroy()
+            print 'closed item:', item.title
+
+        self.docklayout.connect('item-closed', on_item_closed)
 
         def on_item_selected(layout, group, item):
             print 'Selected item:', item.title

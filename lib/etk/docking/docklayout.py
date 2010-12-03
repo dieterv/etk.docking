@@ -50,6 +50,9 @@ class DockLayout(gobject.GObject):
     For this to work the toplevel widget in the layout hierarchy should be a
     DockFrame. The DockFrame is registered with the DockLayout. After that
     sophisticated drag-and-drop functionality is present.
+
+    NB. When items are closed, the item-closed signal is emitted. The item is *not*
+    destroyed, though.
     """
 
     __gtype_name__ = 'EtkDockLayout'
@@ -186,14 +189,14 @@ class DockLayout(gobject.GObject):
         # TODO: Use this callback to grey out the selection on all but the active selection?
         self._focused_item = item
 
-    def on_widget_add(self, container, widget, item_num=None):
+    def on_widget_add(self, container, widget):
         """
         Deal with new elements being added to the layout or it's children.
         """
         if isinstance(widget, gtk.Container):
             self.add_signal_handlers(widget)
 
-    def on_widget_remove(self, container, widget, item_num=None):
+    def on_widget_remove(self, container, widget):
         """
         Remove signals from containers and subcontainers.
         """
@@ -227,6 +230,9 @@ class DockLayout(gobject.GObject):
             if drag_data and drag_data.drop_widget:
                 target = gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0])
                 drag_data.drop_widget.drag_get_data(context, target, timestamp)
+            else:
+                # attach item again
+                context.finish(False, False, timestamp) # success, delete, time
             return drag_data and drag_data.received
         return False
 
@@ -273,7 +279,7 @@ class DockLayout(gobject.GObject):
     def on_dockgroup_item_closed(self, group, item):
         self.emit('item-closed', group, item)
 
-    def on_dockgroup_item_selected(self, group, item, current_index):
+    def on_dockgroup_item_selected(self, group, item):
         """
         An item is selected by clicking on a tab.
         """
@@ -806,6 +812,3 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
         context.finish(True, True, timestamp) # success, delete, time
 
     return DragData(self, dock_frame_magic_borders_leave, new_paned_and_group_receiver)
-            else:
-                # attach item again
-                context.finish(False, False, timestamp) # success, delete, time
