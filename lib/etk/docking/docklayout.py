@@ -456,15 +456,16 @@ def dock_unhighlight(self):
         self.disconnect(self._expose_event_id)
         del self._expose_event_id
     except AttributeError, e:
-        self.log.error(e)
+        self.log.error(e, exc_info=True)
 
 @drag_motion.when_type(DockGroup)
 @with_magic_borders
 def dock_group_drag_motion(self, context, x, y, timestamp):
-    self.log.debug('%s, %s, %s, %s' % (context, x, y, timestamp))
+    self.log.debug('dock_group_drag_motion: %s, %s, %s, %s' % (context, x, y, timestamp))
 
     # Insert the dragged tab before the tab under (x, y)
     drop_tab = self.get_tab_at_pos(x, y)
+    self.log.debug('drop tab at (%d, %d) is %s', x, y, drop_tab)
 
     if drop_tab:
         self._drop_tab_index = self._visible_tabs.index(drop_tab)
@@ -542,7 +543,7 @@ def dock_paned_expose_highlight(self, event):
     try:
         handle = self._handles[self._drop_handle_index]
     except (AttributeError, IndexError, TypeError), e:
-        self.log.error(e)
+        self.log.error(e, exc_info=True)
         return
     else:
         a = handle.area
@@ -563,9 +564,10 @@ def dock_paned_highlight(self):
 @drag_motion.when_type(DockPaned)
 @with_magic_borders
 def dock_paned_drag_motion(self, context, x, y, timestamp):
-    self.log.debug('%s, %s, %s, %s' % (context, x, y, timestamp))
+    self.log.debug('dock_paned_drag_motion: %s, %s, %s, %s' % (context, x, y, timestamp))
 
     handle = self._get_handle_at_pos(x, y)
+    self.log.debug('handle at pos (%d, %d) is %s', x, y, handle)
 
     if handle:
         self._drop_handle_index = self._handles.index(handle)
@@ -756,7 +758,7 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
     "catch-all", the DockFrame.  The Frame should make sure a new DockPaned is
     created with the proper orientation and whatever's needed.
     '''
-    self.log.debug('Magic borders')
+    #self.log.debug('Magic borders')
     a = self.allocation
     border = self.border_width
 

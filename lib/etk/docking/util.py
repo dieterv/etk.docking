@@ -46,6 +46,7 @@ def rect_overlaps(rect, x, y):
     else:
         return False
 
+# TODO: Should change/add on this 'cause it does not work well with IconFactories for example.
 def load_icon(icon_name, size):
     icontheme = gtk.icon_theme_get_default()
 

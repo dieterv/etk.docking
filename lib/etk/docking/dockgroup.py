@@ -101,6 +101,7 @@ class DockGroup(gtk.Container):
         self.set_border_width(2)
         self._frame_width = 1
         self._spacing = 3
+        self._available_width = 0
         self._decoration_area = gdk.Rectangle()
 
         self._tabs = []
@@ -183,7 +184,7 @@ class DockGroup(gtk.Container):
         gtk.Container.do_unmap(self)
 
     def do_size_request(self, requisition):
-        print 'do size request'
+        #print 'do size request'
         gtk.Container.do_size_request(self, requisition)
 
         # Start with a zero sized decoration area
@@ -239,7 +240,7 @@ class DockGroup(gtk.Container):
         requisition.height = dh + ih
 
     def do_size_allocate(self, allocation):
-        print 'do size allocate'
+        #print 'do size allocate'
         self.allocation = allocation
 
         if self.flags() & gtk.REALIZED:
@@ -255,82 +256,29 @@ class DockGroup(gtk.Container):
         self._min_button.size_allocate(gdk.Rectangle(allocation.width - self._frame_width - self._spacing - max_w - min_w, by, min_w, bh))
         self._list_button.size_allocate(gdk.Rectangle(allocation.width - self._frame_width - self._spacing - max_w - min_w - list_w, by, list_w, bh))
 
-        # Check what tabs we can show with the space we have been allocated.
-        # Tabs on the far right of the current item tab get hidden first,
-        # then tabs on the far left.
-        if not self._tabs:
-            del self._visible_tabs[:]
-        else:
-            # Compute available tab area width
-            available_width = (allocation.width - self._frame_width - self._spacing -
-                               max_w - min_w - list_w - self._spacing)
+        # Compute available tab area width
+        self._available_width = (allocation.width - self._frame_width - self._spacing -
+                           max_w - min_w - list_w - self._spacing)
 
-            # TODO: get previous tab position, use that to insert _current_tab
-            if self._current_tab and self._current_tab not in self._visible_tabs:
-                self._visible_tabs.append(self._current_tab)
+        self._update_visible_tabs()
 
-            #if not set(self._visible_tabs) <= set(self._tabs):
-            for tab in self._visible_tabs:
-                if tab not in self._tabs:
-                    self._visible_tabs.remove(tab)
-
-            calculated_width = 0
-            for tab in self._visible_tabs:
-                calculated_width += tab.area.width
-
-            if calculated_width < available_width \
-                    and len(self._visible_tabs) < len(self._tabs):
-                tab_age = sorted(self._tabs, key=attrgetter('last_focused'), reverse=True)
-                while tab_age and calculated_width < available_width:
-                    if tab_age[0] not in self._visible_tabs:
-                        calculated_width += tab_age[0].area.width
-                        self._visible_tabs.append(tab_age[0])
-                    del tab_age[0]
-
-            if calculated_width > available_width:
-                tab_age = sorted(self._visible_tabs, key=attrgetter('last_focused'))
-                while len(tab_age) > 1 and calculated_width > available_width:
-                    calculated_width -= tab_age[0].area.width
-                    self._visible_tabs.remove(tab_age[0])
-                    del tab_age[0]
-
-            # If the current item's tab is the only visible tab,
-            # we need to recalculate its tab.area.width
-            if len(self._visible_tabs) == 1:
-                (iw, ih) = self._current_tab.image.get_child_requisition()
-                (lw, lh) = self._current_tab.label.get_child_requisition()
-                (bh, bw) = self._current_tab.button.get_child_requisition()
-
-                normal = (self._frame_width + self._spacing + iw +
-                          self._spacing + lw + self._spacing + bw +
-                          self._spacing + self._frame_width)
-
-                width = (allocation.width - self._frame_width - self._spacing -
-                         max_w - min_w - list_w - self._spacing)
-
-                if width <= normal:
-                    self._current_tab.area.width = width
-                else:
-                    self._current_tab.area.width = normal
-
-            # Update visibility on dockitems and composite children used
-            # by tabs.
-            for tab in self._tabs:
-                if tab is self._current_tab:
-                    tab.item.show()
-                    tab.image.show()
-                    tab.label.show()
-                    tab.button.show()
-                elif tab in self._visible_tabs:
+        # Update visibility on dockitems and composite children used
+        # by tabs.
+        for tab in self._tabs:
+            if tab is self._current_tab:
+                tab.item.show()
+                tab.image.show()
+                tab.label.show()
+                tab.button.show()
+            elif tab in self._visible_tabs:
+                tab.item.hide()
+                tab.image.show()
+                tab.label.show()
+            elif tab.item.flags() & gtk.VISIBLE:
                     tab.item.hide()
-                    tab.image.show()
-                    tab.label.show()
-                else:
-                    if tab.item.flags() & gtk.VISIBLE:
-                        tab.item.hide()
-                        tab.image.hide()
-                        tab.button.hide()
-                        tab.label.hide()
+                    tab.image.hide()
+                    tab.button.hide()
+                    tab.label.hide()
 
         # Only show the list button when needed
         if len(self._tabs) > len(self._visible_tabs):
@@ -378,15 +326,16 @@ class DockGroup(gtk.Container):
             ih = max(allocation.height - (2 * self._frame_width) - (2 * self.border_width) - 23, 0)
             self._current_tab.item.size_allocate(gdk.Rectangle(ix, iy, iw, ih))
 
-        assert self._current_tab in self._visible_tabs
+        #assert not self._current_tab or self._current_tab in self._visible_tabs
+        self.queue_draw_area(*self.allocation)
 
     def do_expose_event(self, event):
-        print 'do expose event'
+        #print 'do expose event'
         # Sometimes, expose is called before size calculation is done.
         # This may happen if an update is done of part of the screen because of
         # (for example) a popup that is removed. However, if in the meantime the 
-        if self._current_tab not in self._visible_tabs:
-            return
+        #if self._current_tab not in self._visible_tabs:
+        #    return
 
         # Prepare colors
         bg = self.style.bg[self.state]
@@ -757,6 +706,63 @@ class DockGroup(gtk.Container):
     def __contains__(self, item):
         return item in self.items
 
+    def _update_visible_tabs(self):
+        # Check what tabs we can show with the space we have been allocated.
+        # Tabs on the far right of the current item tab get hidden first,
+        # then tabs on the far left.
+        if not self._tabs:
+            del self._visible_tabs[:]
+        else:
+            # TODO: get previous tab position, use that to insert _current_tab
+            if self._current_tab and self._current_tab not in self._visible_tabs:
+                self._visible_tabs.append(self._current_tab)
+
+            #if not set(self._visible_tabs) <= set(self._tabs):
+            for tab in self._visible_tabs:
+                if tab not in self._tabs:
+                    self._visible_tabs.remove(tab)
+
+            available_width = self._available_width
+
+            calculated_width = 0
+            for tab in self._visible_tabs:
+                calculated_width += tab.area.width
+
+            if calculated_width < available_width \
+                    and len(self._visible_tabs) < len(self._tabs):
+                tab_age = sorted(self._tabs, key=attrgetter('last_focused'), reverse=True)
+                while tab_age and calculated_width < available_width:
+                    if tab_age[0] not in self._visible_tabs:
+                        calculated_width += tab_age[0].area.width
+                        self._visible_tabs.append(tab_age[0])
+                    del tab_age[0]
+
+            if calculated_width > available_width:
+                tab_age = sorted(self._visible_tabs, key=attrgetter('last_focused'))
+                while len(tab_age) > 1 and calculated_width > available_width:
+                    calculated_width -= tab_age[0].area.width
+                    self._visible_tabs.remove(tab_age[0])
+                    del tab_age[0]
+
+            # If the current item's tab is the only visible tab,
+            # we need to recalculate its tab.area.width
+            if len(self._visible_tabs) == 1:
+                (iw, ih) = self._current_tab.image.get_child_requisition()
+                (lw, lh) = self._current_tab.label.get_child_requisition()
+                (bh, bw) = self._current_tab.button.get_child_requisition()
+
+                normal = (self._frame_width + self._spacing + iw +
+                          self._spacing + lw + self._spacing + bw +
+                          self._spacing + self._frame_width)
+
+                if available_width <= normal:
+                    self._current_tab.area.width = available_width
+                else:
+                    self._current_tab.area.width = normal
+
+        #if self.allocation:
+        #    self.queue_draw_area(*self.allocation)
+
     def get_tab_at_pos(self, x, y):
         '''
         :param x: the x coordinate of the position
@@ -950,26 +956,24 @@ class DockGroup(gtk.Container):
             else:
                 current_tab_index = item_num
 
-            print '1. set current tab to', current_tab_index, type(current_tab_index)
-            #print '1. set current tab to', self._tabs[current_tab_index]
             self._current_tab = self._tabs[current_tab_index]
             self._current_tab.last_focused = time()
-            print 'passed'
             # Update properties on new current tab
-            self._on_item_title_changed(self._current_tab)
+            self._item_title_changed(self._current_tab)
             self._on_item_title_tooltip_text_changed(self._current_tab)
             self.emit('item-selected', self._current_tab.item)
         else:
-            print '2. set current tab to None'
             self._current_tab = None
             #self.emit('item-selected', None, -1)
 
-        if self.allocation:
-            self.do_size_allocate(self.allocation)
+        self._update_visible_tabs()
+
+        #if self.allocation:
+        #    self.do_size_allocate(self.allocation)
 
         # Update properties on old current tab
         if old_tab:
-            self._on_item_title_changed(old_tab)
+            self._item_title_changed(old_tab)
             self._on_item_title_tooltip_text_changed(old_tab)
 
         # Refresh ourselves
@@ -1021,13 +1025,19 @@ class DockGroup(gtk.Container):
     ############################################################################
     # Property notification signal handlers
     ############################################################################
-    def _on_item_title_changed(self, tab):
+    def _item_title_changed(self, tab):
+        print 'title changed!'
+        tab.label.set_text(tab.item.get_title())
+        self.queue_resize()
         if tab is self._current_tab:
             tab.menu_item.child.set_use_markup(True)
             tab.menu_item.child.set_markup('<b>%s</b>' % tab.item.get_title())
         else:
             tab.menu_item.child.set_use_markup(False)
             tab.menu_item.child.set_markup(tab.item.get_title())
+
+    def _on_item_title_changed(self, item, pspec, tab):
+        self._item_title_changed(tab)
 
     def _on_item_title_tooltip_text_changed(self, tab):
         tab.menu_item.set_tooltip_text(tab.item.get_title_tooltip_text())
