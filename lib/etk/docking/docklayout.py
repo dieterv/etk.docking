@@ -189,7 +189,7 @@ class DockLayout(gobject.GObject):
     def do_item_selected(self, group, item):
         # Use this callback to grey out the selection on all but the active selection?
         self._focused_item = item
-        if group is not self._focused_group:
+        if not (group is self._focused_group and group.get_child_focus()):
             if self._focused_group:
                 self._focused_group.set_child_focus(False)
             self._focused_group = group
@@ -240,6 +240,7 @@ class DockLayout(gobject.GObject):
             # act as if drag failed:
             source = context.get_source_widget()
             source.emit('drag-failed', context, 1)
+            cleanup(source, self)
             return False
         return False
 
@@ -604,8 +605,6 @@ def dock_paned_drag_motion(self, context, x, y, timestamp):
 
 @cleanup.when_type(DockPaned)
 def dock_paned_cleanup(self, layout):
-    # DEBUG:
-    return
     if not len(self):
         parent = self.get_parent()
         self.log.debug('removing empty paned')
