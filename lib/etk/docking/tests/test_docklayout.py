@@ -47,7 +47,7 @@ class TestDockLayout(unittest.TestCase):
         assert frame in layout.frames
         print layout._signal_handlers
         self.assertEquals(4, len(layout._signal_handlers))
-        self.assertEquals(8, len(layout._signal_handlers[frame]))
+        self.assertEquals(9, len(layout._signal_handlers[frame]))
 
         layout.remove(frame)
 
@@ -72,7 +72,7 @@ class TestDockLayout(unittest.TestCase):
 
         assert frame in layout.frames
         self.assertEquals(4, len(layout._signal_handlers))
-        self.assertEquals(8, len(layout._signal_handlers[frame]))
+        self.assertEquals(9, len(layout._signal_handlers[frame]))
 
         paned.remove(group)
 

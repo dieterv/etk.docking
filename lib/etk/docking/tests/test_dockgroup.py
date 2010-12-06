@@ -37,7 +37,7 @@ class TestDockGroup(unittest.TestCase):
         def on_remove(self, widget):
             remove_events.append(widget)
 
-        def on_item_removed(dockgroup, child, position):
+        def on_item_removed(dockgroup, child):
             item_removed_events.append(child)
 
         dockitem = DockItem()
@@ -61,7 +61,7 @@ class TestDockGroup(unittest.TestCase):
         def on_add(self, widget):
             add_events.append(widget)
 
-        def on_item_added(dockgroup, child, position):
+        def on_item_added(dockgroup, child):
             item_added_events.append(child)
 
         dockitem1 = DockItem()

@@ -146,7 +146,7 @@ class TestDockPaned(unittest.TestCase):
         def on_remove(self, widget):
             remove_events.append(widget)
 
-        def on_item_removed(dockpaned, child, position):
+        def on_item_removed(dockpaned, child):
             item_removed_events.append(child)
 
         dockgroup = DockGroup()
@@ -169,7 +169,7 @@ class TestDockPaned(unittest.TestCase):
         def on_add(self, widget):
             add_events.append(widget)
 
-        def on_item_added(dockpaned, child, position):
+        def on_item_added(dockpaned, child):
             item_added_events.append(child)
 
         dockgroup1 = DockGroup()
@@ -196,7 +196,7 @@ class TestDockPaned(unittest.TestCase):
         def on_remove(self, widget):
             remove_events.append(widget)
 
-        def on_item_removed(dockpaned, child, position):
+        def on_item_removed(dockpaned, child):
             item_removed_events.append(child)
 
         dockgroup1 = DockGroup()
