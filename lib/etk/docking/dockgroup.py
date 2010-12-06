@@ -331,8 +331,6 @@ class DockGroup(gtk.Container):
         # Sometimes, expose is called before size calculation is done.
         # This may happen if an update is done of part of the screen because of
         # (for example) a popup that is removed. However, if in the meantime the 
-        #if self._current_tab not in self._visible_tabs:
-        #    return
 
         # Prepare colors
         bg = self.style.bg[self.state]

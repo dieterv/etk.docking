@@ -29,6 +29,7 @@ v implement the group-id system, can be used to configure:
     > reemit by DockLayout so the end user only needs to concern himself with
       DockLayout and DockItem widgets (beside designing an initial layout)
 
+- emit 'item-closed'/'item-removed' when closing a floating window
 
 Release 0.2: "no rush"
 ======================
