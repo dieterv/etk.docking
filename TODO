@@ -20,7 +20,7 @@ v implement the group-id system, can be used to configure:
       child property of DockPaned
     - ???
 
-- implement full signal set on DockGroup, DockPaned, ???:
+v implement full signal set on DockGroup, DockPaned, ???:
     v item-added
     v item-removed
     x item-reordered --> maybe in DockLayout
@@ -29,7 +29,7 @@ v implement the group-id system, can be used to configure:
     > reemit by DockLayout so the end user only needs to concern himself with
       DockLayout and DockItem widgets (beside designing an initial layout)
 
-- emit 'item-closed'/'item-removed' when closing a floating window
+v emit 'item-closed'/'item-removed' when closing a floating window
 
 Release 0.2: "no rush"
 ======================
