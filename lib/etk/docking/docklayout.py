@@ -306,7 +306,6 @@ def _propagate_to_parent(func, widget, context, x, y, timestamp):
     parent = widget.get_parent()
     if parent:
         # Should not use get_pointer as it's not testable.
-        #px, py = widget.get_pointer()
         px, py = widget.translate_coordinates(parent, x, y)
         return func(parent, context, px, py, timestamp)
     else:
@@ -544,18 +543,11 @@ def dock_group_drag_failed(self, context, result):
         group.show()
         context.docklayout.add(frame)
 
-        #source = context.get_source_widget()
-        #assert source
-
         for item in self.dragcontext.dragged_object:
-            #dragged_tab_index = source.tabs.index(tab)
-            #source.remove_item(dragged_tab_index, retain_item=True)
             group.append_item(item)
     else:
         for item in self.dragcontext.dragged_object:
-            #if not tab.item.get_parent():
             self.insert_item(item, position=self._dragged_tab_index)
-    #context.drop_finish(False, 0)
     return True
 
 ################################################################################
@@ -630,7 +622,6 @@ def dock_paned_cleanup(self, layout):
 
         if isinstance(parent, DockPaned):
             position = [c for c in parent].index(self)
-            #expand = parent.child_get_property(self, 'expand')
             weight = parent.child_get_property(self, 'weight')
             self.remove(child)
             parent.remove(self)
@@ -694,7 +685,6 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
                     new_paned.set_orientation(gtk.ORIENTATION_HORIZONTAL)
 
                 position = self.item_num(current_group)
-                #expand = self.child_get_property(current_group, 'expand')
                 weight = self.child_get_property(current_group, 'weight')
                 self.remove(current_group)
                 self.insert_item(new_paned, position=position, weight=weight)
@@ -779,7 +769,6 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
     "catch-all", the DockFrame.  The Frame should make sure a new DockPaned is
     created with the proper orientation and whatever's needed.
     '''
-    #self.log.debug('Magic borders')
     a = self.allocation
     border = self.border_width
 
@@ -801,10 +790,6 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
         allocation = (a.x + border, a.y + a.height - MAGIC_BORDER_SIZE - border, a.width - border*2, MAGIC_BORDER_SIZE)
     else:
         return None
-
-    self.log.debug('Found %s %s' % (orientation, position))
-    self.log.debug('%s %s %s' % (x, y, str(a)))
-    #make_placeholder(self, x, y, gdk.Rectangle(0, 0, a.width, a.height))
 
     placeholder = Placeholder()
 

@@ -261,8 +261,7 @@ class DockGroup(gtk.Container):
 
         self._update_visible_tabs()
 
-        # Update visibility on dockitems and composite children used
-        # by tabs.
+        # Update visibility on dockitems and composite children used by tabs.
         for tab in self._tabs:
             if tab is self._current_tab:
                 tab.item.show()
@@ -387,7 +386,7 @@ class DockGroup(gtk.Container):
                 # Fails if expose event happens before size request/allocate when a new
                 # current_tab has been selected.
                 visible_index = self._visible_tabs.index(self._current_tab)
-            except IndexError:
+            except ValueError:
                 visible_index = -1
 
             for index, tab in enumerate(self._visible_tabs):
@@ -604,8 +603,6 @@ class DockGroup(gtk.Container):
 
         For group movement, no special action is taken.
         '''
-        #TODO: Fill selection_data with the right data (set() or set_text())
-
         # Set some data, so DnD process continues
         selection_data.set(gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0]), 8,
                             '%d tabs' % len(self.dragcontext.dragged_object))
@@ -622,7 +619,6 @@ class DockGroup(gtk.Container):
         For groups, the group is deleted, for tabs the group is destroyed
         of there are no more tabs left (see do_drag_data_get()).
         '''
-
         # Let this be handled by the DockLayout
         pass
 
@@ -985,12 +981,6 @@ class DockGroup(gtk.Container):
             self.emit('item-selected', self._current_tab.item)
         else:
             self._current_tab = None
-            #self.emit('item-selected', None, -1)
-
-        self._update_visible_tabs()
-
-        #if self.allocation:
-        #    self.do_size_allocate(self.allocation)
 
         # Update properties on old current tab
         if old_tab:

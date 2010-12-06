@@ -84,4 +84,3 @@ class DockSettingsDict(object):
         self._settings[self.widget_name(target)] = settings
 
 settings = DockSettingsDict()
-
