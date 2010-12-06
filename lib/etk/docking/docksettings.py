@@ -40,12 +40,15 @@ class DockSettings(object):
     '''
     __slots__ = [ 'auto_remove',
                   'can_float',
+                  'float_retain_size',
                   'expand',
                   'inherit_settings' ]
 
-    def __init__(self, auto_remove=True, can_float=True, expand=True, inherit_settings=True):
+    def __init__(self, auto_remove=True, can_float=True,
+                 float_retain_size=False, expand=True, inherit_settings=True):
         self.auto_remove = auto_remove
         self.can_float = can_float
+        self.float_retain_size = float_retain_size
         self.expand = expand
         self.inherit_settings = inherit_settings
 

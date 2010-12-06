@@ -511,9 +511,15 @@ def dock_group_cleanup(self, layout):
 def dock_group_drag_end(self, context):
     cleanup(self, context.docklayout)
 
+def window_delete_handler(window, event):
+    map(lambda i: i.get_parent().emit('item-closed', i),
+        filter(lambda i: isinstance(i, DockItem), flatten(window)))
+    return False 
+
 # Attached to drag *source*
 @drag_failed.when_type(DockGroup)
 def dock_group_drag_failed(self, context, result):
+    global settings
     self.log.debug('%s, %s' % (context, result))
     if result == 1 and settings[self].can_float: #gtk.DRAG_RESULT_NO_TARGET
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -522,6 +528,13 @@ def dock_group_drag_failed(self, context, result):
         window.set_skip_taskbar_hint(True)
         window.set_type_hint(gdk.WINDOW_TYPE_HINT_UTILITY)
         window.set_transient_for(self.get_toplevel())
+
+        if reduce(lambda a, b: a or b,
+                  map(lambda i: settings[i].float_retain_size,
+                      self.dragcontext.dragged_object)):
+            window.set_size_request(self.allocation.width, self.allocation.height)
+ 
+        window.connect('delete-event', window_delete_handler)
         frame = new(DockFrame)
         window.add(frame)
         group = new(DockGroup, context.get_source_widget(), context.docklayout)

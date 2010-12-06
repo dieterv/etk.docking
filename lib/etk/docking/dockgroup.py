@@ -44,7 +44,8 @@ class _DockGroupTab(object):
     '''
     __slots__ = ['item',                # DockItem associated with this tab
                  'item_title_handler',  # item title property notification signal handler id
-                 'item_title_tooltip_text_handler', # item title-tooltip-text property notification signal handler id
+                 'item_title_tooltip_text_handler',
+                                        # item title-tooltip-text property notification signal handler id
                  'image',               # icon (gtk.Image)
                  'label',               # title (gtk.Label)
                  'button',              # close button (etk.docking.CompactButton)
