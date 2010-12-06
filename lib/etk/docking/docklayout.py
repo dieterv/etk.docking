@@ -73,8 +73,9 @@ class DockLayout(gobject.GObject):
         self._signal_handlers = {} # Map widget -> set([signals, ...])
 
         self._focused_item = None
+        self._focused_group = None
         self._focus_data = WeakKeyDictionary() # Map item -> last focused widget
-
+        
         self._drag_data = None
 
     def add(self, frame):
@@ -186,8 +187,13 @@ class DockLayout(gobject.GObject):
             cleanup(group, self)
 
     def do_item_selected(self, group, item):
-        # TODO: Use this callback to grey out the selection on all but the active selection?
+        # Use this callback to grey out the selection on all but the active selection?
         self._focused_item = item
+        if group is not self._focused_group:
+            if self._focused_group:
+                self._focused_group.set_child_focus(False)
+            self._focused_group = group
+            group.set_child_focus(True)
 
     def on_widget_add(self, container, widget):
         """
@@ -230,10 +236,11 @@ class DockLayout(gobject.GObject):
             if drag_data and drag_data.drop_widget:
                 target = gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0])
                 drag_data.drop_widget.drag_get_data(context, target, timestamp)
-            else:
-                # attach item again
-                context.finish(False, False, timestamp) # success, delete, time
-            return drag_data and drag_data.received
+                return True
+            # act as if drag failed:
+            source = context.get_source_widget()
+            source.emit('drag-failed', context, 1)
+            return False
         return False
 
 
@@ -284,10 +291,11 @@ class DockLayout(gobject.GObject):
         An item is selected by clicking on a tab.
         """
         focus_child = self._focus_data.get(item)
+
         if focus_child:
             # item-selected is emited by is-focus handler
             focus_child.set_property('has-focus', True)
-        elif item is not self._focused_item:
+        else: #if item is not self._focused_item:
             self.emit('item-selected', group, item)
 
 def _propagate_to_parent(func, widget, context, x, y, timestamp):
@@ -596,6 +604,8 @@ def dock_paned_drag_motion(self, context, x, y, timestamp):
 
 @cleanup.when_type(DockPaned)
 def dock_paned_cleanup(self, layout):
+    # DEBUG:
+    return
     if not len(self):
         parent = self.get_parent()
         self.log.debug('removing empty paned')
@@ -709,7 +719,6 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
             new_group = new(DockGroup, source, context.docklayout)
             self.insert_item(new_group, position)
             new_group.show()
-            self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
             for item in source.dragcontext.dragged_object:
                 new_group.append_item(item)
             context.finish(True, True, timestamp) # success, delete, time

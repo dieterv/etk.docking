@@ -195,7 +195,7 @@ class MainWindow(gtk.Window):
                     ('gtk-harddisk', 'browser', '0123456789'),
                     ('gtk-home', 'today', '9876543210'),
                     gtk.Notebook]
-        for i in range(random.randrange(1, 10, 1)):
+        for i in [1]: #range(random.randrange(1, 10, 1)):
             example = random.choice(examples)
             if example is gtk.Notebook:
                 child = gtk.Notebook()

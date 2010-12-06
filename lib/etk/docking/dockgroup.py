@@ -106,8 +106,8 @@ class DockGroup(gtk.Container):
 
         self._tabs = []
         self._visible_tabs = []
-        print '3. set current tab to None'
         self._current_tab = None
+        self._child_focus = True
         self.dragcontext = DockDragContext()
 
         gtk.widget_push_composite_child()
@@ -184,7 +184,6 @@ class DockGroup(gtk.Container):
         gtk.Container.do_unmap(self)
 
     def do_size_request(self, requisition):
-        #print 'do size request'
         gtk.Container.do_size_request(self, requisition)
 
         # Start with a zero sized decoration area
@@ -240,7 +239,6 @@ class DockGroup(gtk.Container):
         requisition.height = dh + ih
 
     def do_size_allocate(self, allocation):
-        #print 'do size allocate'
         self.allocation = allocation
 
         if self.flags() & gtk.REALIZED:
@@ -327,10 +325,9 @@ class DockGroup(gtk.Container):
             self._current_tab.item.size_allocate(gdk.Rectangle(ix, iy, iw, ih))
 
         #assert not self._current_tab or self._current_tab in self._visible_tabs
-        self.queue_draw_area(*self.allocation)
+        self.queue_draw_area(0, 0, self.allocation.width, self.allocation.height)
 
     def do_expose_event(self, event):
-        #print 'do expose event'
         # Sometimes, expose is called before size calculation is done.
         # This may happen if an update is done of part of the screen because of
         # (for example) a popup that is removed. However, if in the meantime the 
@@ -344,6 +341,8 @@ class DockGroup(gtk.Container):
         dark = (dark.red_float, dark.green_float, dark.blue_float)
         tab_light = self.style.text_aa[gtk.STATE_SELECTED]
         tab_light = (tab_light.red_float, tab_light.green_float, tab_light.blue_float)
+        tab_prelight = self.style.text_aa[gtk.STATE_PRELIGHT]
+        tab_prelight = (tab_prelight.red_float, tab_prelight.green_float, tab_prelight.blue_float)
         tab_dark = HslColor(self.style.text_aa[gtk.STATE_SELECTED])
         tab_dark.set_l(0.9)
         tab_dark = tab_dark.get_rgb_float()
@@ -377,12 +376,20 @@ class DockGroup(gtk.Container):
                         self._decoration_area.height + self.border_width / 2,
                         a.width - (2 * self._frame_width) - self.border_width,
                         a.height - self._decoration_area.height - self._frame_width - self.border_width)
-            c.set_source_rgb(*tab_light)
+            if self._child_focus:
+                c.set_source_rgb(*tab_light)
+            else:
+                c.set_source_rgb(*tab_prelight)
             c.stroke()
 
             # Draw tabs
             c.set_line_width(self._frame_width)
-            visible_index = self._visible_tabs.index(self._current_tab) #TODO: this sometimes fails???
+            try:
+                # Fails if expose event happens before size request/allocate when a new
+                # current_tab has been selected.
+                visible_index = self._visible_tabs.index(self._current_tab)
+            except IndexError:
+                visible_index = -1
 
             for index, tab in enumerate(self._visible_tabs):
                 tx = tab.area.x
@@ -415,7 +422,10 @@ class DockGroup(gtk.Container):
                     c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
                     c.line_to(tx + tw - 0.5, ty + th)
                     linear = cairo.LinearGradient(0.5, 0.5, 0.5, th)
-                    linear.add_color_stop_rgb(1, *tab_light)
+                    if self._child_focus:
+                        linear.add_color_stop_rgb(1, *tab_light)
+                    else:
+                        linear.add_color_stop_rgb(1, *tab_prelight)
                     linear.add_color_stop_rgb(0, *tab_dark)
                     c.set_source(linear)
                     c.fill_preserve()
@@ -760,8 +770,20 @@ class DockGroup(gtk.Container):
                 else:
                     self._current_tab.area.width = normal
 
-        #if self.allocation:
-        #    self.queue_draw_area(*self.allocation)
+    def set_child_focus(self, child_focus):
+        '''
+        Indicate if one of the child widgets has the focus. In that case the tabs should
+        be highlighted.
+        '''
+        self._child_focus = child_focus
+        if self.allocation:
+            self.queue_draw_area(0, 0, self.allocation.width, self.allocation.height)
+
+    def get_child_focus(self):
+        '''
+        One if the child widgets has focus (highlighted).
+        '''
+        return self._child_focus
 
     def get_tab_at_pos(self, x, y):
         '''
@@ -1026,7 +1048,6 @@ class DockGroup(gtk.Container):
     # Property notification signal handlers
     ############################################################################
     def _item_title_changed(self, tab):
-        print 'title changed!'
         tab.label.set_text(tab.item.get_title())
         self.queue_resize()
         if tab is self._current_tab:
