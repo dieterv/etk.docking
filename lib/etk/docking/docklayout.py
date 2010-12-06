@@ -189,11 +189,11 @@ class DockLayout(gobject.GObject):
     def do_item_selected(self, group, item):
         # Use this callback to grey out the selection on all but the active selection?
         self._focused_item = item
-        if not (group is self._focused_group and group.get_child_focus()):
+        if not (group is self._focused_group and group.get_tab_state() != gtk.STATE_PRELIGHT):
             if self._focused_group:
-                self._focused_group.set_child_focus(False)
+                self._focused_group.set_tab_state(gtk.STATE_PRELIGHT)
             self._focused_group = group
-            group.set_child_focus(True)
+            group.set_tab_state(gtk.STATE_SELECTED)
 
     def on_widget_add(self, container, widget):
         """

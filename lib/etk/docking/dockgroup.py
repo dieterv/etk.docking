@@ -108,7 +108,7 @@ class DockGroup(gtk.Container):
         self._tabs = []
         self._visible_tabs = []
         self._current_tab = None
-        self._child_focus = True
+        self._tab_state = gtk.STATE_SELECTED
         self.dragcontext = DockDragContext()
 
         gtk.widget_push_composite_child()
@@ -337,10 +337,8 @@ class DockGroup(gtk.Container):
         bg = (bg.red_float, bg.green_float, bg.blue_float)
         dark = self.style.dark[self.state]
         dark = (dark.red_float, dark.green_float, dark.blue_float)
-        tab_light = self.style.text_aa[gtk.STATE_SELECTED]
+        tab_light = self.style.text_aa[self._tab_state]
         tab_light = (tab_light.red_float, tab_light.green_float, tab_light.blue_float)
-        tab_prelight = self.style.text_aa[gtk.STATE_PRELIGHT]
-        tab_prelight = (tab_prelight.red_float, tab_prelight.green_float, tab_prelight.blue_float)
         tab_dark = HslColor(self.style.text_aa[gtk.STATE_SELECTED])
         tab_dark.set_l(0.9)
         tab_dark = tab_dark.get_rgb_float()
@@ -374,10 +372,7 @@ class DockGroup(gtk.Container):
                         self._decoration_area.height + self.border_width / 2,
                         a.width - (2 * self._frame_width) - self.border_width,
                         a.height - self._decoration_area.height - self._frame_width - self.border_width)
-            if self._child_focus:
-                c.set_source_rgb(*tab_light)
-            else:
-                c.set_source_rgb(*tab_prelight)
+            c.set_source_rgb(*tab_light)
             c.stroke()
 
             # Draw tabs
@@ -420,10 +415,7 @@ class DockGroup(gtk.Container):
                     c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
                     c.line_to(tx + tw - 0.5, ty + th)
                     linear = cairo.LinearGradient(0.5, 0.5, 0.5, th)
-                    if self._child_focus:
-                        linear.add_color_stop_rgb(1, *tab_light)
-                    else:
-                        linear.add_color_stop_rgb(1, *tab_prelight)
+                    linear.add_color_stop_rgb(1, *tab_light)
                     linear.add_color_stop_rgb(0, *tab_dark)
                     c.set_source(linear)
                     c.fill_preserve()
@@ -765,20 +757,20 @@ class DockGroup(gtk.Container):
                 else:
                     self._current_tab.area.width = normal
 
-    def set_child_focus(self, child_focus):
+    def set_tab_state(self, tab_state):
         '''
-        Indicate if one of the child widgets has the focus. In that case the tabs should
-        be highlighted.
+        Define the tab state. Normally that will be ``gtk.STATE_SELECTED``, but a
+        different state can be set if required.
         '''
-        self._child_focus = child_focus
+        self._tab_state = tab_state
         if self.allocation:
             self.queue_draw_area(0, 0, self.allocation.width, self.allocation.height)
 
-    def get_child_focus(self):
+    def get_tab_state(self):
         '''
-        One if the child widgets has focus (highlighted).
+        Current state for drawing tabs.
         '''
-        return self._child_focus
+        return self._tab_state
 
     def get_tab_at_pos(self, x, y):
         '''
