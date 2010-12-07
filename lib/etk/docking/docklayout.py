@@ -760,6 +760,7 @@ def dock_frame_drag_end(self, context):
 def dock_frame_magic_borders_leave(self):
     self.set_placeholder(None)
 
+@drag_motion.when_type(DockFrame)
 @magic_borders.when_type(DockFrame)
 def dock_frame_magic_borders(self, context, x, y, timestamp):
     '''
