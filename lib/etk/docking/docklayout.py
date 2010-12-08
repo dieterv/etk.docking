@@ -146,9 +146,12 @@ class DockLayout(gobject.GObject):
             return
 
         signals = set()
-        widget.drag_dest_set(gtk.DEST_DEFAULT_MOTION,
-                             [DRAG_TARGET_ITEM_LIST],
-                             gdk.ACTION_MOVE)
+        drag_dest = widget.drag_dest_get_target_list()
+        if not drag_dest:
+            widget.drag_dest_set(gtk.DEST_DEFAULT_MOTION, [DRAG_TARGET_ITEM_LIST],
+                                 gdk.ACTION_MOVE)
+        elif DRAG_TARGET_ITEM_LIST not in drag_dest:
+            widget.drag_dest_set_target_list(drag_dest + [DRAG_TARGET_ITEM_LIST])
 
         # Use instance methods here, so layout can do additional bookkeeping
         for name, callback in self._get_signals(widget):
@@ -175,6 +178,8 @@ class DockLayout(gobject.GObject):
                 widget.disconnect(s)
 
             del self._signal_handlers[widget]
+
+            # TODO: widget.drag_dest_set_target_list(drag_dest - [DRAG_TARGET_ITEM_LIST])??
 
             if isinstance(widget, gtk.Container):
                 widget.foreach(self.remove_signal_handlers)
@@ -210,26 +215,28 @@ class DockLayout(gobject.GObject):
             self.remove_signal_handlers(widget)
 
     def on_widget_drag_motion(self, widget, context, x, y, timestamp):
-        context.docklayout = self
-        drag_data = drag_motion(widget, context, x, y, timestamp)
+        if DRAG_TARGET_ITEM_LIST[0] in context.targets:
+            context.docklayout = self
+            drag_data = drag_motion(widget, context, x, y, timestamp)
 
-        old_drop_widget = self._drag_data and self._drag_data.drop_widget
-        new_drop_widget = drag_data and drag_data.drop_widget
+            old_drop_widget = self._drag_data and self._drag_data.drop_widget
+            new_drop_widget = drag_data and drag_data.drop_widget
 
-        if new_drop_widget is not old_drop_widget:
-            self.on_widget_drag_leave(widget, context, timestamp)
-            self._drag_data = drag_data
+            if new_drop_widget is not old_drop_widget:
+                self.on_widget_drag_leave(widget, context, timestamp)
+                self._drag_data = drag_data
 
     def on_widget_drag_leave(self, widget, context, timestamp):
         # Note: when dropping, drag-leave is invoked before drag-drop
-        drag_data = self._drag_data
+        if DRAG_TARGET_ITEM_LIST[0] in context.targets:
+            drag_data = self._drag_data
 
-        if drag_data and drag_data.leave:
-            self.log.debug('on widget drag leave %s' % drag_data.leave)
-            drag_data.leave(drag_data.drop_widget)
+            if drag_data and drag_data.leave:
+                self.log.debug('on widget drag leave %s' % drag_data.leave)
+                drag_data.leave(drag_data.drop_widget)
 
     def on_widget_drag_drop(self, widget, context, x, y, timestamp):
-        self.log.debug('%s %s %s %s', context, x, y, timestamp)
+        self.log.debug('drag_drop %s %s %s %s', context, x, y, timestamp)
 
         if DRAG_TARGET_ITEM_LIST[0] in context.targets:
             drag_data = self._drag_data
@@ -241,7 +248,6 @@ class DockLayout(gobject.GObject):
             source = context.get_source_widget()
             source.emit('drag-failed', context, 1)
             cleanup(source, self)
-            return False
         return False
 
 
@@ -250,14 +256,15 @@ class DockLayout(gobject.GObject):
         Execute the received handler using the received handler retrieved in the
         drag_drop event handler.
         '''
-        self.log.debug('%s, %s, %s, %s, %s, %s' % (context, x, y, selection_data, info, timestamp))
-        drag_data = self._drag_data
-        assert drag_data.received
+        self.log.debug('drag_data_received %s, %s, %s, %s, %s, %s' % (context, x, y, selection_data, info, timestamp))
+        if DRAG_TARGET_ITEM_LIST[0] in context.targets:
+            drag_data = self._drag_data
+            assert drag_data.received
 
-        try:
-            drag_data.received(selection_data, info)
-        finally:
-            self._drag_data = None
+            try:
+                drag_data.received(selection_data, info)
+            finally:
+                self._drag_data = None
 
     def on_widget_drag_end(self, widget, context):
         if DRAG_TARGET_ITEM_LIST[0] in context.targets:
