@@ -1,0 +1,197 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>etk.DockLayout &mdash; etk.docking v0.0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="etk.docking v0.0.1 documentation" href="../index.html" />
+    <link rel="next" title="Serialization" href="../dev/serialization.html" />
+    <link rel="prev" title="etk.DockItem" href="dockitem.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../dev/serialization.html" title="Serialization"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="dockitem.html" title="etk.DockItem"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">etk.docking v0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="etk-docklayout">
+<h1><tt class="xref py py-class docutils literal"><span class="pre">etk.DockLayout</span></tt><a class="headerlink" href="#etk-docklayout" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="etk.docking.DockLayout">
+<em class="property">class </em><tt class="descclassname">etk.docking.</tt><tt class="descname">DockLayout</tt><a class="headerlink" href="#etk.docking.DockLayout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">gobject._gobject.GObject</span></tt></p>
+<p>Manage a dock layout.</p>
+<p>For this to work the toplevel widget in the layout hierarchy should be a
+DockFrame. The DockFrame is registered with the DockLayout. After that
+sophisticated drag-and-drop functionality is present.</p>
+<p>NB. When items are closed, the item-closed signal is emitted. The item is <em>not</em>
+destroyed, though.</p>
+<dl class="method">
+<dt id="etk.docking.DockLayout.add_signal_handlers">
+<tt class="descname">add_signal_handlers</tt><big>(</big><em>widget</em><big>)</big><a class="headerlink" href="#etk.docking.DockLayout.add_signal_handlers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set up signal handlers for layout and child widgets</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockLayout.get_floating_frames">
+<tt class="descname">get_floating_frames</tt><big>(</big><big>)</big><a class="headerlink" href="#etk.docking.DockLayout.get_floating_frames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the floating frames. Floating frames have a gtk.Window as parent that is
+transient for some other window.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockLayout.get_main_frames">
+<tt class="descname">get_main_frames</tt><big>(</big><big>)</big><a class="headerlink" href="#etk.docking.DockLayout.get_main_frames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the frames that are non-floating (the main frames).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockLayout.get_widgets">
+<tt class="descname">get_widgets</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#etk.docking.DockLayout.get_widgets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a set of widgets based on their name.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockLayout.on_dockgroup_item_selected">
+<tt class="descname">on_dockgroup_item_selected</tt><big>(</big><em>group</em>, <em>item</em><big>)</big><a class="headerlink" href="#etk.docking.DockLayout.on_dockgroup_item_selected" title="Permalink to this definition">¶</a></dt>
+<dd><p>An item is selected by clicking on a tab.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockLayout.on_widget_add">
+<tt class="descname">on_widget_add</tt><big>(</big><em>container</em>, <em>widget</em><big>)</big><a class="headerlink" href="#etk.docking.DockLayout.on_widget_add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deal with new elements being added to the layout or it&#8217;s children.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockLayout.on_widget_drag_data_received">
+<tt class="descname">on_widget_drag_data_received</tt><big>(</big><em>widget</em>, <em>context</em>, <em>x</em>, <em>y</em>, <em>selection_data</em>, <em>info</em>, <em>timestamp</em><big>)</big><a class="headerlink" href="#etk.docking.DockLayout.on_widget_drag_data_received" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute the received handler using the received handler retrieved in the
+drag_drop event handler.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockLayout.on_widget_is_focus">
+<tt class="descname">on_widget_is_focus</tt><big>(</big><em>widget</em>, <em>pspec</em><big>)</big><a class="headerlink" href="#etk.docking.DockLayout.on_widget_is_focus" title="Permalink to this definition">¶</a></dt>
+<dd><p>The input focus moved to another widget.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockLayout.on_widget_remove">
+<tt class="descname">on_widget_remove</tt><big>(</big><em>container</em>, <em>widget</em><big>)</big><a class="headerlink" href="#etk.docking.DockLayout.on_widget_remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove signals from containers and subcontainers.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockLayout.remove_signal_handlers">
+<tt class="descname">remove_signal_handlers</tt><big>(</big><em>widget</em><big>)</big><a class="headerlink" href="#etk.docking.DockLayout.remove_signal_handlers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove signal handlers.</p>
+</dd></dl>
+
+</dd></dl>
+
+<div class="section" id="signals">
+<h2>Signals<a class="headerlink" href="#signals" title="Permalink to this headline">¶</a></h2>
+<p>item-closed ( group, item ): event forwarded from the DockGroup on which
+the item was removed. This makes for easy central maintenance of how to deal
+with closed items (e.g. if the items should be destroyed or not).</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">etk.DockLayout</span></tt></a><ul>
+<li><a class="reference internal" href="#signals">Signals</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="dockitem.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">etk.DockItem</span></tt></a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../dev/serialization.html"
+                        title="next chapter">Serialization</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/docklayout.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../dev/serialization.html" title="Serialization"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="dockitem.html" title="etk.DockItem"
+             >previous</a> |</li>
+        <li><a href="../index.html">etk.docking v0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010, etk.docking Contributors.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
+    </div>
+  </body>
+</html>

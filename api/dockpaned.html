@@ -1,0 +1,366 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>etk.DockPaned &mdash; etk.docking v0.0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="etk.docking v0.0.1 documentation" href="../index.html" />
+    <link rel="next" title="etk.DockGroup" href="dockgroup.html" />
+    <link rel="prev" title="etk.DockFrame" href="dockframe.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="dockgroup.html" title="etk.DockGroup"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="dockframe.html" title="etk.DockFrame"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">etk.docking v0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="etk-dockpaned">
+<h1><tt class="xref py py-class docutils literal"><span class="pre">etk.DockPaned</span></tt><a class="headerlink" href="#etk-dockpaned" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="etk.docking.DockPaned">
+<em class="property">class </em><tt class="descclassname">etk.docking.</tt><tt class="descname">DockPaned</tt><a class="headerlink" href="#etk.docking.DockPaned" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">gtk.Container</span></tt></p>
+<p>The <tt class="xref py py-class docutils literal"><span class="pre">etk.DockPaned</span></tt> widget is a container widget with multiple panes
+arranged either horizontally or vertically, depending on the value of the
+orientation property. Child widgets are added to the panes of the widget
+with the <tt class="xref py py-meth docutils literal"><span class="pre">append_item()</span></tt>, <tt class="xref py py-meth docutils literal"><span class="pre">prepend_item()</span></tt> or <tt class="xref py py-meth docutils literal"><span class="pre">insert_item()</span></tt>
+methods.</p>
+<p>A dockpaned widget draws a separator between it&#8217;s child widgets and a small
+handle that the user can drag to adjust the division. It does not draw any
+relief around the children or around the separator.</p>
+<dl class="method">
+<dt id="etk.docking.DockPaned.get_handle_size">
+<tt class="descname">get_handle_size</tt><big>(</big><big>)</big><a class="headerlink" href="#etk.docking.DockPaned.get_handle_size" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">the size of the handles in the dockpaned.</td>
+</tr>
+</tbody>
+</table>
+<p>Retrieves the size of the handles in the dockpaned.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockPaned.set_handle_size">
+<tt class="descname">set_handle_size</tt><big>(</big><em>handle_size</em><big>)</big><a class="headerlink" href="#etk.docking.DockPaned.set_handle_size" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>handle_size</strong> &#8211; the new size for the handles in the dockpaned.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Sets the size for the handles in the dockpaned.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockPaned.get_orientation">
+<tt class="descname">get_orientation</tt><big>(</big><big>)</big><a class="headerlink" href="#etk.docking.DockPaned.get_orientation" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">the orientation of the dockpaned.</td>
+</tr>
+</tbody>
+</table>
+<p>Retrieves the orientation of the dockpaned.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockPaned.set_orientation">
+<tt class="descname">set_orientation</tt><big>(</big><em>orientation</em><big>)</big><a class="headerlink" href="#etk.docking.DockPaned.set_orientation" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>orientation</strong> &#8211; the dockpaned&#8217;s new orientation.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Sets the orientation of the dockpaned.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockPaned.append_item">
+<tt class="descname">append_item</tt><big>(</big><em>child</em><big>)</big><a class="headerlink" href="#etk.docking.DockPaned.append_item" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>child</strong> &#8211; the <tt class="xref py py-class docutils literal"><span class="pre">gtk.Widget</span></tt> to use as the contents of the item.</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the index number of the item in the dockpaned.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The <tt class="xref py py-meth docutils literal"><span class="pre">append_item()</span></tt> method prepends an item to the dockpaned.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockPaned.prepend_item">
+<tt class="descname">prepend_item</tt><big>(</big><em>child</em><big>)</big><a class="headerlink" href="#etk.docking.DockPaned.prepend_item" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>child</strong> &#8211; the <tt class="xref py py-class docutils literal"><span class="pre">gtk.Widget</span></tt> to use as the contents of the item.</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the index number of the item in the dockpaned.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The <tt class="xref py py-meth docutils literal"><span class="pre">prepend_item()</span></tt> method prepends an item to the dockpaned.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockPaned.insert_item">
+<tt class="descname">insert_item</tt><big>(</big><em>child</em>, <em>position=None</em>, <em>weight=None</em><big>)</big><a class="headerlink" href="#etk.docking.DockPaned.insert_item" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>child</strong> &#8211; a <tt class="xref py py-class docutils literal"><span class="pre">gtk.Widget`</span></tt> to use as the contents of the item.</li>
+<li><strong>position</strong> &#8211; the index (starting at 0) at which to insert the item,
+negative or <tt class="xref py py-const xref docutils literal"><span class="pre">None</span></tt> to append the item after all
+other items.</li>
+<li><strong>weight</strong> &#8211; The relative amount of space the child should get. No guarantees.</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the index number of the item in the dockpaned.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The <tt class="xref py py-meth docutils literal"><span class="pre">insert_item()</span></tt> method inserts an item into the dockpaned at the
+location specified by <cite>position</cite> (0 is the first item). <cite>child</cite> is the
+widget to use as the contents of the item. If position is negative or
+<tt class="xref py py-const xref docutils literal"><span class="pre">None</span></tt> the item is appended to the dockpaned.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockPaned.remove_item">
+<tt class="descname">remove_item</tt><big>(</big><em>item_num</em><big>)</big><a class="headerlink" href="#etk.docking.DockPaned.remove_item" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>item_num</strong> &#8211; the index (starting from 0) of the item to remove. If
+<tt class="xref py py-const xref docutils literal"><span class="pre">None</span></tt> or negative, the last item will be removed.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The <tt class="xref py py-meth docutils literal"><span class="pre">remove_item()</span></tt> method removes the item at the location
+specified by <cite>item_num</cite>. The value of <cite>item_num</cite> starts from 0. If
+<cite>item_num</cite> is negative or <tt class="xref py py-const xref docutils literal"><span class="pre">None</span></tt> the last item of the dockpaned
+will be removed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockPaned.item_num">
+<tt class="descname">item_num</tt><big>(</big><em>child</em><big>)</big><a class="headerlink" href="#etk.docking.DockPaned.item_num" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>child</strong> &#8211; a <tt class="xref py py-class docutils literal"><span class="pre">gtk.Widget</span></tt>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the index of the item containing <cite>child</cite>, or <tt class="xref py py-const xref docutils literal"><span class="pre">None</span></tt> if
+<cite>child</cite> is not in the dockpaned.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The <tt class="xref py py-meth docutils literal"><span class="pre">item_num()</span></tt> method returns the index of the item which
+contains the widget specified by <cite>child</cite> or <tt class="xref py py-const xref docutils literal"><span class="pre">None</span></tt> if no item
+contains <cite>child</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockPaned.get_nth_item">
+<tt class="descname">get_nth_item</tt><big>(</big><em>item_num</em><big>)</big><a class="headerlink" href="#etk.docking.DockPaned.get_nth_item" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>item_num</strong> &#8211; the index of an item in the dockpaned.</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the child widget, or <tt class="xref py py-const xref docutils literal"><span class="pre">None</span></tt> if <cite>item_num</cite> is out of
+bounds.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The <tt class="xref py py-meth docutils literal"><span class="pre">get_nth_item‘</span> <span class="pre">method</span> <span class="pre">returns</span> <span class="pre">the</span> <span class="pre">child</span> <span class="pre">widget</span> <span class="pre">contained</span> <span class="pre">at</span>
+<span class="pre">the</span> <span class="pre">index</span> <span class="pre">specified</span> <span class="pre">by</span> <span class="pre">`item_num()</span></tt>. If <cite>item_num</cite> is out of bounds for
+the item range of the dockpaned this method returns <tt class="xref py py-const xref docutils literal"><span class="pre">None</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockPaned.get_item_at_pos">
+<tt class="descname">get_item_at_pos</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#etk.docking.DockPaned.get_item_at_pos" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; the x coordinate of the position.</li>
+<li><strong>y</strong> &#8211; the y coordinate of the position.</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the child widget at the position specified by x and y or
+<tt class="xref py py-const xref docutils literal"><span class="pre">None</span></tt>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The <tt class="xref py py-meth docutils literal"><span class="pre">get_item_at_pos()</span></tt> method returns the child widget whose
+allocation contains the position specified by <cite>x</cite> and <cite>y</cite> or
+<tt class="xref py py-const xref docutils literal"><span class="pre">None</span></tt> if no child widget is at that position.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockPaned.reorder_item">
+<tt class="descname">reorder_item</tt><big>(</big><em>child</em>, <em>position</em><big>)</big><a class="headerlink" href="#etk.docking.DockPaned.reorder_item" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>child</strong> &#8211; the child widget to move.</li>
+<li><strong>position</strong> &#8211; the index that <cite>child</cite> is to move to, or <tt class="xref py py-const xref docutils literal"><span class="pre">None</span></tt> to
+move to the end.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The <tt class="xref py py-meth docutils literal"><span class="pre">reorder_item()</span></tt> method reorders the dockpaned child widgets so
+that <cite>child</cite> appears in the location specified by <cite>position</cite>. If
+<cite>position</cite> is greater than or equal to the number of children in the
+list or negative or <tt class="xref py py-const xref docutils literal"><span class="pre">None</span></tt>, <cite>child</cite> will be moved to the end of
+the list.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="dockframe.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal"><span class="pre">etk.DockFrame</span></tt></a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="dockgroup.html"
+                        title="next chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">etk.DockGroup</span></tt></a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/dockpaned.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="dockgroup.html" title="etk.DockGroup"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="dockframe.html" title="etk.DockFrame"
+             >previous</a> |</li>
+        <li><a href="../index.html">etk.docking v0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010, etk.docking Contributors.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
+    </div>
+  </body>
+</html>

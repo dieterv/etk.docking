@@ -1,0 +1,129 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Serialization &mdash; etk.docking v0.0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="etk.docking v0.0.1 documentation" href="../index.html" />
+    <link rel="prev" title="etk.DockLayout" href="../api/docklayout.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../api/docklayout.html" title="etk.DockLayout"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">etk.docking v0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="serialization">
+<h1>Serialization<a class="headerlink" href="#serialization" title="Permalink to this headline">¶</a></h1>
+<p>One of the required features is to be able to persist and load a layout.
+This can be done by means of the DockStore. A DockStore is able to load and save layouts.
+For loading and saving, the most simple xml serializer is used: xml.parser or etree:</p>
+<div class="highlight-python"><pre>&lt;?xml version="1.0" encoding="utf-8"&gt;
+&lt;layout&gt;
+  &lt;frame x="0" y="0" width="0" height="0"&gt;
+&lt;paned orientation="horizontal"&gt;
+  &lt;group size="23%"&gt;
+    &lt;item id="identifier" title="" icon="" tooltip="" pos="1" vispos="2" /&gt;
+  &lt;/group&gt;
+  &lt;paned size="67%" orientation="vertical"&gt;
+    &lt;group size="100%"&gt;
+      &lt;item id="identifier2" title="" icon="" tooltip="" pos="1" vispos="2" /&gt;
+    &lt;/group&gt;
+&lt;/paned&gt;
+  &lt;/frame&gt;
+  &lt;frame floating="true" x="0" y="0" width="0" height="0"&gt;
+...
+  &lt;/frame&gt;
+&lt;/layout&gt;</pre>
+</div>
+<p>The layout can be set up automatically as far as DockFrame, DockPaned, DockGroup and DockItem is concerned. The contents of a single DockItem is harder to construct. For this the DockStore needs to consult a delegate object that implements the DockStore protocol:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">DockStoreDelegate</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+   <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span> <span class="k">pass</span>
+</pre></div>
+</div>
+<p>Open items:</p>
+<ul class="simple">
+<li>It&#8217;s interesting to see to what extend the current GUI builder code can suite us.</li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../api/docklayout.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">etk.DockLayout</span></tt></a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/dev/serialization.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../api/docklayout.html" title="etk.DockLayout"
+             >previous</a> |</li>
+        <li><a href="../index.html">etk.docking v0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010, etk.docking Contributors.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
+    </div>
+  </body>
+</html>

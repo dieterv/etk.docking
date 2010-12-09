@@ -1,0 +1,331 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>etk.DockGroup &mdash; etk.docking v0.0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="etk.docking v0.0.1 documentation" href="../index.html" />
+    <link rel="next" title="etk.DockItem" href="dockitem.html" />
+    <link rel="prev" title="etk.DockPaned" href="dockpaned.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="dockitem.html" title="etk.DockItem"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="dockpaned.html" title="etk.DockPaned"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">etk.docking v0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="etk-dockgroup">
+<h1><tt class="xref py py-class docutils literal"><span class="pre">etk.DockGroup</span></tt><a class="headerlink" href="#etk-dockgroup" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="etk.docking.DockGroup">
+<em class="property">class </em><tt class="descclassname">etk.docking.</tt><tt class="descname">DockGroup</tt><a class="headerlink" href="#etk.docking.DockGroup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">gtk.Container</span></tt></p>
+<p>The etk.DockGroup widget is a gtk.Container that groups its children in a
+tabbed interface.</p>
+<p>You can reorder tabs by dragging them to the desired location within the
+same or another etk.DockGroup having the same group-id. You can also drag
+a complete etk.DockGroup onto another etk.DockGroup having the same group-id
+to merge all etk.DockItems from the source into the destination
+etk.DockGroup.</p>
+<dl class="method">
+<dt id="etk.docking.DockGroup.append_item">
+<tt class="descname">append_item</tt><big>(</big><em>item</em><big>)</big><a class="headerlink" href="#etk.docking.DockGroup.append_item" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>item</strong> &#8211; a DockItem</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the index number of the item tab in the DockGroup</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The append_item() method appends a DockItem to the DockGroup using the
+DockItem specified by item.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockGroup.prepend_item">
+<tt class="descname">prepend_item</tt><big>(</big><em>item</em><big>)</big><a class="headerlink" href="#etk.docking.DockGroup.prepend_item" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>item</strong> &#8211; a DockItem</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the index number of the item tab in the DockGroup</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The prepend_item() method prepends a DockItem to the DockGroup using the
+DockItem specified by item.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockGroup.insert_item">
+<tt class="descname">insert_item</tt><big>(</big><em>item</em>, <em>position=None</em>, <em>visible_position=None</em><big>)</big><a class="headerlink" href="#etk.docking.DockGroup.insert_item" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>item</strong> &#8211; a DockItem</li>
+<li><strong>position</strong> &#8211; the index (starting at 0) at which to insert the item,
+or None to append the item after all other item tabs.</li>
+<li><strong>visible_position</strong> &#8211; the index at which the newly inserted item should
+be displayed. This index is usually different from the
+position and is normally only used when dropping items on
+the group.</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the index number of the item tab in the DockGroup</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The insert_item() method inserts a DockItem into the DockGroup at the
+location specified by position (0 is the first item). item is the
+DockItem to insert. If position is None the item is appended to the
+DockGroup.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockGroup.remove_item">
+<tt class="descname">remove_item</tt><big>(</big><em>item_num</em><big>)</big><a class="headerlink" href="#etk.docking.DockGroup.remove_item" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>item_num</strong> &#8211; the index of an item tab, starting from 0. If None,
+the last item will be removed.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The remove_item() method removes the item at the location specified by
+item_num. The value of item_num starts from 0.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockGroup.item_num">
+<tt class="descname">item_num</tt><big>(</big><em>item</em><big>)</big><a class="headerlink" href="#etk.docking.DockGroup.item_num" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>item</strong> &#8211; a DockItem</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the index of the item tab specified by item, or None if item
+is not in the DockGroup</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The item_num() method returns the index of the item tab which contains
+the DockItem specified by item or None if no item tab contains item.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockGroup.get_nth_item">
+<tt class="descname">get_nth_item</tt><big>(</big><em>item_num</em><big>)</big><a class="headerlink" href="#etk.docking.DockGroup.get_nth_item" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>item_num</strong> &#8211; the index of an item tab in the DockGroup.</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a DockItem, or None if item_num is out of bounds.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The get_nth_item() method returns the DockItem contained in the item tab
+with the index specified by item_num. If item_num is out of bounds for
+the item range of the DockGroup this method returns None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockGroup.get_current_item">
+<tt class="descname">get_current_item</tt><big>(</big><big>)</big><a class="headerlink" href="#etk.docking.DockGroup.get_current_item" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">the index (starting from 0) of the current item tab in the
+DockGroup. If the DockGroup has no item tabs, then None will
+be returned.</td>
+</tr>
+</tbody>
+</table>
+<p>The get_current_item() method returns the index of the current item tab
+numbered from 0, or None if there are no item tabs.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockGroup.set_current_item">
+<tt class="descname">set_current_item</tt><big>(</big><em>item_num</em><big>)</big><a class="headerlink" href="#etk.docking.DockGroup.set_current_item" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>item_num</strong> &#8211; the index of the item tab to switch to, starting from
+0. If negative, the first item tab will be used. If
+greater than the number of item tabs in the DockGroup,
+the last item tab will be used.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Switches to the item number specified by item_num. If item_num is
+negative the first item is selected. If greater than the number of
+items in the DockGroup, the last item is selected.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockGroup.next_item">
+<tt class="descname">next_item</tt><big>(</big><big>)</big><a class="headerlink" href="#etk.docking.DockGroup.next_item" title="Permalink to this definition">¶</a></dt>
+<dd><p>The next_item() method switches to the next item. Nothing happens if
+the current item is the last item.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockGroup.prev_item">
+<tt class="descname">prev_item</tt><big>(</big><big>)</big><a class="headerlink" href="#etk.docking.DockGroup.prev_item" title="Permalink to this definition">¶</a></dt>
+<dd><p>The prev_item() method switches to the previous item. Nothing happens
+if the current item is the first item.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockGroup.reorder_item">
+<tt class="descname">reorder_item</tt><big>(</big><em>item</em>, <em>position</em><big>)</big><a class="headerlink" href="#etk.docking.DockGroup.reorder_item" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>item</strong> &#8211; the DockItem widget to move</li>
+<li><strong>position</strong> &#8211; the index of the item tab that item is to move to</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The reorder_item() method reorders the DockGroup items so that item
+appears in the location specified by position. If position is greater
+than or equal to the number of children in the list, item will be moved
+to the end of the list. If position is negative, item will be moved
+to the beginning of the list.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="dockpaned.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal"><span class="pre">etk.DockPaned</span></tt></a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="dockitem.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">etk.DockItem</span></tt></a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/dockgroup.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="dockitem.html" title="etk.DockItem"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="dockpaned.html" title="etk.DockPaned"
+             >previous</a> |</li>
+        <li><a href="../index.html">etk.docking v0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010, etk.docking Contributors.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
+    </div>
+  </body>
+</html>
