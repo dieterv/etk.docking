@@ -66,7 +66,7 @@ def deserialize(layoutstr, itemfactory):
             factory = widget_factory[element.tag]
             widget = factory(parent=parent_widget, **element.attrib)
             assert widget, 'No widget (%s)' % widget
-            if element:
+            if len(element):
                 map(_des, element, [widget] * len(element))
         return widget
 
