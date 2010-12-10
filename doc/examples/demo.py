@@ -203,7 +203,7 @@ class MainWindow(gtk.Window):
                 child = gtk.Notebook()
                 child.append_page(gtk.Button('Click me'),
                                   gtk.Label('New %s' % self.file_counter))
-                stock_id = gtk.STOCK_NETWORK
+                stock_id = ''
                 tooltip_text = 'notebook'
             else:
                 stock_id, tooltip_text, text = example

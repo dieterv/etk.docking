@@ -135,7 +135,7 @@ class DockItem(gtk.Bin):
         elif not self._stock_id == '':
             return gtk.image_new_from_stock(self._stock_id, gtk.ICON_SIZE_MENU)
         else:
-            return gtk.image_new_from_stock(gtk.STOCK_MISSING_IMAGE, gtk.ICON_SIZE_MENU)
+            return gtk.Image()
 
     title = property(get_title, set_title)
     title_tooltip_text = property(get_title_tooltip_text, set_title_tooltip_text)
