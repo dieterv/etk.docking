@@ -121,9 +121,10 @@ def widget_attributes(widget):
 
 @attributes.when_type(DockItem)
 def dock_item_attributes(widget):
-    return { 'icon': widget.props.icon_name,
-             'title': widget.props.title,
-             'tooltip': widget.props.title_tooltip_text }
+    return { 'title': widget.props.title,
+             'tooltip': widget.props.title_tooltip_text,
+             'icon_name': widget.props.icon_name,
+             'stock_id': widget.props.stock }
 
 @attributes.when_type(DockGroup)
 def dock_group_attributes(widget):
@@ -161,8 +162,8 @@ def factory(typename):
     return _factory
 
 @factory('dockitem')
-def dock_item_factory(parent, icon, title, tooltip, pos=None, vispos=None, current=None, name=None):
-    item = DockItem(icon, title, tooltip)
+def dock_item_factory(parent, title, tooltip, icon_name, stock_id, pos=None, vispos=None, current=None, name=None):
+    item = DockItem(title, tooltip, icon_name, stock_id)
     if name:
         item.set_name(name)
     if pos:

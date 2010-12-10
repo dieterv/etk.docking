@@ -30,39 +30,6 @@ class TestDockItem(unittest.TestCase):
     ############################################################################
     # Test properties
     ############################################################################
-    def test_prop_icon_name(self):
-        global notify_called
-
-        def _on_notify(gobject, pspec):
-            global notify_called
-            notify_called = True
-
-        dockitem = DockItem()
-        dockitem.connect('notify::icon-name', _on_notify)
-
-        notify_called = False
-        dockitem.set_icon_name('someicon')
-        self.assertEquals(dockitem.get_icon_name(), 'someicon',
-                          msg='get_icon_name method did not return expected value')
-        self.assertTrue(notify_called,
-                        msg='icon-name property change notification failed when using set_icon_name method')
-
-        notify_called = False
-        dockitem.set_property('icon-name', 'anothericon')
-        self.assertEquals(dockitem.get_property('icon-name'), 'anothericon',
-                          msg='get_property method did not return expected value')
-        self.assertTrue(notify_called,
-                        msg='icon-name property change notification failed when using set_property method')
-
-        notify_called = False
-        dockitem.props.icon_name = 'niceicon'
-        self.assertEquals(dockitem.props.icon_name, 'niceicon',
-                          msg='.props attribute did not return expected value')
-        self.assertTrue(notify_called,
-                        msg='icon-name property change notification failed when using .props attribute')
-
-        dockitem.destroy()
-
     def test_prop_title(self):
         global notify_called
 
@@ -127,6 +94,88 @@ class TestDockItem(unittest.TestCase):
         self.assertTrue(notify_called,
                         msg='title-tooltip-text property change notification failed when using .props attribute')
 
+        dockitem.destroy()
+
+    def test_prop_icon_name(self):
+        global notify_called
+
+        def _on_notify(gobject, pspec):
+            global notify_called
+            notify_called = True
+
+        dockitem = DockItem()
+        dockitem.connect('notify::icon-name', _on_notify)
+
+        notify_called = False
+        dockitem.set_icon_name('someicon')
+        self.assertEquals(dockitem.get_icon_name(), 'someicon',
+                          msg='get_icon_name method did not return expected value')
+        self.assertTrue(notify_called,
+                        msg='icon-name property change notification failed when using set_icon_name method')
+
+        notify_called = False
+        dockitem.set_property('icon-name', 'anothericon')
+        self.assertEquals(dockitem.get_property('icon-name'), 'anothericon',
+                          msg='get_property method did not return expected value')
+        self.assertTrue(notify_called,
+                        msg='icon-name property change notification failed when using set_property method')
+
+        notify_called = False
+        dockitem.props.icon_name = 'niceicon'
+        self.assertEquals(dockitem.props.icon_name, 'niceicon',
+                          msg='.props attribute did not return expected value')
+        self.assertTrue(notify_called,
+                        msg='icon-name property change notification failed when using .props attribute')
+
+        dockitem.destroy()
+
+    def test_prop_stock(self):
+        global notify_called
+
+        def _on_notify(gobject, pspec):
+            global notify_called
+            notify_called = True
+
+        dockitem = DockItem()
+        dockitem.connect('notify::stock', _on_notify)
+
+        notify_called = False
+        dockitem.set_stock(gtk.STOCK_ABOUT)
+        self.assertEquals(dockitem.get_stock(), gtk.STOCK_ABOUT,
+                          msg='get_stock method did not return expected value')
+        self.assertTrue(notify_called,
+                        msg='stock property change notification failed when using set_stock method')
+
+        notify_called = False
+        dockitem.set_property('stock', gtk.STOCK_ADD)
+        self.assertEquals(dockitem.get_property('stock'), gtk.STOCK_ADD,
+                          msg='get_property method did not return expected value')
+        self.assertTrue(notify_called,
+                        msg='stock property change notification failed when using set_property method')
+
+        notify_called = False
+        dockitem.props.stock = gtk.STOCK_APPLY
+        self.assertEquals(dockitem.props.stock, gtk.STOCK_APPLY,
+                          msg='.props attribute did not return expected value')
+        self.assertTrue(notify_called,
+                        msg='stock property change notification failed when using .props attribute')
+
+        dockitem.destroy()
+
+    def test_prop_image(self):
+        #TODO: is there a way to check we actually received the image we expect?
+        dockitem = DockItem()
+        dockitem.set_icon_name('someicon')
+        self.assertTrue(isinstance(dockitem.get_image(), gtk.Image))
+        self.assertTrue(isinstance(dockitem.props.image, gtk.Image))
+        self.assertTrue(isinstance(dockitem.get_property('image'), gtk.Image))
+        dockitem.destroy()
+
+        dockitem = DockItem()
+        dockitem.set_stock(gtk.STOCK_ABOUT)
+        self.assertTrue(isinstance(dockitem.get_image(), gtk.Image))
+        self.assertTrue(isinstance(dockitem.props.image, gtk.Image))
+        self.assertTrue(isinstance(dockitem.get_property('image'), gtk.Image))
         dockitem.destroy()
 
     ############################################################################

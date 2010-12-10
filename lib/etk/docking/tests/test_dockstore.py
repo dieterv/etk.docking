@@ -22,7 +22,7 @@ class LoadingTestCase(unittest.TestCase):
         frame.add(paned)
         group = DockGroup()
         paned.add(group)
-        item = DockItem('icon', 't', 'xx')
+        item = DockItem(title='t', title_tooltip_text='xx', icon_name='icon', stock_id="")
         item.set_name('fillme')
         group.add(item)
 
@@ -30,9 +30,8 @@ class LoadingTestCase(unittest.TestCase):
         assert '<layout><dockframe height="1" width="1">'\
         '<dockpaned orientation="horizontal">'\
         '<dockgroup weight="100">'\
-        '<dockitem icon="icon" title="t" tooltip="xx" />'\
+        '<dockitem icon_name="icon" stock_id="" title="t" tooltip="xx" />'\
         '</dockgroup></dockpaned></dockframe></layout>' == s, s
-
 
     def test_deserialize(self):
         xml = '''
@@ -40,7 +39,7 @@ class LoadingTestCase(unittest.TestCase):
           <dockframe height="120" width="200">
             <dockpaned orientation="horizontal">
               <dockgroup weight="100">
-                <dockitem icon="icon" title="t" tooltip="xx">
+                <dockitem title="t" tooltip="xx" icon_name="icon" stock_id="">
                   <widget name="fillme" />
                 </dockitem>
               </dockgroup>
@@ -78,17 +77,17 @@ class LoadingTestCase(unittest.TestCase):
           <dockframe height="100" width="492">
             <dockpaned orientation="horizontal">
               <dockgroup weight="45">
-                <dockitem icon="file-manager" title="New 3" tooltip="Hi!"/>
+                <dockitem title="New 3" tooltip="Hi!" icon_name="file-manager" stock_id=""/>
               </dockgroup>
               <dockgroup weight="55">
-                <dockitem icon="web-browser" title="New 1" tooltip="browser"/>
-                <dockitem icon="web-browser" title="New 4" tooltip="browser"/>
+                <dockitem title="New 1" tooltip="browser" icon_name="web-browser" stock_id=""/>
+                <dockitem title="New 4" tooltip="browser" icon_name="web-browser" stock_id=""/>
               </dockgroup>
             </dockpaned>
           </dockframe>
           <dockframe floating="true" x="12" y="23" height="100" width="330">
             <dockgroup>
-              <dockitem icon="style" title="New 2" tooltip="abc"/>
+              <dockitem title="New 2" tooltip="abc" icon_name="style" stock_id=""/>
             </dockgroup>
           </dockframe>
         </layout>

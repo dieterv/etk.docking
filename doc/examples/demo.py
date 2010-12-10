@@ -188,28 +188,30 @@ class MainWindow(gtk.Window):
         return scrolledwindow
 
     def _add_dockitems(self, dockgroup):
-        examples = [('gtk-execute', 'calculator', '#!/usr/bin/env python\n\nprint \'Hello!\''),
-                    ('gtk-open', 'Hi!', 'Hello!'),
-                    ('gtk-file', 'ABC', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'),
-                    ('gtk-find', 'abc', 'abcdefghijklmnopqrstuvwxyz'),
-                    ('gtk-harddisk', 'browser', '0123456789'),
-                    ('gtk-home', 'today', '9876543210'),
+        examples = [(gtk.STOCK_EXECUTE, 'calculator', '#!/usr/bin/env python\n\nprint \'Hello!\''),
+                    (gtk.STOCK_OPEN, 'Hi!', 'Hello!'),
+                    (gtk.STOCK_FILE, 'ABC', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'),
+                    (gtk.STOCK_FIND, 'abc', 'abcdefghijklmnopqrstuvwxyz'),
+                    (gtk.STOCK_HARDDISK, 'browser', '0123456789'),
+                    (gtk.STOCK_HOME, 'today', '9876543210'),
                     gtk.Notebook]
+
         for i in [1]: #range(random.randrange(1, 10, 1)):
             example = random.choice(examples)
+
             if example is gtk.Notebook:
                 child = gtk.Notebook()
                 child.append_page(gtk.Button('Click me'),
                                   gtk.Label('New %s' % self.file_counter))
-                icon_name = ''
+                stock_id = gtk.STOCK_NETWORK
                 tooltip_text = 'notebook'
             else:
-                icon_name, tooltip_text, text = example
+                stock_id, tooltip_text, text = example
                 child = self._create_content(text)
-                child.set_name(icon_name)
+                child.set_name(stock_id)
 
             # Create a DockItem and add our TextView
-            di = DockItem(icon_name=icon_name, title='New %s' % self.file_counter, title_tooltip_text=tooltip_text)
+            di = DockItem(title='New %s' % self.file_counter, title_tooltip_text=tooltip_text, stock_id=stock_id)
             di.add(child)
             di.show_all()
 

@@ -35,7 +35,7 @@ from .compactbutton import CompactButton
 from .dockitem import DockItem
 from .dnd import DockDragContext, DRAG_TARGET_ITEM_LIST
 from .hslcolor import HslColor
-from .util import rect_contains, load_icon_image
+from .util import rect_contains
 
 
 class _DockGroupTab(object):
@@ -330,7 +330,7 @@ class DockGroup(gtk.Container):
     def do_expose_event(self, event):
         # Sometimes, expose is called before size calculation is done.
         # This may happen if an update is done of part of the screen because of
-        # (for example) a popup that is removed. However, if in the meantime the 
+        # (for example) a popup that is removed. However, if in the meantime the
 
         # Prepare colors
         bg = self.style.bg[self.state]
@@ -837,7 +837,7 @@ class DockGroup(gtk.Container):
         # Create composite children for tab
         gtk.widget_push_composite_child()
         tab = _DockGroupTab()
-        tab.image = load_icon_image(item.get_icon_name(), gtk.ICON_SIZE_MENU)
+        tab.image = item.get_image()
         tab.label = gtk.Label()
         tab.button = CompactButton(has_frame=False)
         tab.menu_item = gtk.ImageMenuItem()
@@ -855,7 +855,7 @@ class DockGroup(gtk.Container):
         tab.button.set_icon_name_prelight('compact-close-prelight')
         tab.button.set_parent(self)
         tab.button.connect('clicked', self._on_tab_button_clicked, item)
-        tab.menu_item.set_image(gtk.image_new_from_icon_name(item.get_icon_name(), gtk.ICON_SIZE_MENU))
+        tab.menu_item.set_image(item.get_image())
         tab.menu_item.set_label(item.get_title())
         tab.menu_item.connect('activate', self._on_list_menu_item_activated, tab)
         self._list_menu.append(tab.menu_item)
