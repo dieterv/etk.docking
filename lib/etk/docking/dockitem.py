@@ -59,7 +59,7 @@ class DockItem(gtk.Bin):
                             'The image constructed from the specified stock ID or icon-name. Default value is gtk.STOCK_MISSING_IMAGE.',
                             gobject.PARAM_READABLE)}
 
-    def __init__(self, title='', title_tooltip_text='', icon_name='', stock_id=''):
+    def __init__(self, title='', title_tooltip_text='', icon_name=None, stock_id=None):
         gtk.Bin.__init__(self)
         self.set_flags(self.flags() | gtk.NO_WINDOW)
         self.set_redraw_on_allocate(False)
@@ -68,8 +68,8 @@ class DockItem(gtk.Bin):
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
 
         # Internal housekeeping
-        self._icon_name = ''
-        self._stock_id = ''
+        self._icon_name = icon_name
+        self._stock_id = stock_id
 
         self.set_title(title)
         self.set_title_tooltip_text(title_tooltip_text)
@@ -130,9 +130,9 @@ class DockItem(gtk.Bin):
         self.notify('stock')
 
     def get_image(self):
-        if not self._icon_name == '':
+        if self._icon_name:
             return gtk.image_new_from_icon_name(self._icon_name, gtk.ICON_SIZE_MENU)
-        elif not self._stock_id == '':
+        elif self._stock_id:
             return gtk.image_new_from_stock(self._stock_id, gtk.ICON_SIZE_MENU)
         else:
             return gtk.Image()
