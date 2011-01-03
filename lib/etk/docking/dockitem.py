@@ -58,6 +58,9 @@ class DockItem(gtk.Bin):
                             'Image',
                             'The image constructed from the specified stock ID or icon-name. Default value is gtk.STOCK_MISSING_IMAGE.',
                             gobject.PARAM_READABLE)}
+    __gsignals__ = {'close':
+                        (gobject.SIGNAL_RUN_LAST,
+                         gobject.TYPE_NONE, ())}
 
     def __init__(self, title='', title_tooltip_text='', icon_name=None, stock_id=None):
         gtk.Bin.__init__(self)

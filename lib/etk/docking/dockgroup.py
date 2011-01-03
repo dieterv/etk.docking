@@ -76,7 +76,7 @@ class DockGroup(gtk.Container):
     '''
     __gtype_name__ = 'EtkDockGroup'
     __gsignals__ = {'item-closed':
-                        (gobject.SIGNAL_RUN_LAST,
+                        (gobject.SIGNAL_RUN_FIRST,
                          gobject.TYPE_NONE,
                          (gobject.TYPE_OBJECT,)),
                     'item-added':
@@ -1024,6 +1024,13 @@ class DockGroup(gtk.Container):
         tab = self._tabs[self.item_num(item)]
         self._tabs.remove(tab)
         self._tabs.insert(position, tab)
+
+    ############################################################################
+    # Signal handlers
+    ############################################################################
+    def do_item_closed(self, item):
+        print 'item-closed'
+        item.emit('close')
 
     ############################################################################
     # Property notification signal handlers

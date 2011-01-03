@@ -212,6 +212,9 @@ class MainWindow(gtk.Window):
 
             # Create a DockItem and add our TextView
             di = DockItem(title='New %s' % self.file_counter, title_tooltip_text=tooltip_text, stock_id=stock_id)
+            def on_close(item):
+                print 'close:', item
+            di.connect('close', on_close)
             di.add(child)
             di.show_all()
 
