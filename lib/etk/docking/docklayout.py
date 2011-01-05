@@ -666,11 +666,12 @@ def dock_paned_magic_borders_leave(self):
 @magic_borders.when_type(DockPaned)
 def dock_paned_magic_borders(self, context, x, y, timestamp):
 
-    def handle(create):
+    a = self.allocation
+
+    def create_received(create):
         current_group = self.get_item_at_pos(x, y)
         assert current_group
 
-        a = self.allocation
         ca = current_group.allocation
 
         if x < MAGIC_BORDER_SIZE:
@@ -714,6 +715,7 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
                 else:
                     position = None
                 new_paned.insert_item(current_group)
+                current_group.queue_resize()
                 new_paned.insert_item(new_group, position)
 
                 new_paned.show()
@@ -745,10 +747,10 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
             return add_group_receiver
 
     if abs(min(y, a.height - y)) < MAGIC_BORDER_SIZE:
-        received = handle(self.get_orientation() == gtk.ORIENTATION_HORIZONTAL)
+        received = create_received(self.get_orientation() == gtk.ORIENTATION_HORIZONTAL)
         return DragData(self, dock_paned_magic_borders_leave, received)
     elif abs(min(x, a.width - x)) < MAGIC_BORDER_SIZE:
-        received = handle(self.get_orientation() == gtk.ORIENTATION_VERTICAL)
+        received = create_received(self.get_orientation() == gtk.ORIENTATION_VERTICAL)
         return DragData(self, dock_paned_magic_borders_leave, received)
 
     return None
