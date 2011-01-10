@@ -306,6 +306,66 @@ class DockLayout(gobject.GObject):
         else: #if item is not self._focused_item:
             self.emit('item-selected', group, item)
 
+def place_new_group(widget, new_group, orientation, position):
+    """
+    Place a `new_group` next to `widget` in a
+    """
+    # Parameters: orientation, position (left/top: None, right/bottom: 1),
+    # current_child, (paned) current_position, (paned) weight
+
+    parent = widget.get_parent()
+    assert parent
+
+    try:
+        current_position = parent.item_num(widget)
+        weight = parent.child_get_property(widget, 'weight')
+    except AttributeError:
+        current_position = None
+
+    if isinstance(parent, DockPaned) and orientation == parent.get_orientation():
+        new_parent = parent
+    else:
+        new_paned = new(DockPaned)
+        new_paned.set_orientation(orientation)
+
+        # Current_child will always be a DockGroup or DockPaned with opposite orientation
+        parent.remove(widget)
+        if current_position is not None:
+            # used for DockPaned
+            parent.insert_item(new_paned, position=current_position, weight=weight)
+        else:
+            # Used for DockFrame
+            parent.add(new_paned)
+
+        new_paned.insert_item(widget, weight=0.5)
+        widget.queue_resize()
+
+    #new_group = new(DockGroup, source, context.docklayout)
+    new_paned.insert_item(new_group, position, weight=0.5)
+
+    new_paned.show()
+    new_group.show()
+ 
+    return new_group
+
+def add_new_group_before(widget, orientation):
+    """
+    Create a new DockGroup and place it before `widget`. The DockPaned that will hold
+    both groups will have the defined orientation.
+    """
+    new_group = new(DockGroup)
+    place_new_group(widget, new_group, orientation, 0)
+    return new_group
+
+def add_new_group_after(widget, orientation):
+    """
+    Create a new DockGroup and place it after `widget`. The DockPaned that will hold
+    both groups will have the defined orientation.
+    """
+    new_group = new(DockGroup)
+    place_new_group(widget, new_group, orientation, None)
+    return new_group
+
 def _propagate_to_parent(func, widget, context, x, y, timestamp):
     '''
     Common function to propagate calls to a parent widget.
@@ -694,32 +754,25 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
         placeholder.show()
 
         if create:
+            if self.get_orientation() == gtk.ORIENTATION_HORIZONTAL:
+                orientation = gtk.ORIENTATION_VERTICAL
+            else:
+                orientation = gtk.ORIENTATION_HORIZONTAL
+
+            weight = self.child_get_property(current_group, 'weight')
+
+            if min(x, y) < MAGIC_BORDER_SIZE:
+                position = 0
+            else:
+                position = None
+
             def new_paned_and_group_receiver(selection_data, info):
                 source = context.get_source_widget()
                 assert source
-                new_paned = new(DockPaned, self)
 
-                if self.get_orientation() == gtk.ORIENTATION_HORIZONTAL:
-                    new_paned.set_orientation(gtk.ORIENTATION_VERTICAL)
-                else:
-                    new_paned.set_orientation(gtk.ORIENTATION_HORIZONTAL)
-
-                position = self.item_num(current_group)
-                weight = self.child_get_property(current_group, 'weight')
-                self.remove(current_group)
-                self.insert_item(new_paned, position=position, weight=weight)
                 new_group = new(DockGroup, source, context.docklayout)
+                place_new_group(current_group, new_group, orientation, position)
 
-                if min(x, y) < MAGIC_BORDER_SIZE:
-                    position = 0
-                else:
-                    position = None
-                new_paned.insert_item(current_group)
-                current_group.queue_resize()
-                new_paned.insert_item(new_group, position)
-
-                new_paned.show()
-                new_group.show()
                 self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
 
                 for item in source.dragcontext.dragged_object:
@@ -792,19 +845,15 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
 
     if x - border < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_HORIZONTAL
-        position = 0
         allocation = (a.x + border, a.y + border, MAGIC_BORDER_SIZE, a.height - border*2)
     elif a.width - x - border < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_HORIZONTAL
-        position = None
         allocation = (a.x + a.width - MAGIC_BORDER_SIZE - border, a.y + border, MAGIC_BORDER_SIZE, a.height - border*2)
     elif y - border < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_VERTICAL
-        position = 0
         allocation = (a.x + border, a.y + border, a.width - border*2, MAGIC_BORDER_SIZE)
     elif a.height - y - border < MAGIC_BORDER_SIZE:
         orientation = gtk.ORIENTATION_VERTICAL
-        position = None
         allocation = (a.x + border, a.y + a.height - MAGIC_BORDER_SIZE - border, a.width - border*2, MAGIC_BORDER_SIZE)
     else:
         return None
@@ -815,22 +864,21 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
     placeholder.size_allocate(allocation)
     placeholder.show()
 
+    current_child = self.get_children()[0]
+    assert current_child
+
+    if min(x - border, y - border) < MAGIC_BORDER_SIZE:
+        position = 0
+    else:
+        position = None
+
     def new_paned_and_group_receiver(selection_data, info):
         source = context.get_source_widget()
         assert source
-        new_paned = new(DockPaned)
-        new_paned.set_orientation(orientation)
-        current_child = self.get_children()[0]
-        assert current_child
-        # Current_child will always be a DockGroup or DockPaned with opposite orientation
-        self.remove(current_child)
-        self.add(new_paned)
+
         new_group = new(DockGroup, source, context.docklayout)
-        new_paned.insert_item(current_child)
-        current_child.queue_resize()
-        new_paned.insert_item(new_group, position)
-        new_paned.show()
-        new_group.show()
+        place_new_group(current_child, new_group, orientation, position)
+
         self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
 
         for item in source.dragcontext.dragged_object:
