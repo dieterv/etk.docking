@@ -796,11 +796,10 @@ class DockPaned(gtk.Container):
         contains the widget specified by `child` or :const:`None` if no item
         contains `child`.
         '''
-        for item in self._items:
-            if item.child is child:
-                return self._items.index(item)
-        else:
-            return None
+        try:
+            return self.get_children().index(child)
+        except ValueError:
+            pass
 
     def get_nth_item(self, item_num):
         '''
