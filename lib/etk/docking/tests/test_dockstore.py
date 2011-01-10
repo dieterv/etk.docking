@@ -30,7 +30,7 @@ class LoadingTestCase(unittest.TestCase):
         assert '<layout><dockframe height="1" width="1">'\
         '<dockpaned orientation="horizontal">'\
         '<dockgroup weight="100">'\
-        '<dockitem icon_name="icon" stock_id="" title="t" tooltip="xx" />'\
+        '<dockitem icon_name="icon" title="t" tooltip="xx" />'\
         '</dockgroup></dockpaned></dockframe></layout>' == s, s
 
     def test_deserialize(self):
