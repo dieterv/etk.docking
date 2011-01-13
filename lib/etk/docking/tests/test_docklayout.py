@@ -297,3 +297,95 @@ class TestDockLayoutDnD(unittest.TestCase):
 
         # TODO: check is paned[0]
         assert not paneds[0].get_parent()
+
+from etk.docking import docklayout
+
+class PlacementTest(unittest.TestCase):
+
+    def setUp(self):
+        self.layout = DockLayout()
+        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.frame = DockFrame()
+        self.group = DockGroup()
+
+        self.layout.add(self.frame)
+        self.window.add(self.frame)
+        self.frame.add(self.group)
+
+    def test_placement_left(self):
+
+        g1, g2 = DockGroup(), DockGroup()
+
+        docklayout.add_new_group_left(self.group, g1)
+
+        paned = g1.get_parent()
+        assert isinstance(paned, DockPaned), paned
+        assert self.group.get_parent() is paned
+        assert paned.get_nth_item(0) is g1
+        assert paned.get_nth_item(1) is self.group
+
+        docklayout.add_new_group_left(self.group, g2)
+        assert self.group.get_parent() is paned
+        assert g2.get_parent() is paned
+        assert paned.get_nth_item(0) is g1
+        assert paned.get_nth_item(1) is g2
+        assert paned.get_nth_item(2) is self.group
+
+    def test_placement_right(self):
+
+        g1, g2 = DockGroup(), DockGroup()
+
+        docklayout.add_new_group_right(self.group, g1)
+
+        paned = g1.get_parent()
+        assert isinstance(paned, DockPaned), paned
+        assert self.group.get_parent() is paned
+        assert paned.get_nth_item(0) is self.group
+        assert paned.get_nth_item(1) is g1
+
+        docklayout.add_new_group_right(self.group, g2)
+        assert self.group.get_parent() is paned
+        assert g2.get_parent() is paned
+        assert paned.get_nth_item(0) is self.group
+        assert paned.get_nth_item(1) is g2
+        assert paned.get_nth_item(2) is g1
+
+
+    def test_placement_above(self):
+
+        g1, g2 = DockGroup(), DockGroup()
+
+        docklayout.add_new_group_above(self.group, g1)
+
+        paned = g1.get_parent()
+        assert isinstance(paned, DockPaned), paned
+        assert self.group.get_parent() is paned
+        assert paned.get_nth_item(0) is g1
+        assert paned.get_nth_item(1) is self.group
+
+        docklayout.add_new_group_above(self.group, g2)
+        assert self.group.get_parent() is paned
+        assert g2.get_parent() is paned
+        assert paned.get_nth_item(0) is g1
+        assert paned.get_nth_item(1) is g2
+        assert paned.get_nth_item(2) is self.group
+
+    def test_placement_below(self):
+
+        g1, g2 = DockGroup(), DockGroup()
+
+        docklayout.add_new_group_below(self.group, g1)
+
+        paned = g1.get_parent()
+        assert isinstance(paned, DockPaned), paned
+        assert self.group.get_parent() is paned
+        assert paned.get_nth_item(0) is self.group
+        assert paned.get_nth_item(1) is g1
+
+        docklayout.add_new_group_below(self.group, g2)
+        assert self.group.get_parent() is paned
+        assert g2.get_parent() is paned
+        assert paned.get_nth_item(0) is self.group
+        assert paned.get_nth_item(1) is g2
+        assert paned.get_nth_item(2) is g1
+

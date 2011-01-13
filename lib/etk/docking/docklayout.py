@@ -306,7 +306,41 @@ class DockLayout(gobject.GObject):
         else: #if item is not self._focused_item:
             self.emit('item-selected', group, item)
 
-def place_new_group(widget, new_group, orientation, position):
+################################################################################
+# Placement
+################################################################################
+
+def add_new_group_left(widget, new_group):
+    add_new_group_before(widget, new_group, gtk.ORIENTATION_HORIZONTAL)
+
+def add_new_group_right(widget, new_group):
+    add_new_group_after(widget, new_group, gtk.ORIENTATION_HORIZONTAL)
+
+def add_new_group_above(widget, new_group):
+    add_new_group_before(widget, new_group, gtk.ORIENTATION_VERTICAL)
+
+def add_new_group_below(widget, new_group):
+    add_new_group_after(widget, new_group, gtk.ORIENTATION_VERTICAL)
+
+def add_new_group_before(widget, new_group, orientation):
+    """
+    Create a new DockGroup and place it before `widget`. The DockPaned that will hold
+    both groups will have the defined orientation.
+    """
+    position = widget.get_parent().get_children().index(widget)
+    add_new_group(widget, new_group, orientation, position)
+    return new_group
+
+def add_new_group_after(widget, new_group, orientation):
+    """
+    Create a new DockGroup and place it after `widget`. The DockPaned that will hold
+    both groups will have the defined orientation.
+    """
+    position = widget.get_parent().get_children().index(widget) + 1
+    add_new_group(widget, new_group, orientation, position)
+    return new_group
+
+def add_new_group(widget, new_group, orientation, position):
     """
     Place a `new_group` next to `widget` in a
     """
@@ -323,7 +357,7 @@ def place_new_group(widget, new_group, orientation, position):
         current_position = None
 
     if isinstance(parent, DockPaned) and orientation == parent.get_orientation():
-        new_parent = parent
+        new_paned = parent
     else:
         new_paned = new(DockPaned)
         new_paned.set_orientation(orientation)
@@ -348,23 +382,32 @@ def place_new_group(widget, new_group, orientation, position):
  
     return new_group
 
-def add_new_group_before(widget, orientation):
-    """
-    Create a new DockGroup and place it before `widget`. The DockPaned that will hold
-    both groups will have the defined orientation.
-    """
-    new_group = new(DockGroup)
-    place_new_group(widget, new_group, orientation, 0)
-    return new_group
+def add_new_group_floating(new_group, layout, size=None, pos=None):
+    window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+    if pos:
+        window.move(*pos)
+    window.set_resizable(True)
+    window.set_skip_taskbar_hint(True)
+    window.set_type_hint(gdk.WINDOW_TYPE_HINT_UTILITY)
+    window.set_transient_for(layout.get_main_frames().next().get_toplevel())
 
-def add_new_group_after(widget, orientation):
-    """
-    Create a new DockGroup and place it after `widget`. The DockPaned that will hold
-    both groups will have the defined orientation.
-    """
-    new_group = new(DockGroup)
-    place_new_group(widget, new_group, orientation, None)
-    return new_group
+    if size:
+        window.set_size_request(*size)
+
+    window.connect('delete-event', window_delete_handler)
+    frame = new(DockFrame)
+    window.add(frame)
+    frame.add(new_group)
+    window.show()
+    frame.show()
+    new_group.show()
+    layout.add(frame)
+
+    return frame
+
+################################################################################
+# Drag and Drop behaviour
+################################################################################
 
 def _propagate_to_parent(func, widget, context, x, y, timestamp):
     '''
@@ -582,32 +625,6 @@ def window_delete_handler(window, event):
         filter(lambda i: isinstance(i, DockItem), flatten(window)))
     return False 
 
-def place_floating(items, original_group, layout, size=None, pos=None):
-    window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-    if pos:
-        window.move(*pos)
-    window.set_resizable(True)
-    window.set_skip_taskbar_hint(True)
-    window.set_type_hint(gdk.WINDOW_TYPE_HINT_UTILITY)
-    window.set_transient_for(layout.get_main_frames().next().get_toplevel())
-
-    if size:
-        window.set_size_request(*size)
-
-    window.connect('delete-event', window_delete_handler)
-    frame = new(DockFrame)
-    window.add(frame)
-    group = new(DockGroup, original_group, layout)
-    frame.add(group)
-    window.show()
-    frame.show()
-    group.show()
-    layout.add(frame)
-
-    for item in items:
-        group.append_item(item)
-
-
 # Attached to drag *source*
 @drag_failed.when_type(DockGroup)
 def dock_group_drag_failed(self, context, result):
@@ -621,10 +638,12 @@ def dock_group_drag_failed(self, context, result):
         else:
             size = None
 
-        place_floating(self.dragcontext.dragged_object,
-                       context.get_source_widget(),
-                       context.docklayout,
-                       size, self.get_pointer())
+        layout = context.docklayout
+        new_group = new(DockGroup, context.get_source_widget(), layout)
+        add_new_group_floating(new_group, layout, size, self.get_pointer())
+        for item in self.dragcontext.dragged_object:
+            new_group.append_item(item)
+
     else:
         for item in self.dragcontext.dragged_object:
             self.insert_item(item, position=self._dragged_tab_index)
@@ -771,7 +790,7 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
                 assert source
 
                 new_group = new(DockGroup, source, context.docklayout)
-                place_new_group(current_group, new_group, orientation, position)
+                add_new_group(current_group, new_group, orientation, position)
 
                 self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
 
@@ -877,7 +896,7 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
         assert source
 
         new_group = new(DockGroup, source, context.docklayout)
-        place_new_group(current_child, new_group, orientation, position)
+        add_new_group(current_child, new_group, orientation, position)
 
         self.log.debug('Recieving item %s' % source.dragcontext.dragged_object)
 
