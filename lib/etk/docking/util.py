@@ -64,6 +64,10 @@ def load_icon_image(icon_name, size):
     return gtk.image_new_from_icon_name(icon_name, size)
 
 def flatten(w, child_getter=gtk.Container.get_children):
+    """
+    Generator function that returns all items in a hierarchy.
+    Default `child_getter` returns children in a GTK+ widget hierarchy.
+    """
     yield w
     try:
         for c in child_getter(w):
