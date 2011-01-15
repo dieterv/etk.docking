@@ -184,6 +184,15 @@ class DockLayout(gobject.GObject):
             if isinstance(widget, gtk.Container):
                 widget.foreach(self.remove_signal_handlers)
 
+    def update_floating_window_title(self, widget):
+        frame = widget.get_ancestor(DockFrame)
+        if frame in self.get_floating_frames():
+            frame.get_toplevel().set_title(
+                ', '.join(
+                    map(lambda w: w.title,
+                        filter(lambda w: isinstance(w, DockItem),
+                            flatten(frame)))))
+
     def do_item_closed(self, group, item):
         """
         If an item is closed, perform maintenance cleanup.
@@ -206,6 +215,7 @@ class DockLayout(gobject.GObject):
         """
         if isinstance(widget, gtk.Container):
             self.add_signal_handlers(widget)
+        self.update_floating_window_title(container)
 
     def on_widget_remove(self, container, widget):
         """
@@ -213,6 +223,7 @@ class DockLayout(gobject.GObject):
         """
         if isinstance(widget, gtk.Container):
             self.remove_signal_handlers(widget)
+        self.update_floating_window_title(container)
 
     def on_widget_drag_motion(self, widget, context, x, y, timestamp):
         if DRAG_TARGET_ITEM_LIST[0] in context.targets:
@@ -382,6 +393,11 @@ def add_new_group(widget, new_group, orientation, position):
  
     return new_group
 
+def _window_delete_handler(window, event):
+    map(lambda i: i.get_parent().emit('item-closed', i),
+        filter(lambda i: isinstance(i, DockItem), flatten(window)))
+    return False 
+
 def add_new_group_floating(new_group, layout, size=None, pos=None):
     window = gtk.Window(gtk.WINDOW_TOPLEVEL)
     if pos:
@@ -394,7 +410,7 @@ def add_new_group_floating(new_group, layout, size=None, pos=None):
     if size:
         window.set_size_request(*size)
 
-    window.connect('delete-event', window_delete_handler)
+    window.connect('delete-event', _window_delete_handler)
     frame = new(DockFrame)
     window.add(frame)
     frame.add(new_group)
@@ -620,11 +636,6 @@ def dock_group_cleanup(self, layout):
 def dock_group_drag_end(self, context):
     cleanup(self, context.docklayout)
 
-def window_delete_handler(window, event):
-    map(lambda i: i.get_parent().emit('item-closed', i),
-        filter(lambda i: isinstance(i, DockItem), flatten(window)))
-    return False 
-
 # Attached to drag *source*
 @drag_failed.when_type(DockGroup)
 def dock_group_drag_failed(self, context, result):
@@ -814,6 +825,7 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
                 new_group.show()
                 for item in source.dragcontext.dragged_object:
                     new_group.append_item(item)
+
                 context.finish(True, True, timestamp) # success, delete, time
 
             return add_group_receiver
