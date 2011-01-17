@@ -167,3 +167,14 @@ class DockItem(gtk.Bin):
             child_allocation.width = allocation.width - (2 * self.border_width)
             child_allocation.height = allocation.height - (2 * self.border_width)
             self.child.size_allocate(child_allocation)
+
+    ############################################################################
+    # DockItem
+    ############################################################################
+    def do_close(self):
+        group = self.get_parent()
+        if group:
+            group.remove(self)
+
+    def close(self):
+        self.emit('close')

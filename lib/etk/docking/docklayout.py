@@ -121,8 +121,9 @@ class DockLayout(gobject.GObject):
         elif isinstance(widget, DockGroup):
             signals = (('item-added', self.on_widget_add),
                        ('item-removed', self.on_widget_remove),
-                       ('item-closed', self.on_dockgroup_item_closed),
                        ('item-selected', self.on_dockgroup_item_selected))
+        elif isinstance(widget, DockItem):
+            signals = (('close', self.on_dockitem_close),)
         elif isinstance(widget, gtk.Container):
             signals = (('add', self.on_widget_add),
                        ('remove', self.on_widget_remove))
@@ -302,8 +303,10 @@ class DockLayout(gobject.GObject):
                 group = item.get_parent()
                 self.emit('item-selected', group, item)
 
-    def on_dockgroup_item_closed(self, group, item):
+    def on_dockitem_close(self, item):
+        group = item.get_parent()
         self.emit('item-closed', group, item)
+        cleanup(group, self)
 
     def on_dockgroup_item_selected(self, group, item):
         """
@@ -394,7 +397,7 @@ def add_new_group(widget, new_group, orientation, position):
     return new_group
 
 def _window_delete_handler(window, event):
-    map(lambda i: i.get_parent().emit('item-closed', i),
+    map(lambda i: i.close(),
         filter(lambda i: isinstance(i, DockItem), flatten(window)))
     return False 
 

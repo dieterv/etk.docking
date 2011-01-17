@@ -75,11 +75,7 @@ class DockGroup(gtk.Container):
     etk.DockGroup.
     '''
     __gtype_name__ = 'EtkDockGroup'
-    __gsignals__ = {'item-closed':
-                        (gobject.SIGNAL_RUN_FIRST,
-                         gobject.TYPE_NONE,
-                         (gobject.TYPE_OBJECT,)),
-                    'item-added':
+    __gsignals__ = {'item-added':
                         (gobject.SIGNAL_RUN_LAST,
                          gobject.TYPE_NONE,
                          (gobject.TYPE_OBJECT,)),
@@ -1026,13 +1022,6 @@ class DockGroup(gtk.Container):
         self._tabs.insert(position, tab)
 
     ############################################################################
-    # Signal handlers
-    ############################################################################
-    def do_item_closed(self, item):
-        print 'item-closed'
-        item.emit('close')
-
-    ############################################################################
     # Property notification signal handlers
     ############################################################################
     def _item_title_changed(self, tab):
@@ -1055,8 +1044,7 @@ class DockGroup(gtk.Container):
     # Decoration area signal handlers
     ############################################################################
     def _on_tab_button_clicked(self, button, item):
-        self.remove(item)
-        self.emit('item-closed', item)
+        item.close()
 
     def _on_list_button_clicked(self, button):
         def _menu_position(menu):
