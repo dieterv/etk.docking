@@ -62,6 +62,8 @@ del os, gtk, path
 # This also defines the widgets that can be considered public.
 ############################################################################
 from .docklayout import DockLayout
+from .docklayout import add_new_group_left, add_new_group_right, \
+                        add_new_group_above, add_new_group_below, add_new_group_floating
 from .dockframe import DockFrame
 from .dockpaned import DockPaned
 from .dockgroup import DockGroup

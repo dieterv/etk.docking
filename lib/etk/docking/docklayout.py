@@ -317,8 +317,7 @@ class DockLayout(gobject.GObject):
         if focus_child:
             # item-selected is emited by is-focus handler
             focus_child.set_property('has-focus', True)
-        else: #if item is not self._focused_item:
-            self.emit('item-selected', group, item)
+        self.emit('item-selected', group, item)
 
 ################################################################################
 # Placement

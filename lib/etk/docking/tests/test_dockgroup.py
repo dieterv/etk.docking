@@ -377,13 +377,13 @@ class TestDockGroup(unittest.TestCase):
         tab = dockgroup._tabs[0]
 
         item_closed = []
-        def item_closed_handler(group, item):
-            item_closed.append((group, item))
+        def item_closed_handler(item):
+            item_closed.append(item)
 
-        dockgroup.connect('item-closed', item_closed_handler)
+        dockitem.connect('close', item_closed_handler)
 
         # Simulate clicking the close button
         tab.button.emit('clicked')
 
-        assert [(dockgroup, dockitem)] == item_closed
+        assert [dockitem] == item_closed
 
