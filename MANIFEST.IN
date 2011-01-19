@@ -1,2 +1,4 @@
 include AUTHORS COPYING COPYING.LESSER README TODO
 include ez_setup.py
+
+recursive-include lib/etk/docking/icons *.png

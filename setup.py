@@ -83,8 +83,7 @@ setup(namespace_packages = ['etk'],
 
       packages = find_packages('lib'),
       package_dir = {'': 'lib'},
-      data_files = get_data_files(('etk/docking/icons', 'lib/etk/docking/icons', '*.png'),
-                                  ('doc/examples', 'doc/examples', '*.py'),
+      data_files = get_data_files(('doc/examples', 'doc/examples', '*.py'),
                                   ('doc/reference', 'doc/reference/build/html', '*')),
 
       tests_require = ['nose'],
