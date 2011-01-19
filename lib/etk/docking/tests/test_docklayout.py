@@ -115,6 +115,21 @@ class TestDockLayout(unittest.TestCase):
         assert widgets[0] is group
         assert widgets[1] is group2
 
+    def test_get_widgets_with_many_frames(self):
+        frame1 = DockFrame()
+        frame2 = DockFrame()
+        frame3 = DockFrame()
+        
+        layout = DockLayout()
+
+        layout.add(frame1)
+        layout.add(frame2)
+        layout.add(frame3)
+
+        widgets = list(layout.get_widgets('foo'))
+        assert len(widgets) == 0
+
+
 class StubContext(object):
     def __init__(self, source_widget, items):
         self.targets = [ DRAG_TARGET_ITEM_LIST[0] ]

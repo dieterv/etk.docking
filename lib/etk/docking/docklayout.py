@@ -109,7 +109,7 @@ class DockLayout(gobject.GObject):
         Get a set of widgets based on their name.
         """
         return filter(lambda w: w.get_name() == name,
-                      *itertools.chain(flatten(frame) for frame in self.frames))
+                      itertools.chain.from_iterable(flatten(frame) for frame in self.frames))
 
     def _get_signals(self, widget):
         """
