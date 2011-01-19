@@ -205,11 +205,11 @@ class TestDockGroup(unittest.TestCase):
 
     def test_get_n_items(self):
         dockgroup = DockGroup()
-        self.assertTrue(len(dockgroup) == 0)
+        self.assertTrue(dockgroup.get_n_items() == len(dockgroup) == 0)
 
         dockitem = DockItem()
         dockgroup.add(dockitem)
-        self.assertTrue(len(dockgroup) == 1)
+        self.assertTrue(dockgroup.get_n_items() == len(dockgroup) == 1)
 
         dockitem.destroy()
         dockgroup.destroy()

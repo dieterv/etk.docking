@@ -907,6 +907,15 @@ class DockGroup(gtk.Container):
                 return self._tabs.index(tab)
         return None
 
+    def get_n_items(self):
+        '''
+        :returns: the number of item tabs in the DockGroup.
+
+        The get_n_items() method returns the number of item tabs in the
+        DockGroup.
+        '''
+        return len(self)
+
     def get_nth_item(self, item_num):
         '''
         :param item_num: the index of an item tab in the DockGroup.
