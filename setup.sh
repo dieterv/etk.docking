@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Configure the path to your Python interpreter installations.
-INTERPRETERS="/d/bin/Python26 /d/bin/Python27"
+INTERPRETERS="/d/bin/Python27 /d/bin/Python26"
 
 # Build documentation
-SPHINXOPTS="-W" make -e -C doc/reference/ html &&
+/d/bin/Python27/python setup.py build_sphinx
 
 # Build eggs
 for INTERPRETER in ${INTERPRETERS}; do
