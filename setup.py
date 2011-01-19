@@ -39,9 +39,12 @@ def _get_data_files(dest, src, filter):
     path = os.path.abspath(os.path.join(os.path.dirname(__file__), src))
     files = []
 
-    for item in fnmatch.filter(os.listdir(path), filter):
-        if os.path.isfile(os.path.join(path, item)):
-            files.append(('%s/%s' % (src, item)))
+    if os.path.isdir(path):
+        for item in fnmatch.filter(os.listdir(path), filter):
+            if os.path.isfile(os.path.join(path, item)):
+                files.append(('%s/%s' % (src, item)))
+    else:
+        print 'get_data_files: "%s" does not exist, ignoring'
 
     return files
 
@@ -51,11 +54,14 @@ def get_data_files(*args):
     for (dest, src, filter) in args:
         path = os.path.abspath(os.path.join(os.path.dirname(__file__), src))
 
-        data_files.append(('%s' % dest, _get_data_files('%s' % dest, '%s' % src, filter)))
+        if os.path.isdir(path):
+            data_files.append(('%s' % dest, _get_data_files('%s' % dest, '%s' % src, filter)))
 
-        for item in os.listdir(path):
-            if os.path.isdir(os.path.join(path, item)):
-                data_files.append(('%s/%s' % (dest, item), _get_data_files('%s/%s' % (dest, item), '%s/%s' % (src, item), filter)))
+            for item in os.listdir(path):
+                if os.path.isdir(os.path.join(path, item)):
+                    data_files.append(('%s/%s' % (dest, item), _get_data_files('%s/%s' % (dest, item), '%s/%s' % (src, item), filter)))
+        else:
+            print 'get_data_files: "%s" does not exist, ignoring'
 
     return data_files
 
