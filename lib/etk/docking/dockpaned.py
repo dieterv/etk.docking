@@ -363,7 +363,7 @@ class DockPaned(gtk.Container):
         exeeded.
 
         The general scheme is as follows:
-        
+
         * figure out which items requested a new weight
         * ensure sum(min_sizes) fits in the allocated size
         * ensure the requested weights do not make items go smaller than min_size
@@ -866,7 +866,7 @@ for index, (name, pspec) in enumerate(DockPaned.__gchild_properties__.iteritems(
 
 def fair_scale(weight, wmpairs):
     """
-    Fair scaling algorithm. 
+    Fair scaling algorithm.
     A weight and a list of (weight, min_weight) pairs is provided. The result is a list
     of calculated weights that add up to weight, but are no smaller than their specified
     min_weight's.

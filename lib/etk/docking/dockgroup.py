@@ -269,10 +269,10 @@ class DockGroup(gtk.Container):
                 tab.image.show()
                 tab.label.show()
             elif tab.item.flags() & gtk.VISIBLE:
-                    tab.item.hide()
-                    tab.image.hide()
-                    tab.button.hide()
-                    tab.label.hide()
+                tab.item.hide()
+                tab.image.hide()
+                tab.label.hide()
+                tab.button.hide()
 
         # Only show the list button when needed
         if len(self._tabs) > len(self._visible_tabs):
@@ -977,7 +977,6 @@ class DockGroup(gtk.Container):
 
         # Refresh ourselves
         self.queue_resize()
-
 
     def next_item(self):
         '''
