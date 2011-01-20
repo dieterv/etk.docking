@@ -715,6 +715,11 @@ class DockGroup(gtk.Container):
                 if tab not in self._tabs:
                     self._visible_tabs.remove(tab)
 
+                if tab is self._current_tab:
+                    tab.button.show()
+                else:
+                    tab.button.hide()
+
             available_width = self._available_width
 
             calculated_width = 0
