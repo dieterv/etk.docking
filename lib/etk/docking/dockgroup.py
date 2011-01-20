@@ -20,8 +20,8 @@
 
 
 from __future__ import absolute_import
-from math import pi
 from logging import getLogger
+from math import pi
 from operator import attrgetter
 from time import time
 
@@ -68,7 +68,7 @@ class DockGroup(gtk.Container):
     The etk.DockGroup widget is a gtk.Container that groups its children in a
     tabbed interface.
 
-    You can reorder tabs by dragging them to the desired location within the
+    Tabs can be reorder by dragging them to the desired location within the
     same or another etk.DockGroup having the same group-id. You can also drag
     a complete etk.DockGroup onto another etk.DockGroup having the same group-id
     to merge all etk.DockItems from the source into the destination
@@ -252,9 +252,9 @@ class DockGroup(gtk.Container):
         self._list_button.size_allocate(gdk.Rectangle(allocation.width - self._frame_width - self._spacing - max_w - min_w - list_w, by, list_w, bh))
 
         # Compute available tab area width
-        self._available_width = (allocation.width - self._frame_width - self._spacing -
-                           max_w - min_w - list_w - self._spacing)
+        self._available_width = (allocation.width - self._frame_width - self._spacing - max_w - min_w - list_w - self._spacing)
 
+        # Update visible tabs
         self._update_visible_tabs()
 
         # Update visibility on dockitems and composite children used by tabs.
@@ -283,6 +283,7 @@ class DockGroup(gtk.Container):
         # Compute x an y for each visible tab and allocate space for
         # the tab's composite children.
         cx = cy = 0
+
         for tab in self._visible_tabs:
             tab.area.x = cx
             tab.area.y = cy
@@ -324,10 +325,6 @@ class DockGroup(gtk.Container):
         self.queue_draw_area(0, 0, self.allocation.width, self.allocation.height)
 
     def do_expose_event(self, event):
-        # Sometimes, expose is called before size calculation is done.
-        # This may happen if an update is done of part of the screen because of
-        # (for example) a popup that is removed. However, if in the meantime the
-
         # Prepare colors
         bg = self.style.bg[self.state]
         bg = (bg.red_float, bg.green_float, bg.blue_float)
@@ -373,6 +370,7 @@ class DockGroup(gtk.Container):
 
             # Draw tabs
             c.set_line_width(self._frame_width)
+
             try:
                 # Fails if expose event happens before size request/allocate when a new
                 # current_tab has been selected.
@@ -591,10 +589,10 @@ class DockGroup(gtk.Container):
 
         For group movement, no special action is taken.
         '''
-        # Set some data, so DnD process continues
-        selection_data.set(gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0]), 8,
-                            '%d tabs' % len(self.dragcontext.dragged_object))
-
+        # Set some data so the DnD process continues
+        selection_data.set(gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0]),
+                           8,
+                           '%d tabs' % len(self.dragcontext.dragged_object))
 
     def do_drag_data_delete(self, context):
         '''
@@ -715,28 +713,32 @@ class DockGroup(gtk.Container):
                 if tab not in self._tabs:
                     self._visible_tabs.remove(tab)
 
+                # TODO: There are other places where something like this happens,
+                #       notably do_motion_notify_event. Consider some cleanup...
                 if tab is self._current_tab:
                     tab.button.show()
                 else:
                     tab.button.hide()
 
             available_width = self._available_width
-
             calculated_width = 0
+
             for tab in self._visible_tabs:
                 calculated_width += tab.area.width
 
-            if calculated_width < available_width \
-                    and len(self._visible_tabs) < len(self._tabs):
+            if calculated_width < available_width and len(self._visible_tabs) < len(self._tabs):
                 tab_age = sorted(self._tabs, key=attrgetter('last_focused'), reverse=True)
+
                 while tab_age and calculated_width < available_width:
                     if tab_age[0] not in self._visible_tabs:
                         calculated_width += tab_age[0].area.width
                         self._visible_tabs.append(tab_age[0])
+
                     del tab_age[0]
 
             if calculated_width > available_width:
                 tab_age = sorted(self._visible_tabs, key=attrgetter('last_focused'))
+
                 while len(tab_age) > 1 and calculated_width > available_width:
                     calculated_width -= tab_age[0].area.width
                     self._visible_tabs.remove(tab_age[0])
@@ -764,6 +766,7 @@ class DockGroup(gtk.Container):
         different state can be set if required.
         '''
         self._tab_state = tab_state
+
         if self.allocation:
             self.queue_draw_area(0, 0, self.allocation.width, self.allocation.height)
 
@@ -870,7 +873,6 @@ class DockGroup(gtk.Container):
             tab.button.set_parent_window(self.window)
 
         self._tabs.insert(position, tab)
-
         self.emit('item-added', item)
 
         #TODO: get rid of this pronto!
@@ -1040,6 +1042,7 @@ class DockGroup(gtk.Container):
     def _item_title_changed(self, tab):
         tab.label.set_text(tab.item.get_title())
         self.queue_resize()
+
         if tab is self._current_tab:
             tab.menu_item.child.set_use_markup(True)
             tab.menu_item.child.set_markup('<b>%s</b>' % tab.item.get_title())

@@ -25,7 +25,9 @@ The configuration can be set for every element in the hierarchy. By default the 
 name can be used.
 """
 
+
 import gtk
+
 
 class DockSettings(object):
     '''
@@ -51,6 +53,7 @@ class DockSettings(object):
         self.float_retain_size = float_retain_size
         self.expand = expand
         self.inherit_settings = inherit_settings
+
 
 class DockSettingsDict(object):
     '''
@@ -82,5 +85,6 @@ class DockSettingsDict(object):
 
     def __setitem__(self, target, settings):
         self._settings[self.widget_name(target)] = settings
+
 
 settings = DockSettingsDict()

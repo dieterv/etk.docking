@@ -30,8 +30,10 @@ from .dnd import DockDragContext
 from .util import rect_overlaps
 from .docksettings import settings
 
+
 # The weight we allocate to a newly added item if we can't come up with anything else
 FALLBACK_WEIGHT = 0.2
+
 
 class _DockPanedHandle(object):
     '''
@@ -385,6 +387,7 @@ class DockPaned(gtk.Container):
 
         # Ensure the min_sizes do not exceed the overall size
         min_size = sum(i.min_size for i in items)
+
         if min_size > size:
             sf = size / min_size
             self.log.warn('Size scaling required (factor=%f)' % sf)
@@ -547,16 +550,19 @@ class DockPaned(gtk.Container):
 
                 if isinstance(child, _DockPanedItem):
                     s = round(child.weight * size)
+
                     if self._orientation == gtk.ORIENTATION_HORIZONTAL:
                         rect.height = allocation.height
                         rect.width = s
                         cx += s
+
                         if child is self._items[-1]:
                             rect.width += allocation.width - cx
                     else:
                         rect.height = s
                         rect.width = allocation.width
                         cy += s
+
                         if child is self._items[-1]:
                             rect.height += allocation.height - cy
 
@@ -687,11 +693,13 @@ class DockPaned(gtk.Container):
 
     def do_get_child_property(self, child, property_id, pspec):
         item = self._item_for_child(child)
+
         if pspec.name == 'weight':
             return item.weight_request or item.weight
 
     def do_set_child_property(self, child, property_id, value, pspec):
         item = self._item_for_child(child)
+
         if pspec.name == 'weight':
             item.weight_request = value
             child.child_notify('weight')

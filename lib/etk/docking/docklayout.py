@@ -39,9 +39,10 @@ from .dockitem import DockItem
 from .docksettings import settings
 from .util import flatten
 
-MAGIC_BORDER_SIZE = 10
 
+MAGIC_BORDER_SIZE = 10
 DragData = namedtuple('DragData', 'drop_widget leave received')
+
 
 class DockLayout(gobject.GObject):
     """
@@ -75,7 +76,7 @@ class DockLayout(gobject.GObject):
         self._focused_item = None
         self._focused_group = None
         self._focus_data = WeakKeyDictionary() # Map item -> last focused widget
-        
+
         self._drag_data = None
 
     def add(self, frame):
@@ -148,6 +149,7 @@ class DockLayout(gobject.GObject):
 
         signals = set()
         drag_dest = widget.drag_dest_get_target_list()
+
         if not drag_dest:
             widget.drag_dest_set(gtk.DEST_DEFAULT_MOTION, [DRAG_TARGET_ITEM_LIST],
                                  gdk.ACTION_MOVE)
@@ -187,6 +189,7 @@ class DockLayout(gobject.GObject):
 
     def update_floating_window_title(self, widget):
         frame = widget.get_ancestor(DockFrame)
+
         if frame in self.get_floating_frames():
             frame.get_toplevel().set_title(
                 ', '.join(
@@ -204,9 +207,11 @@ class DockLayout(gobject.GObject):
     def do_item_selected(self, group, item):
         # Use this callback to grey out the selection on all but the active selection?
         self._focused_item = item
+
         if not (group is self._focused_group and group.get_tab_state() != gtk.STATE_PRELIGHT):
             if self._focused_group:
                 self._focused_group.set_tab_state(gtk.STATE_PRELIGHT)
+
             self._focused_group = group
             group.set_tab_state(gtk.STATE_SELECTED)
 
@@ -216,6 +221,7 @@ class DockLayout(gobject.GObject):
         """
         if isinstance(widget, gtk.Container):
             self.add_signal_handlers(widget)
+
         self.update_floating_window_title(container)
 
     def on_widget_remove(self, container, widget):
@@ -224,6 +230,7 @@ class DockLayout(gobject.GObject):
         """
         if isinstance(widget, gtk.Container):
             self.remove_signal_handlers(widget)
+
         self.update_floating_window_title(container)
 
     def on_widget_drag_motion(self, widget, context, x, y, timestamp):
@@ -252,14 +259,17 @@ class DockLayout(gobject.GObject):
 
         if DRAG_TARGET_ITEM_LIST[0] in context.targets:
             drag_data = self._drag_data
+
             if drag_data and drag_data.drop_widget:
                 target = gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0])
                 drag_data.drop_widget.drag_get_data(context, target, timestamp)
                 return True
+
             # act as if drag failed:
             source = context.get_source_widget()
             source.emit('drag-failed', context, 1)
             cleanup(source, self)
+
         return False
 
 
@@ -269,6 +279,7 @@ class DockLayout(gobject.GObject):
         drag_drop event handler.
         '''
         self.log.debug('drag_data_received %s, %s, %s, %s, %s, %s' % (context, x, y, selection_data, info, timestamp))
+
         if DRAG_TARGET_ITEM_LIST[0] in context.targets:
             drag_data = self._drag_data
             assert drag_data.received
@@ -299,6 +310,7 @@ class DockLayout(gobject.GObject):
 
         if item:
             self._focus_data[item] = widget
+
             if item is not self._focused_item:
                 group = item.get_parent()
                 self.emit('item-selected', group, item)
@@ -317,6 +329,7 @@ class DockLayout(gobject.GObject):
         if focus_child:
             # item-selected is emited by is-focus handler
             focus_child.set_property('has-focus', True)
+
         self.emit('item-selected', group, item)
 
 ################################################################################
@@ -377,6 +390,7 @@ def add_new_group(widget, new_group, orientation, position):
 
         # Current_child will always be a DockGroup or DockPaned with opposite orientation
         parent.remove(widget)
+
         if current_position is not None:
             # used for DockPaned
             parent.insert_item(new_paned, position=current_position, weight=weight)
@@ -392,18 +406,20 @@ def add_new_group(widget, new_group, orientation, position):
 
     new_paned.show()
     new_group.show()
- 
+
     return new_group
 
 def _window_delete_handler(window, event):
     map(lambda i: i.close(),
         filter(lambda i: isinstance(i, DockItem), flatten(window)))
-    return False 
+    return False
 
 def add_new_group_floating(new_group, layout, size=None, pos=None):
     window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+
     if pos:
         window.move(*pos)
+
     window.set_resizable(True)
     window.set_skip_taskbar_hint(True)
     window.set_type_hint(gdk.WINDOW_TYPE_HINT_UTILITY)
@@ -432,6 +448,7 @@ def _propagate_to_parent(func, widget, context, x, y, timestamp):
     Common function to propagate calls to a parent widget.
     '''
     parent = widget.get_parent()
+
     if parent:
         # Should not use get_pointer as it's not testable.
         px, py = widget.translate_coordinates(parent, x, y)
@@ -557,6 +574,7 @@ def new(class_, old=None, layout=None):
     Create a new Widget. Set the group name if required.
     '''
     new = class_()
+
     if old and settings[old].inherit_settings:
         new.set_name(old.get_name())
     return new
@@ -654,6 +672,7 @@ def dock_group_drag_failed(self, context, result):
         layout = context.docklayout
         new_group = new(DockGroup, context.get_source_widget(), layout)
         add_new_group_floating(new_group, layout, size, self.get_pointer())
+
         for item in self.dragcontext.dragged_object:
             new_group.append_item(item)
 
@@ -744,6 +763,7 @@ def dock_paned_cleanup(self, layout):
             self.remove(child)
             parent.remove(self)
             parent.add(child)
+
         self.log.debug('removing empty paned - moved child to parent first')
         self.destroy()
 

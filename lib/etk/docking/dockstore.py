@@ -33,7 +33,9 @@ from .dockpaned import DockPaned
 from .dockgroup import DockGroup
 from .dockitem import DockItem
 
+
 SERIALIZABLE = ( DockFrame, DockPaned, DockGroup, DockItem )
+
 
 def serialize(layout):
     def _ser(widget, element):
