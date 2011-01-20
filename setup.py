@@ -44,7 +44,7 @@ def _get_data_files(dest, src, filter):
             if os.path.isfile(os.path.join(path, item)):
                 files.append(('%s/%s' % (src, item)))
     else:
-        print 'get_data_files: "%s" does not exist, ignoring'
+        print 'get_data_files: "%s" does not exist, ignoring' % src
 
     return files
 
@@ -61,7 +61,7 @@ def get_data_files(*args):
                 if os.path.isdir(os.path.join(path, item)):
                     data_files.append(('%s/%s' % (dest, item), _get_data_files('%s/%s' % (dest, item), '%s/%s' % (src, item), filter)))
         else:
-            print 'get_data_files: "%s" does not exist, ignoring'
+            print 'get_data_files: "%s" does not exist, ignoring' % src
 
     return data_files
 
