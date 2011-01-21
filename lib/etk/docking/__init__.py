@@ -23,7 +23,7 @@ from __future__ import absolute_import
 
 
 __all__ = ['DockLayout', 'DockFrame', 'DockPaned', 'DockGroup', 'DockItem', 'settings']
-__version__ = '0.1'
+__version__ = '0.2'
 __docformat__ = 'restructuredtext'
 
 
