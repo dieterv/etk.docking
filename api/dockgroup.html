@@ -7,13 +7,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>etk.DockGroup &mdash; etk.docking v0.0.1 documentation</title>
+    <title>etk.DockGroup &mdash; etk.docking v0.1 documentation</title>
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.0.1',
+        VERSION:     '0.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="etk.docking v0.0.1 documentation" href="../index.html" />
+    <link rel="top" title="etk.docking v0.1 documentation" href="../index.html" />
     <link rel="next" title="etk.DockItem" href="dockitem.html" />
     <link rel="prev" title="etk.DockPaned" href="dockpaned.html" /> 
   </head>
@@ -39,7 +39,7 @@
         <li class="right" >
           <a href="dockpaned.html" title="etk.DockPaned"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">etk.docking v0.0.1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">etk.docking v0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -56,7 +56,7 @@
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">gtk.Container</span></tt></p>
 <p>The etk.DockGroup widget is a gtk.Container that groups its children in a
 tabbed interface.</p>
-<p>You can reorder tabs by dragging them to the desired location within the
+<p>Tabs can be reorder by dragging them to the desired location within the
 same or another etk.DockGroup having the same group-id. You can also drag
 a complete etk.DockGroup onto another etk.DockGroup having the same group-id
 to merge all etk.DockItems from the source into the destination
@@ -68,13 +68,9 @@ etk.DockGroup.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>item</strong> &#8211; a DockItem</li>
-</ul>
-</td>
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>item</strong> &#8211; a DockItem</td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the index number of the item tab in the DockGroup</p>
-</td>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">the index number of the item tab in the DockGroup</td>
 </tr>
 </tbody>
 </table>
@@ -89,13 +85,9 @@ DockItem specified by item.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>item</strong> &#8211; a DockItem</li>
-</ul>
-</td>
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>item</strong> &#8211; a DockItem</td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the index number of the item tab in the DockGroup</p>
-</td>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">the index number of the item tab in the DockGroup</td>
 </tr>
 </tbody>
 </table>
@@ -139,11 +131,8 @@ DockGroup.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>item_num</strong> &#8211; the index of an item tab, starting from 0. If None,
-the last item will be removed.</li>
-</ul>
-</td>
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>item_num</strong> &#8211; the index of an item tab, starting from 0. If None,
+the last item will be removed.</td>
 </tr>
 </tbody>
 </table>
@@ -158,19 +147,30 @@ item_num. The value of item_num starts from 0.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>item</strong> &#8211; a DockItem</li>
-</ul>
-</td>
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>item</strong> &#8211; a DockItem</td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the index of the item tab specified by item, or None if item
-is not in the DockGroup</p>
-</td>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">the index of the item tab specified by item, or None if item
+is not in the DockGroup</td>
 </tr>
 </tbody>
 </table>
 <p>The item_num() method returns the index of the item tab which contains
 the DockItem specified by item or None if no item tab contains item.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="etk.docking.DockGroup.get_n_items">
+<tt class="descname">get_n_items</tt><big>(</big><big>)</big><a class="headerlink" href="#etk.docking.DockGroup.get_n_items" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">the number of item tabs in the DockGroup.</td>
+</tr>
+</tbody>
+</table>
+<p>The get_n_items() method returns the number of item tabs in the
+DockGroup.</p>
 </dd></dl>
 
 <dl class="method">
@@ -180,13 +180,9 @@ the DockItem specified by item or None if no item tab contains item.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>item_num</strong> &#8211; the index of an item tab in the DockGroup.</li>
-</ul>
-</td>
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>item_num</strong> &#8211; the index of an item tab in the DockGroup.</td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a DockItem, or None if item_num is out of bounds.</p>
-</td>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">a DockItem, or None if item_num is out of bounds.</td>
 </tr>
 </tbody>
 </table>
@@ -219,13 +215,10 @@ numbered from 0, or None if there are no item tabs.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>item_num</strong> &#8211; the index of the item tab to switch to, starting from
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>item_num</strong> &#8211; the index of the item tab to switch to, starting from
 0. If negative, the first item tab will be used. If
 greater than the number of item tabs in the DockGroup,
-the last item tab will be used.</li>
-</ul>
-</td>
+the last item tab will be used.</td>
 </tr>
 </tbody>
 </table>
@@ -320,12 +313,12 @@ to the beginning of the list.</p>
         <li class="right" >
           <a href="dockpaned.html" title="etk.DockPaned"
              >previous</a> |</li>
-        <li><a href="../index.html">etk.docking v0.0.1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">etk.docking v0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2010, etk.docking Contributors.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
   </body>
 </html>
