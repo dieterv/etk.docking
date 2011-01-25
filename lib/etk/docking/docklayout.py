@@ -142,7 +142,8 @@ class DockLayout(gobject.GObject):
 
     def add_signal_handlers(self, widget):
         """
-        Set up signal handlers for layout and child widgets
+        Set up signal handlers for layout and child widgets. Also group state is changed
+        from selected to prelight, in order to have one focused widget.
         """
         if self._signal_handlers.get(widget):
             return
@@ -167,6 +168,10 @@ class DockLayout(gobject.GObject):
 
         if isinstance(widget, gtk.Container):
             widget.foreach(self.add_signal_handlers)
+
+        # Ensure SELECTED state is only for the selected item
+        if isinstance(widget, DockGroup):
+            widget.set_tab_state(gtk.STATE_PRELIGHT)
 
     def remove_signal_handlers(self, widget):
         """
