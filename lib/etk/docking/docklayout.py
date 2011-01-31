@@ -675,7 +675,7 @@ def dock_group_drag_failed(self, context, result):
             size = None
 
         layout = context.docklayout
-        new_group = new(DockGroup, context.get_source_widget(), layout)
+        new_group = new(DockGroup, self, layout)
         add_new_group_floating(new_group, layout, size, self.get_pointer())
 
         for item in self.dragcontext.dragged_object:
