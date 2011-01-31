@@ -20,3 +20,10 @@ class TestDockLayout(unittest.TestCase):
         s2 = settings['other-gid']
         assert s2 is not settings
 
+        s3 = settings.get('other-gid')
+
+        assert s3 is s2
+
+        settings['other-gid'] = DockSettings()
+
+        assert s2 is not settings['other-gid']
