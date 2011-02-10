@@ -20,6 +20,7 @@
 
 
 from __future__ import absolute_import
+import sys
 from collections import namedtuple
 from logging import getLogger
 
@@ -427,7 +428,8 @@ def add_new_group_floating(new_group, layout, size=None, pos=None):
 
     window.set_resizable(True)
     window.set_skip_taskbar_hint(True)
-    window.set_type_hint(gdk.WINDOW_TYPE_HINT_UTILITY)
+    if sys.platform != 'darwin':
+        window.set_type_hint(gdk.WINDOW_TYPE_HINT_UTILITY)
     window.set_transient_for(layout.get_main_frames().next().get_toplevel())
 
     if size:
