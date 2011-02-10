@@ -40,8 +40,12 @@ from .dockitem import DockItem
 from .docksettings import settings
 from .util import flatten
 
+# On OSX/X11 Utility windows are above all windows,
+# even if the app is not the active app.
+PROVIDE_FLOATING_WINDOW_HINTS = sys.platform != 'darwin'
 
 MAGIC_BORDER_SIZE = 10
+
 DragData = namedtuple('DragData', 'drop_widget leave received')
 
 
@@ -428,7 +432,7 @@ def add_new_group_floating(new_group, layout, size=None, pos=None):
 
     window.set_resizable(True)
     window.set_skip_taskbar_hint(True)
-    if sys.platform != 'darwin':
+    if PROVIDE_FLOATING_WINDOW_HINTS:
         window.set_type_hint(gdk.WINDOW_TYPE_HINT_UTILITY)
     window.set_transient_for(layout.get_main_frames().next().get_toplevel())
 
