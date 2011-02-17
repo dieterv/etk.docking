@@ -621,7 +621,7 @@ def dock_unhighlight(self):
         self.disconnect(self._expose_event_id)
         del self._expose_event_id
     except AttributeError, e:
-        self.log.error(e, exc_info=True)
+        self.log.debug(e, exc_info=True)
 
 @drag_motion.when_type(DockGroup)
 @with_magic_borders
@@ -784,7 +784,9 @@ def dock_paned_drag_end(self, context):
     cleanup(self, context.docklayout)
 
 def dock_paned_magic_borders_leave(self):
-    self.get_ancestor(DockFrame).set_placeholder(None)
+    a = self.get_ancestor(DockFrame)
+    if a:
+        a.set_placeholder(None)
 
 @magic_borders.when_type(DockPaned)
 def dock_paned_magic_borders(self, context, x, y, timestamp):
