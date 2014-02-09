@@ -21,8 +21,7 @@
 
 from __future__ import division
 
-import gobject
-import Gtk.gdk as gdk
+from gi.repository import GObject, Gdk
 
 
 class HslColor(GObject.GObject):

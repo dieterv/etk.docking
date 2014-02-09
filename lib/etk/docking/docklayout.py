@@ -26,9 +26,7 @@ from logging import getLogger
 
 from simplegeneric import generic
 
-from gi.repository import GObject
-from gi.repository import Gtk
-import Gtk.gdk as gdk
+from gi.repository import GObject, Gtk, Gdk
 import itertools
 from weakref import WeakKeyDictionary
 

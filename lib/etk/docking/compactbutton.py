@@ -22,9 +22,7 @@
 from __future__ import absolute_import
 from logging import getLogger
 
-from gi.repository import GObject
-from gi.repository import Gtk
-import Gtk.gdk as gdk
+from gi.repository import GObject, Gtk, Gdk
 
 from .util import load_icon
 
@@ -70,7 +68,7 @@ class CompactButton(Gtk.Widget):
 
     def __init__(self, icon_name_normal='', size=16, has_frame=True):
         GObject.GObject.__init__(self)
-        self.set_flags(self.flags() | Gtk.NO_WINDOW)
+        self.set_has_window(False)
 
         # Initialize logging
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
@@ -177,19 +175,21 @@ class CompactButton(Gtk.Widget):
     ############################################################################
     def do_realize(self):
         Gtk.Widget.do_realize(self)
-        self._input_window = Gdk.Window(self.get_parent_window(),
-                                        x = self.allocation.x,
-                                        y = self.allocation.y,
-                                        width = self.allocation.width,
-                                        height = self.allocation.height,
-                                        window_type = Gdk.WINDOW_CHILD,
-                                        wclass = Gdk.INPUT_ONLY,
-                                        visual = self.get_visual(),
-                                        colormap = self.get_colormap(),
-                                        event_mask = (Gdk.EventMask.ENTER_NOTIFY_MASK |
-                                                      Gdk.EventMask.LEAVE_NOTIFY_MASK |
-                                                      Gdk.EventMask.BUTTON_PRESS_MASK |
-                                                      Gdk.EventMask.BUTTON_RELEASE_MASK))
+        attr = Gdk.WindowAttr()
+        attr.x = self.allocation.x
+        attr.y = self.allocation.y
+        attr.width = self.allocation.width
+        attr.height = self.allocation.height
+        attr.window_type = Gdk.WindowType.CHILD
+        attr.wclass = Gdk.WindowWindowClass.INPUT_ONLY
+        attr.visual = self.get_visual()
+        attr.colormap = self.get_colormap()
+        attr.event_mask = (Gdk.EventMask.ENTER_NOTIFY_MASK |
+                            Gdk.EventMask.LEAVE_NOTIFY_MASK |
+                            Gdk.EventMask.BUTTON_PRESS_MASK |
+                            Gdk.EventMask.BUTTON_RELEASE_MASK)
+        T = Gdk.WindowAttributesType
+        self._input_window = Gdk.Window(self.get_parent_window(), attr, T.X | T.Y)
         self._input_window.set_user_data(self)
         self._refresh_icons()
 

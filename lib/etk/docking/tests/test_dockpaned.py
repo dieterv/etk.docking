@@ -21,8 +21,7 @@
 
 import unittest
 
-from gi.repository import Gtk
-import Gtk.gdk as gdk
+from gi.repository import Gtk, Gdk
 
 from etk.docking import DockPaned, DockGroup
 

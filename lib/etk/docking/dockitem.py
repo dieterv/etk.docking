@@ -22,9 +22,7 @@
 from __future__ import absolute_import
 from logging import getLogger
 
-from gi.repository import GObject
-from gi.repository import Gtk
-import Gtk.gdk as gdk
+from gi.repository import GObject, Gtk, Gdk
 
 
 class DockItem(Gtk.Bin):
@@ -64,7 +62,7 @@ class DockItem(Gtk.Bin):
 
     def __init__(self, title='', title_tooltip_text='', icon_name=None, stock_id=None):
         GObject.GObject.__init__(self)
-        self.set_flags(self.flags() | Gtk.NO_WINDOW)
+        self.set_has_window(False)
         self.set_redraw_on_allocate(False)
 
         # Initialize logging

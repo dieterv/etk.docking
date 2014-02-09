@@ -30,16 +30,17 @@ __docformat__ = 'restructuredtext'
 ############################################################################
 # Initialization
 ############################################################################
-import os, gtk
+from gi.repository import Gtk, GdkPixbuf
+import os
 
 # Register some custom icons into the default icon theme
 path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'icons', '16x16'))
-Gtk.icon_theme_add_builtin_icon('compact-close', 16, GdkPixbuf.Pixbuf.new_from_file(os.path.join(path, 'compact-close.png')))
-Gtk.icon_theme_add_builtin_icon('compact-close-prelight', 16, GdkPixbuf.Pixbuf.new_from_file(os.path.join(path, 'compact-close-prelight.png')))
-Gtk.icon_theme_add_builtin_icon('compact-list', 16, GdkPixbuf.Pixbuf.new_from_file(os.path.join(path, 'compact-list.png')))
-Gtk.icon_theme_add_builtin_icon('compact-minimize', 16, GdkPixbuf.Pixbuf.new_from_file(os.path.join(path, 'compact-minimize.png')))
-Gtk.icon_theme_add_builtin_icon('compact-maximize', 16, GdkPixbuf.Pixbuf.new_from_file(os.path.join(path, 'compact-maximize.png')))
-Gtk.icon_theme_add_builtin_icon('compact-restore', 16, GdkPixbuf.Pixbuf.new_from_file(os.path.join(path, 'compact-restore.png')))
+Gtk.IconTheme.add_builtin_icon('compact-close', 16, GdkPixbuf.Pixbuf.new_from_file(os.path.join(path, 'compact-close.png')))
+Gtk.IconTheme.add_builtin_icon('compact-close-prelight', 16, GdkPixbuf.Pixbuf.new_from_file(os.path.join(path, 'compact-close-prelight.png')))
+Gtk.IconTheme.add_builtin_icon('compact-list', 16, GdkPixbuf.Pixbuf.new_from_file(os.path.join(path, 'compact-list.png')))
+Gtk.IconTheme.add_builtin_icon('compact-minimize', 16, GdkPixbuf.Pixbuf.new_from_file(os.path.join(path, 'compact-minimize.png')))
+Gtk.IconTheme.add_builtin_icon('compact-maximize', 16, GdkPixbuf.Pixbuf.new_from_file(os.path.join(path, 'compact-maximize.png')))
+Gtk.IconTheme.add_builtin_icon('compact-restore', 16, GdkPixbuf.Pixbuf.new_from_file(os.path.join(path, 'compact-restore.png')))
 
 # Check for elib, not required.
 try:
@@ -53,7 +54,7 @@ else:
     del localedir, install_module
 
 # Keep our namespace nice and tidy
-del os, gtk, path
+del os, Gtk, path
 
 ############################################################################
 # GtkBuilder and Glade create GObject instances (and thus GTK+ widgets) using

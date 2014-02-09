@@ -26,9 +26,7 @@ from operator import attrgetter
 from time import time
 
 import cairo
-from gi.repository import GObject
-from gi.repository import Gtk
-import Gtk.gdk as gdk
+from gi.repository import GObject, Gtk, Gdk
 
 from . import _
 from .compactbutton import CompactButton
@@ -107,7 +105,8 @@ class DockGroup(Gtk.Container):
         self._tab_state = Gtk.StateType.SELECTED
         self.dragcontext = DockDragContext()
 
-        Gtk.widget_push_composite_child()
+        # Note: push_composite_child() and pop_composite_child() are deprecated!
+        self.push_composite_child()
         self._list_button = CompactButton('compact-list')
         self._list_button.set_tooltip_text(_('Show list'))
         self._list_button.connect('clicked', self._on_list_button_clicked)
@@ -124,7 +123,7 @@ class DockGroup(Gtk.Container):
         self._tab_menu.attach_to_widget(self, None)
         self._list_menu = Gtk.Menu()
         self._list_menu.attach_to_widget(self._list_button, None)
-        Gtk.widget_pop_composite_child()
+        self.pop_composite_child()
 
     def __len__(self):
         return len(self._tabs)
@@ -134,21 +133,24 @@ class DockGroup(Gtk.Container):
     ############################################################################
     def do_realize(self):
         # Internal housekeeping
-        self.set_flags(self.flags() | Gtk.REALIZED)
-        self.window = Gdk.Window(self.get_parent_window(),
-                                 x = self.allocation.x,
-                                 y = self.allocation.y,
-                                 width = self.allocation.width,
-                                 height = self.allocation.height,
-                                 window_type = Gdk.WINDOW_CHILD,
-                                 wclass = Gdk.INPUT_OUTPUT,
-                                 event_mask = (Gdk.EventMask.EXPOSURE_MASK |
-                                               Gdk.EventMask.POINTER_MOTION_MASK |
-                                               Gdk.EventMask.BUTTON_PRESS_MASK |
-                                               Gdk.EventMask.BUTTON_RELEASE_MASK))
-        self.window.set_user_data(self)
-        self.style.attach(self.window)
-        self.style.set_background(self.window, Gtk.StateType.NORMAL)
+        self.set_realized(True)
+        attr = Gdk.WindowAttr()
+        attr.x = self.allocation.x
+        attr.y = self.allocation.y
+        attr.width = self.allocation.width
+        attr.height = self.allocation.height
+        attr.window_type = Gdk.WindowType.CHILD
+        attr.wclass = Gdk.WindowWindowClass.INPUT_OUTPUT
+        attr.event_mask = (Gdk.EventMask.EXPOSURE_MASK |
+                            Gdk.EventMask.POINTER_MOTION_MASK |
+                            Gdk.EventMask.BUTTON_PRESS_MASK |
+                            Gdk.EventMask.BUTTON_RELEASE_MASK)
+        T = Gdk.WindowAttributesType
+        window = Gdk.Window(self.get_parent_window(), attr, T.X | T.Y)
+        window.set_user_data(self)
+        self.set_window(window)
+        self.style_attach(window)
+        self.props.style.set_background(self.window, Gtk.StateType.NORMAL)
 
         # Set parent window on all child widgets
         for tab in self._tabs:
@@ -839,13 +841,13 @@ class DockGroup(Gtk.Container):
             position = len(self)
 
         # Create composite children for tab
-        Gtk.widget_push_composite_child()
+        self.push_composite_child()
         tab = _DockGroupTab()
         tab.image = item.get_image()
         tab.label = Gtk.Label()
         tab.button = CompactButton(has_frame=False)
         tab.menu_item = Gtk.ImageMenuItem()
-        Gtk.widget_pop_composite_child()
+        self.pop_composite_child()
 
         # Configure child widgets for tab
         tab.item = item

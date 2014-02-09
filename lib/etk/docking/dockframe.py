@@ -22,8 +22,7 @@
 from __future__ import absolute_import
 from logging import getLogger
 
-from gi.repository import Gtk
-import Gtk.gdk as gdk
+from gi.repository import GObject, Gtk, Gdk
 
 
 class DockFrame(Gtk.Bin):

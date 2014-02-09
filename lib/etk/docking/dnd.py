@@ -22,8 +22,7 @@
 from __future__ import absolute_import
 from logging import getLogger
 
-from gi.repository import Gtk
-import Gtk.gdk as gdk
+from gi.repository import Gtk, Gdk
 
 
 DRAG_TARGET_ITEM_LIST = ('x-etk-docking/item-list', Gtk.TargetFlags.SAME_APP, 0)
