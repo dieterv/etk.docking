@@ -1,6 +1,6 @@
 # vim:sw=4:et:ai
 import unittest
-import gtk
+from gi.repository import Gtk
 from etk.docking import DockLayout, DockFrame, DockPaned, DockGroup, DockItem
 from etk.docking.dockstore import serialize, deserialize, get_main_frames, finish
 
@@ -8,12 +8,12 @@ from etk.docking.dockstore import serialize, deserialize, get_main_frames, finis
 class ItemFactory(object):
 
     def __call__(self, label):
-        return gtk.Button(label)
+        return Gtk.Button(label)
 
 class LoadingTestCase(unittest.TestCase):
 
     def test_serialize(self):
-        win = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        win = Gtk.Window(Gtk.WindowType.TOPLEVEL)
         layout = DockLayout()
         frame = DockFrame()
         win.add(frame)
@@ -51,22 +51,22 @@ class LoadingTestCase(unittest.TestCase):
         layout = deserialize(xml, ItemFactory())
         assert 1, len(layout.frames)
         frame = iter(layout.frames).next()
-        assert frame.child
-        paned = frame.child
+        assert frame.get_child()
+        paned = frame.get_child()
         assert len(paned)
         group = paned.get_nth_item(0)
         assert isinstance(group, DockGroup), group
         assert len(group)
         item = group.get_nth_item(0)
         assert isinstance(item, DockItem)
-        button = item.child
-        assert isinstance(button, gtk.Button)
+        button = item.get_child()
+        assert isinstance(button, Gtk.Button)
         assert "fillme" == button.get_label(), button.get_label()
-        win = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        win = Gtk.Window(Gtk.WindowType.TOPLEVEL)
         win.add(frame)
         win.show()
-        while gtk.events_pending():
-            gtk.main_iteration()
+        while Gtk.events_pending():
+            Gtk.main_iteration()
 
         #assert frame.allocation.width == 200, frame.allocation.width
         #assert frame.allocation.height == 120, frame.allocation.height
@@ -98,7 +98,7 @@ class LoadingTestCase(unittest.TestCase):
         assert len(layout.frames) == 2, layout.frames
         frames = list(get_main_frames(layout))
         assert len(frames) == 1, frames
-        win = gtk.Window()
+        win = Gtk.Window()
         win.add(frames[0])
         finish(layout, frames[0])
 

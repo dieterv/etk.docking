@@ -22,19 +22,19 @@
 from __future__ import absolute_import
 from logging import getLogger
 
-import gtk
-import gtk.gdk as gdk
+from gi.repository import Gtk
+import Gtk.gdk as gdk
 
 
-class DockFrame(gtk.Bin):
+class DockFrame(Gtk.Bin):
     '''
-    The etk.DockFrame widget is a gtk.Bin that acts as the toplevel widget
+    The etk.DockFrame widget is a Gtk.Bin that acts as the toplevel widget
     for a dock layout hierarchy.
     '''
     __gtype_name__ = 'EtkDockFrame'
 
     def __init__(self):
-        gtk.Bin.__init__(self)
+        GObject.GObject.__init__(self)
 
         # Initialize logging
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
@@ -49,21 +49,21 @@ class DockFrame(gtk.Bin):
         requisition.width = 0
         requisition.height = 0
 
-        if self.child and self.child.flags() & gtk.VISIBLE:
-            (requisition.width, requisition.height) = self.child.size_request()
+        if self.get_child() and self.get_child().flags() & Gtk.VISIBLE:
+            (requisition.width, requisition.height) = self.get_child().size_request()
             requisition.width += self.border_width * 2
             requisition.height += self.border_width * 2
 
     def do_size_allocate(self, allocation):
         self.allocation = allocation
 
-        if self.child and self.child.flags() & gtk.VISIBLE:
-            child_allocation = gdk.Rectangle()
+        if self.get_child() and self.get_child().flags() & Gtk.VISIBLE:
+            child_allocation = ()
             child_allocation.x = allocation.x + self.border_width
             child_allocation.y = allocation.y + self.border_width
             child_allocation.width = allocation.width - (2 * self.border_width)
             child_allocation.height = allocation.height - (2 * self.border_width)
-            self.child.size_allocate(child_allocation)
+            self.get_child().size_allocate(child_allocation)
 
     ############################################################################
     # EtkDockFrame

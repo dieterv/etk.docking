@@ -34,12 +34,12 @@ import os, gtk
 
 # Register some custom icons into the default icon theme
 path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'icons', '16x16'))
-gtk.icon_theme_add_builtin_icon('compact-close', 16, gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-close.png')))
-gtk.icon_theme_add_builtin_icon('compact-close-prelight', 16, gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-close-prelight.png')))
-gtk.icon_theme_add_builtin_icon('compact-list', 16, gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-list.png')))
-gtk.icon_theme_add_builtin_icon('compact-minimize', 16, gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-minimize.png')))
-gtk.icon_theme_add_builtin_icon('compact-maximize', 16, gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-maximize.png')))
-gtk.icon_theme_add_builtin_icon('compact-restore', 16, gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-restore.png')))
+Gtk.icon_theme_add_builtin_icon('compact-close', 16, GdkPixbuf.Pixbuf.new_from_file(os.path.join(path, 'compact-close.png')))
+Gtk.icon_theme_add_builtin_icon('compact-close-prelight', 16, GdkPixbuf.Pixbuf.new_from_file(os.path.join(path, 'compact-close-prelight.png')))
+Gtk.icon_theme_add_builtin_icon('compact-list', 16, GdkPixbuf.Pixbuf.new_from_file(os.path.join(path, 'compact-list.png')))
+Gtk.icon_theme_add_builtin_icon('compact-minimize', 16, GdkPixbuf.Pixbuf.new_from_file(os.path.join(path, 'compact-minimize.png')))
+Gtk.icon_theme_add_builtin_icon('compact-maximize', 16, GdkPixbuf.Pixbuf.new_from_file(os.path.join(path, 'compact-maximize.png')))
+Gtk.icon_theme_add_builtin_icon('compact-restore', 16, GdkPixbuf.Pixbuf.new_from_file(os.path.join(path, 'compact-restore.png')))
 
 # Check for elib, not required.
 try:
@@ -57,7 +57,7 @@ del os, gtk, path
 
 ############################################################################
 # GtkBuilder and Glade create GObject instances (and thus GTK+ widgets) using
-# gobject.new(). For this to work, we have to be sure our subclasses have been
+# GObject.new(). For this to work, we have to be sure our subclasses have been
 # registered with the GObject type system when etk.docking is imported.
 # This also defines the widgets that can be considered public.
 ############################################################################

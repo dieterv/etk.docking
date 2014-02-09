@@ -19,13 +19,13 @@
 # along with etk.docking. If not, see <http://www.gnu.org/licenses/>.
 
 
-import gtk
+from gi.repository import Gtk
 
 
 def rect_contains(rect, x, y):
     '''
     The rect_contains function checks if a point, defined by x and y falls
-    within the gdk.Rectangle defined by rect.
+    within the  defined by rect.
 
     Note: Unlike rect_overlaps defined below, this function ignores a 1 pixel border.
     '''
@@ -37,7 +37,7 @@ def rect_contains(rect, x, y):
 def rect_overlaps(rect, x, y):
     '''
     The rect_overlaps function checks if a point, defined by x and y overlaps
-    the gdk.Rectangle defined by rect.
+    the  defined by rect.
 
     Note: Unlike rect_contains defined above, this function does not ignore a 1 pixel border.
     '''
@@ -48,22 +48,22 @@ def rect_overlaps(rect, x, y):
 
 # TODO: Should change/add on this 'cause it does not work well with IconFactories for example.
 def load_icon(icon_name, size):
-    icontheme = gtk.icon_theme_get_default()
+    icontheme = Gtk.IconTheme.get_default()
 
     if not icontheme.has_icon(icon_name):
         icon_name = 'gtk-missing-image'
 
-    return icontheme.load_icon(icon_name, size, gtk.ICON_LOOKUP_USE_BUILTIN)
+    return icontheme.load_icon(icon_name, size, Gtk.IconLookupFlags.USE_BUILTIN)
 
 def load_icon_image(icon_name, size):
-    icontheme = gtk.icon_theme_get_default()
+    icontheme = Gtk.IconTheme.get_default()
 
     if not icontheme.has_icon(icon_name):
         icon_name = 'gtk-missing-image'
 
-    return gtk.image_new_from_icon_name(icon_name, size)
+    return Gtk.Image.new_from_icon_name(icon_name, size)
 
-def flatten(w, child_getter=gtk.Container.get_children):
+def flatten(w, child_getter=Gtk.Container.get_children):
     """
     Generator function that returns all items in a hierarchy.
     Default `child_getter` returns children in a GTK+ widget hierarchy.

@@ -22,55 +22,55 @@
 from __future__ import absolute_import
 from logging import getLogger
 
-import gobject
-import gtk
-import gtk.gdk as gdk
+from gi.repository import GObject
+from gi.repository import Gtk
+import Gtk.gdk as gdk
 
 from .util import load_icon
 
 
-class CompactButton(gtk.Widget):
+class CompactButton(Gtk.Widget):
     __gtype_name__ = 'EtkCompactButton'
     __gsignals__ = {'clicked':
-                        (gobject.SIGNAL_RUN_FIRST | gobject.SIGNAL_ACTION,
-                         gobject.TYPE_NONE,
+                        (GObject.SignalFlags.RUN_FIRST | GObject.SignalFlags.ACTION,
+                         None,
                          tuple())}
     __gproperties__ = {'icon-name-normal':
-                           (gobject.TYPE_STRING,
+                           (GObject.TYPE_STRING,
                             'icon name normal',
                             'icon name normal',
                             '',
-                            gobject.PARAM_READWRITE),
+                            GObject.PARAM_READWRITE),
                        'icon-name-prelight':
-                           (gobject.TYPE_STRING,
+                           (GObject.TYPE_STRING,
                             'icon name prelight',
                             'icon name prelight',
                             '',
-                            gobject.PARAM_READWRITE),
+                            GObject.PARAM_READWRITE),
                        'icon-name-active':
-                           (gobject.TYPE_STRING,
+                           (GObject.TYPE_STRING,
                             'icon name active',
                             'icon name active',
                             '',
-                            gobject.PARAM_READWRITE),
+                            GObject.PARAM_READWRITE),
                        'size':
-                           (gobject.TYPE_UINT,
+                           (GObject.TYPE_UINT,
                             'size',
                             'size',
                             0,
-                            gobject.G_MAXUINT,
+                            GObject.G_MAXUINT,
                             16,
-                            gobject.PARAM_READWRITE),
+                            GObject.PARAM_READWRITE),
                        'has-frame':
-                           (gobject.TYPE_BOOLEAN,
+                           (GObject.TYPE_BOOLEAN,
                             'has frame',
                             'has frame',
                             True,
-                            gobject.PARAM_READWRITE)}
+                            GObject.PARAM_READWRITE)}
 
     def __init__(self, icon_name_normal='', size=16, has_frame=True):
-        gtk.Widget.__init__(self)
-        self.set_flags(self.flags() | gtk.NO_WINDOW)
+        GObject.GObject.__init__(self)
+        self.set_flags(self.flags() | Gtk.NO_WINDOW)
 
         # Initialize logging
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
@@ -135,7 +135,7 @@ class CompactButton(gtk.Widget):
         self._icon_name_prelight = value
         self._icon_name_active = value
 
-        if self.flags() & gtk.REALIZED:
+        if self.get_realized():
             self._refresh_icons()
             self.queue_resize()
 
@@ -146,7 +146,7 @@ class CompactButton(gtk.Widget):
         self._icon_name_prelight = value
         self._icon_name_active = value
 
-        if self.flags() & gtk.REALIZED:
+        if self.get_realized():
             self._refresh_icons()
             self.queue_resize()
 
@@ -156,7 +156,7 @@ class CompactButton(gtk.Widget):
     def set_icon_name_active(self, value):
         self._icon_name_active = value
 
-        if self.flags() & gtk.REALIZED:
+        if self.get_realized():
             self._refresh_icons()
             self.queue_resize()
 
@@ -176,35 +176,35 @@ class CompactButton(gtk.Widget):
     # GtkWidget
     ############################################################################
     def do_realize(self):
-        gtk.Widget.do_realize(self)
-        self._input_window = gdk.Window(self.get_parent_window(),
+        Gtk.Widget.do_realize(self)
+        self._input_window = Gdk.Window(self.get_parent_window(),
                                         x = self.allocation.x,
                                         y = self.allocation.y,
                                         width = self.allocation.width,
                                         height = self.allocation.height,
-                                        window_type = gdk.WINDOW_CHILD,
-                                        wclass = gdk.INPUT_ONLY,
+                                        window_type = Gdk.WINDOW_CHILD,
+                                        wclass = Gdk.INPUT_ONLY,
                                         visual = self.get_visual(),
                                         colormap = self.get_colormap(),
-                                        event_mask = (gdk.ENTER_NOTIFY_MASK |
-                                                      gdk.LEAVE_NOTIFY_MASK |
-                                                      gdk.BUTTON_PRESS_MASK |
-                                                      gdk.BUTTON_RELEASE_MASK))
+                                        event_mask = (Gdk.EventMask.ENTER_NOTIFY_MASK |
+                                                      Gdk.EventMask.LEAVE_NOTIFY_MASK |
+                                                      Gdk.EventMask.BUTTON_PRESS_MASK |
+                                                      Gdk.EventMask.BUTTON_RELEASE_MASK))
         self._input_window.set_user_data(self)
         self._refresh_icons()
 
     def do_unrealize(self):
         self._input_window.set_user_data(None)
         self._input_window.destroy()
-        gtk.Widget.do_unrealize(self)
+        Gtk.Widget.do_unrealize(self)
 
     def do_map(self):
         self._input_window.show()
-        gtk.Widget.do_map(self)
+        Gtk.Widget.do_map(self)
 
     def do_unmap(self):
         self._input_window.hide()
-        gtk.Widget.do_unmap(self)
+        Gtk.Widget.do_unmap(self)
 
     def do_size_request(self, requisition):
         requisition.width = self._size
@@ -213,20 +213,20 @@ class CompactButton(gtk.Widget):
     def do_size_allocate(self, allocation):
         self.allocation = allocation
 
-        if self.flags() & gtk.REALIZED:
+        if self.get_realized():
             self._input_window.move_resize(*self.allocation)
 
     def do_expose_event(self, event):
         # Draw icon
-        if self.state == gtk.STATE_NORMAL:
+        if self.state == Gtk.StateType.NORMAL:
             pixbuf = self._icon_normal
             x = self.allocation.x
             y = self.allocation.y
-        elif self.state == gtk.STATE_PRELIGHT:
+        elif self.state == Gtk.StateType.PRELIGHT:
             pixbuf = self._icon_prelight
             x = self.allocation.x
             y = self.allocation.y
-        elif self.state == gtk.STATE_ACTIVE:
+        elif self.state == Gtk.StateType.ACTIVE:
             pixbuf = self._icon_active
             x = self.allocation.x + 1
             y = self.allocation.y + 1
@@ -234,7 +234,7 @@ class CompactButton(gtk.Widget):
         event.window.draw_pixbuf(self.style.base_gc[self.state], pixbuf, 0, 0, x, y)
 
         # Draw frame
-        if self._has_frame and self.state != gtk.STATE_NORMAL:
+        if self._has_frame and self.state != Gtk.StateType.NORMAL:
             event.window.draw_rectangle(self.style.dark_gc[self.state], False,
                                         self.allocation.x,
                                         self.allocation.y,
@@ -245,26 +245,26 @@ class CompactButton(gtk.Widget):
 
     def do_enter_notify_event(self, event):
         self._entered = True
-        self.set_state(gtk.STATE_PRELIGHT)
+        self.set_state(Gtk.StateType.PRELIGHT)
         self.queue_draw()
         return True
 
     def do_leave_notify_event(self, event):
         self._entered = False
-        self.set_state(gtk.STATE_NORMAL)
+        self.set_state(Gtk.StateType.NORMAL)
         self.queue_draw()
         return True
 
     def do_button_press_event(self, event):
         if event.button == 1:
-            self.set_state(gtk.STATE_ACTIVE)
+            self.set_state(Gtk.StateType.ACTIVE)
             self.queue_draw()
 
         return True
 
     def do_button_release_event(self, event):
         if event.button == 1 and self._entered == True:
-            self.set_state(gtk.STATE_PRELIGHT)
+            self.set_state(Gtk.StateType.PRELIGHT)
             self.emit('clicked')
             self.queue_draw()
 

@@ -26,9 +26,9 @@ from logging import getLogger
 
 from simplegeneric import generic
 
-import gobject
-import gtk
-import gtk.gdk as gdk
+from gi.repository import GObject
+from gi.repository import Gtk
+import Gtk.gdk as gdk
 import itertools
 from weakref import WeakKeyDictionary
 
@@ -49,7 +49,7 @@ MAGIC_BORDER_SIZE = 10
 DragData = namedtuple('DragData', 'drop_widget leave received')
 
 
-class DockLayout(gobject.GObject):
+class DockLayout(GObject.GObject):
     """
     Manage a dock layout.
 
@@ -63,14 +63,14 @@ class DockLayout(gobject.GObject):
 
     __gtype_name__ = 'EtkDockLayout'
     __gsignals__ = {
-        'item-closed': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
-                      (gobject.TYPE_OBJECT, gobject.TYPE_OBJECT)),
-        'item-selected': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
-                      (gobject.TYPE_OBJECT, gobject.TYPE_OBJECT)),
+        'item-closed': (GObject.SignalFlags.RUN_LAST, None,
+                      (GObject.TYPE_OBJECT, GObject.TYPE_OBJECT)),
+        'item-selected': (GObject.SignalFlags.RUN_LAST, None,
+                      (GObject.TYPE_OBJECT, GObject.TYPE_OBJECT)),
     }
 
     def __init__(self):
-        gobject.GObject.__init__(self)
+        GObject.GObject.__init__(self)
 
         # Initialize logging
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
@@ -98,16 +98,16 @@ class DockLayout(gobject.GObject):
         Get the frames that are non-floating (the main frames).
         """
         return (f for f in self.frames \
-                if not (isinstance(f.get_parent(), gtk.Window) \
+                if not (isinstance(f.get_parent(), Gtk.Window) \
                     and f.get_parent().get_transient_for()) )
 
     def get_floating_frames(self):
         """
-        Get the floating frames. Floating frames have a gtk.Window as parent that is
+        Get the floating frames. Floating frames have a Gtk.Window as parent that is
         transient for some other window.
         """
         return (f for f in self.frames \
-                if isinstance(f.get_parent(), gtk.Window) \
+                if isinstance(f.get_parent(), Gtk.Window) \
                     and f.get_parent().get_transient_for() )
 
     def get_widgets(self, name):
@@ -130,7 +130,7 @@ class DockLayout(gobject.GObject):
                        ('item-selected', self.on_dockgroup_item_selected))
         elif isinstance(widget, DockItem):
             signals = (('close', self.on_dockitem_close),)
-        elif isinstance(widget, gtk.Container):
+        elif isinstance(widget, Gtk.Container):
             signals = (('add', self.on_widget_add),
                        ('remove', self.on_widget_remove))
         else:
@@ -157,8 +157,8 @@ class DockLayout(gobject.GObject):
         drag_dest = widget.drag_dest_get_target_list()
 
         if not drag_dest:
-            widget.drag_dest_set(gtk.DEST_DEFAULT_MOTION, [DRAG_TARGET_ITEM_LIST],
-                                 gdk.ACTION_MOVE)
+            widget.drag_dest_set(Gtk.DestDefaults.MOTION, [DRAG_TARGET_ITEM_LIST],
+                                 Gdk.DragAction.MOVE)
         elif DRAG_TARGET_ITEM_LIST not in drag_dest:
             widget.drag_dest_set_target_list(drag_dest + [DRAG_TARGET_ITEM_LIST])
 
@@ -171,12 +171,12 @@ class DockLayout(gobject.GObject):
 
         self._signal_handlers[widget] = signals
 
-        if isinstance(widget, gtk.Container):
+        if isinstance(widget, Gtk.Container):
             widget.foreach(self.add_signal_handlers)
 
         # Ensure SELECTED state is only for the selected item
         if isinstance(widget, DockGroup):
-            widget.set_tab_state(gtk.STATE_PRELIGHT)
+            widget.set_tab_state(Gtk.StateType.PRELIGHT)
 
     def remove_signal_handlers(self, widget):
         """
@@ -194,7 +194,7 @@ class DockLayout(gobject.GObject):
 
             # TODO: widget.drag_dest_set_target_list(drag_dest - [DRAG_TARGET_ITEM_LIST])??
 
-            if isinstance(widget, gtk.Container):
+            if isinstance(widget, Gtk.Container):
                 widget.foreach(self.remove_signal_handlers)
 
     def update_floating_window_title(self, widget):
@@ -218,18 +218,18 @@ class DockLayout(gobject.GObject):
         # Use this callback to grey out the selection on all but the active selection?
         self._focused_item = item
 
-        if not (group is self._focused_group and group.get_tab_state() != gtk.STATE_PRELIGHT):
+        if not (group is self._focused_group and group.get_tab_state() != Gtk.StateType.PRELIGHT):
             if self._focused_group:
-                self._focused_group.set_tab_state(gtk.STATE_PRELIGHT)
+                self._focused_group.set_tab_state(Gtk.StateType.PRELIGHT)
 
             self._focused_group = group
-            group.set_tab_state(gtk.STATE_SELECTED)
+            group.set_tab_state(Gtk.StateType.SELECTED)
 
     def on_widget_add(self, container, widget):
         """
         Deal with new elements being added to the layout or it's children.
         """
-        if isinstance(widget, gtk.Container):
+        if isinstance(widget, Gtk.Container):
             self.add_signal_handlers(widget)
 
         self.update_floating_window_title(container)
@@ -238,7 +238,7 @@ class DockLayout(gobject.GObject):
         """
         Remove signals from containers and subcontainers.
         """
-        if isinstance(widget, gtk.Container):
+        if isinstance(widget, Gtk.Container):
             self.remove_signal_handlers(widget)
 
         self.update_floating_window_title(container)
@@ -271,7 +271,7 @@ class DockLayout(gobject.GObject):
             drag_data = self._drag_data
 
             if drag_data and drag_data.drop_widget:
-                target = gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0])
+                target = Gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0])
                 drag_data.drop_widget.drag_get_data(context, target, timestamp)
                 return True
 
@@ -347,16 +347,16 @@ class DockLayout(gobject.GObject):
 ################################################################################
 
 def add_new_group_left(widget, new_group):
-    add_new_group_before(widget, new_group, gtk.ORIENTATION_HORIZONTAL)
+    add_new_group_before(widget, new_group, Gtk.Orientation.HORIZONTAL)
 
 def add_new_group_right(widget, new_group):
-    add_new_group_after(widget, new_group, gtk.ORIENTATION_HORIZONTAL)
+    add_new_group_after(widget, new_group, Gtk.Orientation.HORIZONTAL)
 
 def add_new_group_above(widget, new_group):
-    add_new_group_before(widget, new_group, gtk.ORIENTATION_VERTICAL)
+    add_new_group_before(widget, new_group, Gtk.Orientation.VERTICAL)
 
 def add_new_group_below(widget, new_group):
-    add_new_group_after(widget, new_group, gtk.ORIENTATION_VERTICAL)
+    add_new_group_after(widget, new_group, Gtk.Orientation.VERTICAL)
 
 def add_new_group_before(widget, new_group, orientation):
     """
@@ -425,7 +425,7 @@ def _window_delete_handler(window, event):
     return False
 
 def add_new_group_floating(new_group, layout, size=None, pos=None):
-    window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+    window = Gtk.Window(Gtk.WindowType.TOPLEVEL)
 
     if pos:
         window.move(*pos)
@@ -433,7 +433,7 @@ def add_new_group_floating(new_group, layout, size=None, pos=None):
     window.set_resizable(True)
     window.set_skip_taskbar_hint(True)
     if PROVIDE_FLOATING_WINDOW_HINTS:
-        window.set_type_hint(gdk.WINDOW_TYPE_HINT_UTILITY)
+        window.set_type_hint(Gdk.WindowTypeHint.UTILITY)
     window.set_transient_for(layout.get_main_frames().next().get_toplevel())
 
     if size:
@@ -495,7 +495,7 @@ def magic_borders(widget, context, x, y, timestamp):
 @generic
 def drag_motion(widget, context, x, y, timestamp):
     '''
-    :param context: the gdk.DragContext
+    :param context: the Gdk.DragContext
     :param x: the X position of the drop
     :param y: the Y position of the drop
     :param timestamp: the time of the drag event
@@ -508,11 +508,11 @@ def drag_motion(widget, context, x, y, timestamp):
     it should return False and no further processing is necessary. Otherwise,
     the handler should return True. In this case, the handler is responsible
     for providing the necessary information for displaying feedback to the
-    user, by calling the gdk.DragContext.drag_status() method. If the
+    user, by calling the Gdk.DragContext.drag_status() method. If the
     decision to accept or reject the drop can't be made based solely on
     the cursor position and the type of the data, the handler may inspect
     the dragged data by calling the drag_get_data() method and defer the
-    gdk.DragContext.drag_status() method call to the do_drag_data_received()
+    Gdk.DragContext.drag_status() method call to the do_drag_data_received()
     signal handler.
 
     Note::
@@ -528,11 +528,11 @@ def drag_motion(widget, context, x, y, timestamp):
     The do_drag_data_received() signal handler is executed when the drag
     destination receives the data from the drag operation. If the data was
     received in order to determine whether the drop will be accepted, the
-    handler is expected to call the gdk.DragContext.drag_status() method
+    handler is expected to call the Gdk.DragContext.drag_status() method
     and not finish the drag. If the data was received in response to a
     do_drag_drop() signal (and this is the last target to be received),
     the handler for this signal is expected to process the received data
-    and then call the gdk.DragContext.finish() method, setting the success
+    and then call the Gdk.DragContext.finish() method, setting the success
     parameter to True if the data was processed successfully.
     '''
     return _propagate_to_parent(drag_motion, widget, context, x, y, timestamp)
@@ -551,7 +551,7 @@ def cleanup(widget, layout):
 @generic
 def drag_end(widget, context):
     '''
-    :param context: the gdk.DragContext
+    :param context: the Gdk.DragContext
 
     The do_drag_end() signal handler is executed when the drag operation is
     completed. A typical reason to use this signal handler is to undo things
@@ -563,7 +563,7 @@ def drag_end(widget, context):
 @generic
 def drag_failed(widget, context, result):
     '''
-    :param context: the gdk.DragContext
+    :param context: the Gdk.DragContext
     :param result: the result of the drag operation
     :returns: True if the failed drag operation has been already handled.
 
@@ -672,7 +672,7 @@ def dock_group_drag_end(self, context):
 def dock_group_drag_failed(self, context, result):
     global settings
     self.log.debug('%s, %s' % (context, result))
-    if result == 1 and settings[self].can_float: #gtk.DRAG_RESULT_NO_TARGET
+    if result == 1 and settings[self].can_float: #Gtk.DRAG_RESULT_NO_TARGET
         if reduce(lambda a, b: a or b,
                   map(lambda i: settings[i].float_retain_size,
                       self.dragcontext.dragged_object)):
@@ -819,10 +819,10 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
         placeholder.show()
 
         if create:
-            if self.get_orientation() == gtk.ORIENTATION_HORIZONTAL:
-                orientation = gtk.ORIENTATION_VERTICAL
+            if self.get_orientation() == Gtk.Orientation.HORIZONTAL:
+                orientation = Gtk.Orientation.VERTICAL
             else:
-                orientation = gtk.ORIENTATION_HORIZONTAL
+                orientation = Gtk.Orientation.HORIZONTAL
 
             weight = self.child_get_property(current_group, 'weight')
 
@@ -866,10 +866,10 @@ def dock_paned_magic_borders(self, context, x, y, timestamp):
             return add_group_receiver
 
     if abs(min(y, a.height - y)) < MAGIC_BORDER_SIZE:
-        received = create_received(self.get_orientation() == gtk.ORIENTATION_HORIZONTAL)
+        received = create_received(self.get_orientation() == Gtk.Orientation.HORIZONTAL)
         return DragData(self, dock_paned_magic_borders_leave, received)
     elif abs(min(x, a.width - x)) < MAGIC_BORDER_SIZE:
-        received = create_received(self.get_orientation() == gtk.ORIENTATION_VERTICAL)
+        received = create_received(self.get_orientation() == Gtk.Orientation.VERTICAL)
         return DragData(self, dock_paned_magic_borders_leave, received)
 
     return None
@@ -910,16 +910,16 @@ def dock_frame_magic_borders(self, context, x, y, timestamp):
     border = self.border_width
 
     if x - border < MAGIC_BORDER_SIZE:
-        orientation = gtk.ORIENTATION_HORIZONTAL
+        orientation = Gtk.Orientation.HORIZONTAL
         allocation = (a.x + border, a.y + border, MAGIC_BORDER_SIZE, a.height - border*2)
     elif a.width - x - border < MAGIC_BORDER_SIZE:
-        orientation = gtk.ORIENTATION_HORIZONTAL
+        orientation = Gtk.Orientation.HORIZONTAL
         allocation = (a.x + a.width - MAGIC_BORDER_SIZE - border, a.y + border, MAGIC_BORDER_SIZE, a.height - border*2)
     elif y - border < MAGIC_BORDER_SIZE:
-        orientation = gtk.ORIENTATION_VERTICAL
+        orientation = Gtk.Orientation.VERTICAL
         allocation = (a.x + border, a.y + border, a.width - border*2, MAGIC_BORDER_SIZE)
     elif a.height - y - border < MAGIC_BORDER_SIZE:
-        orientation = gtk.ORIENTATION_VERTICAL
+        orientation = Gtk.Orientation.VERTICAL
         allocation = (a.x + border, a.y + a.height - MAGIC_BORDER_SIZE - border, a.width - border*2, MAGIC_BORDER_SIZE)
     else:
         return None

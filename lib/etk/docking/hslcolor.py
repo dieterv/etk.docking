@@ -22,20 +22,20 @@
 from __future__ import division
 
 import gobject
-import gtk.gdk as gdk
+import Gtk.gdk as gdk
 
 
-class HslColor(gobject.GObject):
+class HslColor(GObject.GObject):
     __gtype_name__ = 'EtkHslColor'
-    __gproperties__ = {'h': (float, 'h', 'h', 0.0, 1.0, 0.0, gobject.PARAM_READWRITE),
-                       's': (float, 's', 's', 0.0, 1.0, 0.0, gobject.PARAM_READWRITE),
-                       'l': (float, 'l', 'l', 0.0, 1.0, 0.0, gobject.PARAM_READWRITE),
-                       'red-float': (float, 'red-float', 'red-float', 0.0, 1.0, 0.0, gobject.PARAM_READABLE),
-                       'green-float': (float, 'green-float', 'green-float', 0.0, 1.0, 0.0, gobject.PARAM_READABLE),
-                       'blue-float': (float, 'blue-float', 'blue-float', 0.0, 1.0, 0.0, gobject.PARAM_READABLE)}
+    __gproperties__ = {'h': (float, 'h', 'h', 0.0, 1.0, 0.0, GObject.PARAM_READWRITE),
+                       's': (float, 's', 's', 0.0, 1.0, 0.0, GObject.PARAM_READWRITE),
+                       'l': (float, 'l', 'l', 0.0, 1.0, 0.0, GObject.PARAM_READWRITE),
+                       'red-float': (float, 'red-float', 'red-float', 0.0, 1.0, 0.0, GObject.PARAM_READABLE),
+                       'green-float': (float, 'green-float', 'green-float', 0.0, 1.0, 0.0, GObject.PARAM_READABLE),
+                       'blue-float': (float, 'blue-float', 'blue-float', 0.0, 1.0, 0.0, GObject.PARAM_READABLE)}
 
     def __init__(self, color):
-        gobject.GObject.__init__(self)
+        GObject.GObject.__init__(self)
 
         self._update_hsl(color)
         self._update_rgb()
@@ -120,7 +120,7 @@ class HslColor(gobject.GObject):
     # HslColor
     ############################################################################
     def to_gdk_color(self):
-        return gdk.Color(*self.get_rgb_float())
+        return Gdk.Color(*self.get_rgb_float())
 
     def _update_hsl(self, color):
         r = color.red / float(65535)

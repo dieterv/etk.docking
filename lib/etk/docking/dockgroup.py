@@ -26,9 +26,9 @@ from operator import attrgetter
 from time import time
 
 import cairo
-import gobject
-import gtk
-import gtk.gdk as gdk
+from gi.repository import GObject
+from gi.repository import Gtk
+import Gtk.gdk as gdk
 
 from . import _
 from .compactbutton import CompactButton
@@ -46,11 +46,11 @@ class _DockGroupTab(object):
                  'item_title_handler',  # item title property notification signal handler id
                  'item_title_tooltip_text_handler',
                                         # item title-tooltip-text property notification signal handler id
-                 'image',               # icon (gtk.Image)
-                 'label',               # title (gtk.Label)
+                 'image',               # icon (Gtk.Image)
+                 'label',               # title (Gtk.Label)
                  'button',              # close button (etk.docking.CompactButton)
-                 'menu_item',           # menu item (gtk.ImageMenuItem)
-                 'area',                # area, used for hit testing (gdk.Rectangle)
+                 'menu_item',           # menu item (Gtk.ImageMenuItem)
+                 'area',                # area, used for hit testing ()
                  'last_focused']        # timestamp set last time a tab was focused
 
     def __contains__(self, pos):
@@ -63,9 +63,9 @@ class _DockGroupTab(object):
                                                               self.area)
 
 
-class DockGroup(gtk.Container):
+class DockGroup(Gtk.Container):
     '''
-    The etk.DockGroup widget is a gtk.Container that groups its children in a
+    The etk.DockGroup widget is a Gtk.Container that groups its children in a
     tabbed interface.
 
     Tabs can be reorder by dragging them to the desired location within the
@@ -76,20 +76,20 @@ class DockGroup(gtk.Container):
     '''
     __gtype_name__ = 'EtkDockGroup'
     __gsignals__ = {'item-added':
-                        (gobject.SIGNAL_RUN_LAST,
-                         gobject.TYPE_NONE,
-                         (gobject.TYPE_OBJECT,)),
+                        (GObject.SignalFlags.RUN_LAST,
+                         None,
+                         (GObject.TYPE_OBJECT,)),
                     'item-removed':
-                        (gobject.SIGNAL_RUN_LAST,
-                         gobject.TYPE_NONE,
-                         (gobject.TYPE_OBJECT,)),
+                        (GObject.SignalFlags.RUN_LAST,
+                         None,
+                         (GObject.TYPE_OBJECT,)),
                     'item-selected':
-                        (gobject.SIGNAL_RUN_LAST,
-                         gobject.TYPE_NONE,
-                         (gobject.TYPE_OBJECT,))}
+                        (GObject.SignalFlags.RUN_LAST,
+                         None,
+                         (GObject.TYPE_OBJECT,))}
 
     def __init__(self):
-        gtk.Container.__init__(self)
+        GObject.GObject.__init__(self)
 
         # Initialize logging
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
@@ -99,15 +99,15 @@ class DockGroup(gtk.Container):
         self._frame_width = 1
         self._spacing = 3
         self._available_width = 0
-        self._decoration_area = gdk.Rectangle()
+        self._decoration_area = ()
 
         self._tabs = []
         self._visible_tabs = []
         self._current_tab = None
-        self._tab_state = gtk.STATE_SELECTED
+        self._tab_state = Gtk.StateType.SELECTED
         self.dragcontext = DockDragContext()
 
-        gtk.widget_push_composite_child()
+        Gtk.widget_push_composite_child()
         self._list_button = CompactButton('compact-list')
         self._list_button.set_tooltip_text(_('Show list'))
         self._list_button.connect('clicked', self._on_list_button_clicked)
@@ -120,11 +120,11 @@ class DockGroup(gtk.Container):
         self._max_button.set_tooltip_text(_('Maximize'))
         self._max_button.connect('clicked', self._on_max_button_clicked)
         self._max_button.set_parent(self)
-        self._tab_menu = gtk.Menu()
+        self._tab_menu = Gtk.Menu()
         self._tab_menu.attach_to_widget(self, None)
-        self._list_menu = gtk.Menu()
+        self._list_menu = Gtk.Menu()
         self._list_menu.attach_to_widget(self._list_button, None)
-        gtk.widget_pop_composite_child()
+        Gtk.widget_pop_composite_child()
 
     def __len__(self):
         return len(self._tabs)
@@ -134,21 +134,21 @@ class DockGroup(gtk.Container):
     ############################################################################
     def do_realize(self):
         # Internal housekeeping
-        self.set_flags(self.flags() | gtk.REALIZED)
-        self.window = gdk.Window(self.get_parent_window(),
+        self.set_flags(self.flags() | Gtk.REALIZED)
+        self.window = Gdk.Window(self.get_parent_window(),
                                  x = self.allocation.x,
                                  y = self.allocation.y,
                                  width = self.allocation.width,
                                  height = self.allocation.height,
-                                 window_type = gdk.WINDOW_CHILD,
-                                 wclass = gdk.INPUT_OUTPUT,
-                                 event_mask = (gdk.EXPOSURE_MASK |
-                                               gdk.POINTER_MOTION_MASK |
-                                               gdk.BUTTON_PRESS_MASK |
-                                               gdk.BUTTON_RELEASE_MASK))
+                                 window_type = Gdk.WINDOW_CHILD,
+                                 wclass = Gdk.INPUT_OUTPUT,
+                                 event_mask = (Gdk.EventMask.EXPOSURE_MASK |
+                                               Gdk.EventMask.POINTER_MOTION_MASK |
+                                               Gdk.EventMask.BUTTON_PRESS_MASK |
+                                               Gdk.EventMask.BUTTON_RELEASE_MASK))
         self.window.set_user_data(self)
         self.style.attach(self.window)
-        self.style.set_background(self.window, gtk.STATE_NORMAL)
+        self.style.set_background(self.window, Gtk.StateType.NORMAL)
 
         # Set parent window on all child widgets
         for tab in self._tabs:
@@ -164,10 +164,10 @@ class DockGroup(gtk.Container):
     def do_unrealize(self):
         self.window.set_user_data(None)
         self.window.destroy()
-        gtk.Container.do_unrealize(self)
+        Gtk.Container.do_unrealize(self)
 
     def do_map(self):
-        gtk.Container.do_map(self)
+        Gtk.Container.do_map(self)
         self._list_button.show()
         self._min_button.show()
         self._max_button.show()
@@ -178,10 +178,10 @@ class DockGroup(gtk.Container):
         self._min_button.hide()
         self._max_button.hide()
         self.window.hide()
-        gtk.Container.do_unmap(self)
+        Gtk.Container.do_unmap(self)
 
     def do_size_request(self, requisition):
-        gtk.Container.do_size_request(self, requisition)
+        Gtk.Container.do_size_request(self, requisition)
 
         # Start with a zero sized decoration area
         dw = dh = 0
@@ -238,7 +238,7 @@ class DockGroup(gtk.Container):
     def do_size_allocate(self, allocation):
         self.allocation = allocation
 
-        if self.flags() & gtk.REALIZED:
+        if self.get_realized():
             self.window.move_resize(*allocation)
 
         # Allocate space for decoration buttons
@@ -247,9 +247,9 @@ class DockGroup(gtk.Container):
         list_w, list_h = self._list_button.get_child_requisition()
         bh = max(list_h, min_h, max_h)
         by = self._frame_width + self._spacing
-        self._max_button.size_allocate(gdk.Rectangle(allocation.width - self._frame_width - self._spacing - max_w, by, max_w, bh))
-        self._min_button.size_allocate(gdk.Rectangle(allocation.width - self._frame_width - self._spacing - max_w - min_w, by, min_w, bh))
-        self._list_button.size_allocate(gdk.Rectangle(allocation.width - self._frame_width - self._spacing - max_w - min_w - list_w, by, list_w, bh))
+        self._max_button.size_allocate((allocation.width - self._frame_width - self._spacing - max_w, by, max_w, bh))
+        self._min_button.size_allocate((allocation.width - self._frame_width - self._spacing - max_w - min_w, by, min_w, bh))
+        self._list_button.size_allocate((allocation.width - self._frame_width - self._spacing - max_w - min_w - list_w, by, list_w, bh))
 
         # Compute available tab area width
         self._available_width = (allocation.width - self._frame_width - self._spacing - max_w - min_w - list_w - self._spacing)
@@ -268,7 +268,7 @@ class DockGroup(gtk.Container):
                 tab.item.hide()
                 tab.image.show()
                 tab.label.show()
-            elif tab.item.flags() & gtk.VISIBLE:
+            elif tab.item.flags() & Gtk.VISIBLE:
                 tab.item.hide()
                 tab.image.hide()
                 tab.label.hide()
@@ -294,7 +294,7 @@ class DockGroup(gtk.Container):
 
             ix = cx + self._frame_width + self._spacing
             iy = (tab.area.height - ih) / 2 + 1
-            tab.image.size_allocate(gdk.Rectangle(ix, iy, iw, ih))
+            tab.image.size_allocate((ix, iy, iw, ih))
 
             if len(self._visible_tabs) == 1:
                 lw = tab.area.width - (self._frame_width + self._spacing + iw +
@@ -304,12 +304,12 @@ class DockGroup(gtk.Container):
 
             lx = cx + self._frame_width + self._spacing + iw + self._spacing
             ly = (tab.area.height - lh) / 2 + 1
-            tab.label.size_allocate(gdk.Rectangle(lx, ly, lw, lh))
+            tab.label.size_allocate((lx, ly, lw, lh))
 
             bx = (cx + self._frame_width + self._spacing + iw +
                   self._spacing + lw + self._spacing)
             by = (tab.area.height - bh) / 2 + 1
-            tab.button.size_allocate(gdk.Rectangle(bx, by, bw, bh))
+            tab.button.size_allocate((bx, by, bw, bh))
 
             cx += tab.area.width
 
@@ -319,7 +319,7 @@ class DockGroup(gtk.Container):
             iy = self._decoration_area.height + self.border_width
             iw = max(allocation.width - (2 * self._frame_width) - (2 * self.border_width), 0)
             ih = max(allocation.height - (2 * self._frame_width) - (2 * self.border_width) - 23, 0)
-            self._current_tab.item.size_allocate(gdk.Rectangle(ix, iy, iw, ih))
+            self._current_tab.item.size_allocate((ix, iy, iw, ih))
 
         #assert not self._current_tab or self._current_tab in self._visible_tabs
         self.queue_draw_area(0, 0, self.allocation.width, self.allocation.height)
@@ -332,7 +332,7 @@ class DockGroup(gtk.Container):
         dark = (dark.red_float, dark.green_float, dark.blue_float)
         tab_light = self.style.text_aa[self._tab_state]
         tab_light = (tab_light.red_float, tab_light.green_float, tab_light.blue_float)
-        tab_dark = HslColor(self.style.text_aa[gtk.STATE_SELECTED])
+        tab_dark = HslColor(self.style.text_aa[Gtk.StateType.SELECTED])
         tab_dark.set_l(0.9)
         tab_dark = tab_dark.get_rgb_float()
 
@@ -501,7 +501,7 @@ class DockGroup(gtk.Container):
         # current tab's child widget
         if event.window is self.window:
             # Check if we are actually starting a DnD operation
-            if event.state & gdk.BUTTON1_MASK and \
+            if event.get_state() & Gdk.ModifierType.BUTTON1_MASK and \
                self.dragcontext.source_button == 1 and \
                self.drag_check_threshold(int(self.dragcontext.source_x),
                                          int(self.dragcontext.source_y),
@@ -519,7 +519,7 @@ class DockGroup(gtk.Container):
                     self.dragcontext.dragged_object = [t.item for t in self._tabs]
 
                 if self.dragcontext.dragged_object:
-                    self.drag_begin([DRAG_TARGET_ITEM_LIST], gdk.ACTION_MOVE,
+                    self.drag_begin([DRAG_TARGET_ITEM_LIST], Gdk.DragAction.MOVE,
                                     self.dragcontext.source_button, event)
 
             # Update tab button visibility
@@ -539,7 +539,7 @@ class DockGroup(gtk.Container):
     ############################################################################
     def do_drag_begin(self, context):
         '''
-        :param context: the gdk.DragContext
+        :param context: the Gdk.DragContext
 
         The do_drag_begin() signal handler is executed on the drag source when
         the user initiates a drag operation. A typical reason to use this signal
@@ -554,13 +554,13 @@ class DockGroup(gtk.Container):
         #TODO: Set drag icon to be empty
         #TODO: Set drag cursor -> will most likely not (only) happen here...
         # Can be any of the following, depending on the selected drag destination:
-        #   - gdk.DIAMOND_CROSS    "stacking" a dockitem into a dockgroup
-        #   - gdk.SB_UP_ARROW      "splitting" a dockitem into a new dockgroup above the source dockgroup (needs docklayout)
-        #   - gdk.SB_DOWN_ARROW    "splitting" a dockitem into a new dockgroup below the source dockgroup (needs docklayout)
-        #   - gdk.SB_LEFT_ARROW    "splitting" a dockitem into a new dockgroup on the left of the source dockgroup (needs docklayout)
-        #   - gdk.SB_RIGHT_ARROW   "splitting" a dockitem into a new dockgroup on the right of the source dockgroup (needs docklayout)
+        #   - Gdk.DIAMOND_CROSS    "stacking" a dockitem into a dockgroup
+        #   - Gdk.SB_UP_ARROW      "splitting" a dockitem into a new dockgroup above the source dockgroup (needs docklayout)
+        #   - Gdk.SB_DOWN_ARROW    "splitting" a dockitem into a new dockgroup below the source dockgroup (needs docklayout)
+        #   - Gdk.SB_LEFT_ARROW    "splitting" a dockitem into a new dockgroup on the left of the source dockgroup (needs docklayout)
+        #   - Gdk.SB_RIGHT_ARROW   "splitting" a dockitem into a new dockgroup on the right of the source dockgroup (needs docklayout)
 
-        #dnd_window = gtk.Window(gtk.WINDOW_POPUP)
+        #dnd_window = Gtk.Window(Gtk.WindowType.POPUP)
         #dnd_window.set_screen(self.get_screen())
         #dnd_window.add(tab.item)
         #dnd_window.set_size_request(tab.item.allocation.width,
@@ -571,14 +571,14 @@ class DockGroup(gtk.Container):
 
     def do_drag_data_get(self, context, selection_data, info, timestamp):
         '''
-        :param context: the gdk.DragContext
-        :param selection_data: a gtk.SelectionData object
+        :param context: the Gdk.DragContext
+        :param selection_data: a Gtk.SelectionData object
         :param info: an integer ID for the drag
         :param timestamp: the time of the drag event
 
         The do_drag_data_get() signal handler is executed when a drag operation
         completes that copies data or when a drag drop occurs using the
-        gdk.DRAG_PROTO_ROOTWIN protocol. The drag source executes this
+        Gdk.DRAG_PROTO_ROOTWIN protocol. The drag source executes this
         handler when the drag destination requests the data using the
         drag_get_data() method. This handler needs to fill selection_data
         with the data in the format specified by the target associated with
@@ -590,13 +590,13 @@ class DockGroup(gtk.Container):
         For group movement, no special action is taken.
         '''
         # Set some data so the DnD process continues
-        selection_data.set(gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0]),
+        selection_data.set(Gdk.atom_intern(DRAG_TARGET_ITEM_LIST[0]),
                            8,
                            '%d tabs' % len(self.dragcontext.dragged_object))
 
     def do_drag_data_delete(self, context):
         '''
-        :param context: the gdk.DragContext
+        :param context: the Gdk.DragContext
 
         The do_drag_data_delete() signal handler is executed when the drag
         completes a move operation and requires the source data to be deleted.
@@ -610,7 +610,7 @@ class DockGroup(gtk.Container):
 
     def do_drag_end(self, context):
         '''
-        :param context: the gdk.DragContext
+        :param context: the Gdk.DragContext
 
         The do_drag_end() signal handler is executed when the drag operation is
         completed. A typical reason to use this signal handler is to undo things
@@ -762,7 +762,7 @@ class DockGroup(gtk.Container):
 
     def set_tab_state(self, tab_state):
         '''
-        Define the tab state. Normally that will be ``gtk.STATE_SELECTED``, but a
+        Define the tab state. Normally that will be ``Gtk.StateType.SELECTED``, but a
         different state can be set if required.
         '''
         self._tab_state = tab_state
@@ -839,13 +839,13 @@ class DockGroup(gtk.Container):
             position = len(self)
 
         # Create composite children for tab
-        gtk.widget_push_composite_child()
+        Gtk.widget_push_composite_child()
         tab = _DockGroupTab()
         tab.image = item.get_image()
-        tab.label = gtk.Label()
+        tab.label = Gtk.Label()
         tab.button = CompactButton(has_frame=False)
-        tab.menu_item = gtk.ImageMenuItem()
-        gtk.widget_pop_composite_child()
+        tab.menu_item = Gtk.ImageMenuItem()
+        Gtk.widget_pop_composite_child()
 
         # Configure child widgets for tab
         tab.item = item
@@ -863,10 +863,10 @@ class DockGroup(gtk.Container):
         tab.menu_item.set_label(item.get_title())
         tab.menu_item.connect('activate', self._on_list_menu_item_activated, tab)
         self._list_menu.append(tab.menu_item)
-        tab.area = gdk.Rectangle()
+        tab.area = ()
         tab.last_focused = time()
 
-        if self.flags() & gtk.REALIZED:
+        if self.get_realized():
             tab.item.set_parent_window(self.window)
             tab.image.set_parent_window(self.window)
             tab.label.set_parent_window(self.window)
@@ -1044,11 +1044,11 @@ class DockGroup(gtk.Container):
         self.queue_resize()
 
         if tab is self._current_tab:
-            tab.menu_item.child.set_use_markup(True)
-            tab.menu_item.child.set_markup('<b>%s</b>' % tab.item.get_title())
+            tab.menu_item.get_child().set_use_markup(True)
+            tab.menu_item.get_child().set_markup('<b>%s</b>' % tab.item.get_title())
         else:
-            tab.menu_item.child.set_use_markup(False)
-            tab.menu_item.child.set_markup(tab.item.get_title())
+            tab.menu_item.get_child().set_use_markup(False)
+            tab.menu_item.get_child().set_markup(tab.item.get_title())
 
     def _on_item_title_changed(self, item, pspec, tab):
         self._item_title_changed(tab)

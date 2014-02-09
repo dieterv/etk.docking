@@ -22,11 +22,11 @@
 from __future__ import absolute_import
 from logging import getLogger
 
-import gtk
-import gtk.gdk as gdk
+from gi.repository import Gtk
+import Gtk.gdk as gdk
 
 
-DRAG_TARGET_ITEM_LIST = ('x-etk-docking/item-list', gtk.TARGET_SAME_APP, 0)
+DRAG_TARGET_ITEM_LIST = ('x-etk-docking/item-list', Gtk.TargetFlags.SAME_APP, 0)
 
 
 class DockDragContext(object):
@@ -60,7 +60,7 @@ class DockDragContext(object):
         self.offset_y = None
 
 
-class Placeholder(gtk.DrawingArea):
+class Placeholder(Gtk.DrawingArea):
     __gtype_name__ = 'EtkDockPlaceholder'
 
     def do_expose_event(self, expose):
@@ -74,9 +74,9 @@ class Placeholder(gtk.DrawingArea):
         c.stroke()
 
 
-class PlaceHolderWindow(gtk.Window):
+class PlaceHolderWindow(Gtk.Window):
     '''
-    The etk.dnd.PlaceHolderWindow is a gtk.Window that can highlight an area
+    The etk.dnd.PlaceHolderWindow is a Gtk.Window that can highlight an area
     on screen. When a PlaceHolderWindow has no child widget an undecorated
     utility popup is shown drawing a transparent highlighting rectangle around
     the desired area. The location and size of the highlight rectangle can
@@ -93,10 +93,10 @@ class PlaceHolderWindow(gtk.Window):
     __gtype_name__ = 'EtkDockPlaceHolderWindow'
 
     def __init__(self):
-        gtk.Window.__init__(self, gtk.WINDOW_POPUP)
+        GObject.GObject.__init__(self, Gtk.WindowType.POPUP)
         self.set_decorated(False)
         self.set_skip_taskbar_hint(True)
-        self.set_type_hint(gdk.WINDOW_TYPE_HINT_UTILITY)
+        self.set_type_hint(Gdk.WindowTypeHint.UTILITY)
         #TODO: self.set_transient_for(???.get_toplevel())
 
         # Initialize logging
@@ -106,11 +106,11 @@ class PlaceHolderWindow(gtk.Window):
         self._gc = None
 
     def _create_shape(self, width, height):
-        black = gdk.Color(red=0, green=0, blue=0, pixel=1)
-        white = gdk.Color(red=255, green=255, blue=255, pixel=0)
+        black = Gdk.Color(red=0, green=0, blue=0, pixel=1)
+        white = Gdk.Color(red=255, green=255, blue=255, pixel=0)
 
-        pm = gdk.Pixmap(self.window, width, height, 1)
-        gc = gdk.GC(pm)
+        pm = Gdk.Pixmap(self.window, width, height, 1)
+        gc = Gdk.GC(pm)
         gc.set_background(white)
         gc.set_foreground(white)
         pm.draw_rectangle(gc, True, 0, 0, width, height)
@@ -125,22 +125,22 @@ class PlaceHolderWindow(gtk.Window):
     # GtkWidget
     ############################################################################
     def do_realize(self):
-        gtk.Window.do_realize(self)
-        self._gc = self.style.bg_gc[gtk.STATE_SELECTED]
+        Gtk.Window.do_realize(self)
+        self._gc = self.style.bg_gc[Gtk.StateType.SELECTED]
 
     def do_unrealize(self):
         self._gc = None
-        gtk.Window.do_unrealize(self)
+        Gtk.Window.do_unrealize(self)
 
     def do_size_allocate(self, allocation):
         self.log.debug('%s' % allocation)
-        gtk.Window.do_size_allocate(self, allocation)
+        Gtk.Window.do_size_allocate(self, allocation)
 
         self._create_shape(allocation.width, allocation.height)
 
     def do_expose_event(self, event):
         self.log.debug('%s' % event)
-        gtk.Window.do_expose_event(self, event)
+        Gtk.Window.do_expose_event(self, event)
 
         width, height = self.get_size()
         self.window.draw_rectangle(self._gc, False, 0, 0, width-1, height-1)
@@ -153,7 +153,7 @@ class PlaceHolderWindow(gtk.Window):
     def do_add(self, widget):
         self.set_decorated(True)
         self.reset_shapes()
-        gtk.Window.add(self, widget)
+        Gtk.Window.add(self, widget)
 
     ############################################################################
     # EtkPlaceHolderWindow
