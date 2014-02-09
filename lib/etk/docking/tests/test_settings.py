@@ -3,7 +3,7 @@
 
 import unittest
 
-from etk.docking.docksettings import DockSettingsDict
+from etk.docking.docksettings import DockSettings, DockSettingsDict
 
 class TestDockLayout(unittest.TestCase):
 
