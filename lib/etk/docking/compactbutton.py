@@ -175,15 +175,16 @@ class CompactButton(Gtk.Widget):
     ############################################################################
     def do_realize(self):
         Gtk.Widget.do_realize(self)
+        allocation = self.get_allocation()
         attr = Gdk.WindowAttr()
-        attr.x = self.allocation.x
-        attr.y = self.allocation.y
-        attr.width = self.allocation.width
-        attr.height = self.allocation.height
+        attr.x = allocation.x
+        attr.y = allocation.y
+        attr.width = allocation.width
+        attr.height = allocation.height
         attr.window_type = Gdk.WindowType.CHILD
         attr.wclass = Gdk.WindowWindowClass.INPUT_ONLY
         attr.visual = self.get_visual()
-        attr.colormap = self.get_colormap()
+        #attr.colormap = self.get_colormap()
         attr.event_mask = (Gdk.EventMask.ENTER_NOTIFY_MASK |
                             Gdk.EventMask.LEAVE_NOTIFY_MASK |
                             Gdk.EventMask.BUTTON_PRESS_MASK |
@@ -211,36 +212,36 @@ class CompactButton(Gtk.Widget):
         requisition.height = self._size
 
     def do_size_allocate(self, allocation):
-        self.allocation = allocation
+        self.set_allocation(allocation)
 
         if self.get_realized():
-            self._input_window.move_resize(*self.allocation)
+            self._input_window.move_resize(allocation.x, allocation.y, allocation.width, allocation.height)
 
-    def do_expose_event(self, event):
+    def do_draw(self, cr):
         # Draw icon
-        if self.state == Gtk.StateType.NORMAL:
+        allocation = self.get_allocation()
+        if self.get_state() == Gtk.StateType.NORMAL:
             pixbuf = self._icon_normal
-            x = self.allocation.x
-            y = self.allocation.y
-        elif self.state == Gtk.StateType.PRELIGHT:
+            x = allocation.x
+            y = allocation.y
+        elif self.get_state() == Gtk.StateType.PRELIGHT:
             pixbuf = self._icon_prelight
-            x = self.allocation.x
-            y = self.allocation.y
-        elif self.state == Gtk.StateType.ACTIVE:
+            x = allocation.x
+            y = allocation.y
+        elif self.get_state() == Gtk.StateType.ACTIVE:
             pixbuf = self._icon_active
-            x = self.allocation.x + 1
-            y = self.allocation.y + 1
+            x = allocation.x + 1
+            y = allocation.y + 1
 
-        event.window.draw_pixbuf(self.style.base_gc[self.state], pixbuf, 0, 0, x, y)
+        #event.window.draw_pixbuf(self.props.style.base_gc[self.state], pixbuf, 0, 0, x, y)
+        Gdk.cairo_set_source_pixbuf(cr, pixbuf, 0, 0)
+        cr.paint()
 
         # Draw frame
-        if self._has_frame and self.state != Gtk.StateType.NORMAL:
-            event.window.draw_rectangle(self.style.dark_gc[self.state], False,
-                                        self.allocation.x,
-                                        self.allocation.y,
-                                        self.allocation.width - 1,
-                                        self.allocation.height - 1)
-
+        if self._has_frame and self.get_state() != Gtk.StateType.NORMAL:
+            #event.window.draw_rectangle(self.props.style.dark_gc[self.state], False,
+            cr.rectangle(allocation.x, allocation.y, allocation.width - 1, allocation.height - 1)
+            cr.stroke()
         return False
 
     def do_enter_notify_event(self, event):

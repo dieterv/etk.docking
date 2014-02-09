@@ -24,8 +24,14 @@ from logging import getLogger
 
 from gi.repository import Gtk, Gdk
 
+def gtk_target_entry(target, flags, info):
+    te = Gtk.TargetEntry()
+    te.target = target
+    te.flags = flags
+    te.info = info
+    return te
 
-DRAG_TARGET_ITEM_LIST = ('x-etk-docking/item-list', Gtk.TargetFlags.SAME_APP, 0)
+DRAG_TARGET_ITEM_LIST =  gtk_target_entry('x-etk-docking/item-list', Gtk.TargetFlags.SAME_APP, 0)
 
 
 class DockDragContext(object):
@@ -137,14 +143,15 @@ class PlaceHolderWindow(Gtk.Window):
 
         self._create_shape(allocation.width, allocation.height)
 
-    def do_expose_event(self, event):
-        self.log.debug('%s' % event)
-        Gtk.Window.do_expose_event(self, event)
-
-        width, height = self.get_size()
-        self.window.draw_rectangle(self._gc, False, 0, 0, width-1, height-1)
-        self.window.draw_rectangle(self._gc, False, 1, 1, width-3, height-3)
-        return True
+# TODO: implement draw
+#    def do_draw(self, cr):
+#        self.log.debug('%s' % cr)
+#        Gtk.Window.do_draw(self, cr)
+#
+#        width, height = self.get_size()
+#        self.window.draw_rectangle(self._gc, False, 0, 0, width-1, height-1)
+#        self.window.draw_rectangle(self._gc, False, 1, 1, width-3, height-3)
+#        return True
 
     ############################################################################
     # GtkContainer

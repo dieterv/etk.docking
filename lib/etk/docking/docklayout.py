@@ -143,7 +143,7 @@ class DockLayout(GObject.GObject):
                           ('drag-failed', self.on_widget_drag_failed),
                           ('notify::is-focus', self.on_widget_is_focus))
 
-    def add_signal_handlers(self, widget):
+    def add_signal_handlers(self, widget, data=None):
         """
         Set up signal handlers for layout and child widgets. Also group state is changed
         from selected to prelight, in order to have one focused widget.
@@ -157,7 +157,7 @@ class DockLayout(GObject.GObject):
         if not drag_dest:
             widget.drag_dest_set(Gtk.DestDefaults.MOTION, [DRAG_TARGET_ITEM_LIST],
                                  Gdk.DragAction.MOVE)
-        elif DRAG_TARGET_ITEM_LIST not in drag_dest:
+        elif not drag_dest.find(DRAG_TARGET_ITEM_LIST):
             widget.drag_dest_set_target_list(drag_dest + [DRAG_TARGET_ITEM_LIST])
 
         # Use instance methods here, so layout can do additional bookkeeping
@@ -170,7 +170,7 @@ class DockLayout(GObject.GObject):
         self._signal_handlers[widget] = signals
 
         if isinstance(widget, Gtk.Container):
-            widget.foreach(self.add_signal_handlers)
+            widget.foreach(self.add_signal_handlers, None)
 
         # Ensure SELECTED state is only for the selected item
         if isinstance(widget, DockGroup):
@@ -588,7 +588,7 @@ def new(class_, old=None, layout=None):
         new.set_name(old.get_name())
     return new
 
-def dock_group_expose_highlight(self, event):
+def dock_group_expose_highlight(self, cr):
     try:
         tab = self._visible_tabs[self._drop_tab_index]
     except TypeError:
@@ -599,7 +599,7 @@ def dock_group_expose_highlight(self, event):
         else:
             a = tab.area
 
-    cr = self.window.cairo_create()
+    #cr = self.window.cairo_create()
     cr.set_source_rgb(0, 0, 0)
     cr.set_line_width(1.0)
     cr.rectangle(a.x + 0.5, a.y + 0.5, a.width - 1, a.height - 1)
@@ -608,7 +608,7 @@ def dock_group_expose_highlight(self, event):
 def dock_group_highlight(self):
     if not hasattr(self, '_expose_event_id'):
         self.log.debug('attaching expose event')
-        self._expose_event_id = self.connect_after('expose-event',
+        self._expose_event_id = self.connect_after('draw',
                                                    dock_group_expose_highlight)
     self.queue_draw()
 
@@ -693,7 +693,7 @@ def dock_group_drag_failed(self, context, result):
 ################################################################################
 # DockPaned
 ################################################################################
-def dock_paned_expose_highlight(self, event):
+def dock_paned_expose_highlight(self, cr):
     try:
         handle = self._handles[self._drop_handle_index]
     except (AttributeError, IndexError, TypeError), e:
@@ -702,7 +702,6 @@ def dock_paned_expose_highlight(self, event):
     else:
         a = handle.area
 
-    cr = self.window.cairo_create()
     cr.set_source_rgb(0, 0, 0)
     cr.set_line_width(1.0)
     cr.rectangle(a.x + 0.5, a.y + 0.5, a.width - 1, a.height - 1)

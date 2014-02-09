@@ -201,9 +201,9 @@ class DockPaned(Gtk.Container):
         elif self.get_allocation() and child.get_allocation():
             size = self._effective_size(self.get_allocation()) - self._handle_size
             if self._orientation == Gtk.Orientation.HORIZONTAL:
-                child_size = child.size_request()[0]
+                child_size = child.size_request().width
             else:
-                child_size = child.size_request()[1]
+                child_size = child.size_request().height
 
             if size > 0 and child_size > 0:
                 item.weight_request = float(child_size) / size
@@ -449,11 +449,12 @@ class DockPaned(Gtk.Container):
     def do_realize(self):
         # Internal housekeeping
         self.set_realized(True)
+        allocation = self.get_allocation()
         attr = Gdk.WindowAttr()
-        attr.x = self.get_allocation().x
-        attr.y = self.get_allocation().y
-        attr.width = self.get_allocation().width
-        attr.height = self.get_allocation().height
+        attr.x = allocation.x
+        attr.y = allocation.y
+        attr.width = allocation.width
+        attr.height = allocation.height
         attr.window_type = Gdk.WindowType.CHILD
         attr.wclass = Gdk.WindowWindowClass.INPUT_OUTPUT
         attr.event_mask = (Gdk.EventMask.EXPOSURE_MASK |
@@ -467,15 +468,15 @@ class DockPaned(Gtk.Container):
         window.set_user_data(self)
         self.set_window(window)
         #self.style.attach(self.window)
-        self.props.style.set_background(self.window, Gtk.StateType.NORMAL)
+        self.props.style.set_background(window, Gtk.StateType.NORMAL)
 
         # Set parent window on all child widgets
         for item in self._items:
-            item.child.set_parent_window(self.window)
+            item.child.set_parent_window(window)
 
         # Initialize cursors
-        self._hcursor = Gdk.Cursor.new(self.get_display(), Gdk.SB_H_DOUBLE_ARROW)
-        self._vcursor = Gdk.Cursor.new(self.get_display(), Gdk.SB_V_DOUBLE_ARROW)
+        self._hcursor = Gdk.Cursor(Gdk.CursorType.SB_H_DOUBLE_ARROW)
+        self._vcursor = Gdk.Cursor(Gdk.CursorType.SB_V_DOUBLE_ARROW)
 
     def do_unrealize(self):
         self._hcursor = None
@@ -485,11 +486,11 @@ class DockPaned(Gtk.Container):
         Gtk.Container.do_unrealize(self)
 
     def do_map(self):
-        self.window.show()
+        self.get_window().show()
         Gtk.Container.do_map(self)
 
     def do_unmap(self):
-        self.window.hide()
+        self.get_window().hide()
         Gtk.Container.do_unmap(self)
 
     def do_size_request(self, requisition):
@@ -587,7 +588,7 @@ class DockPaned(Gtk.Container):
 
         # Move/Resize our GdkWindow
         if self.get_realized():
-            self.window.move_resize(*allocation)
+            self.window.move_resize(allocation, x, allocation.y, allocation.width, allocation.height)
 
     def do_expose_event(self, event):
         for item in self._items:
@@ -601,14 +602,14 @@ class DockPaned(Gtk.Container):
 
     def do_leave_notify_event(self, event):
         # Reset cursor
-        self.window.set_cursor(None)
+        self.get_window().set_cursor(None)
 
     def do_button_press_event(self, event):
         # We might be starting a drag operation, or we could simply be starting
         # a click somewhere. Store information from this event in self._dragcontext
         # and decide in do_motion_notify_event if we're actually starting a
         # drag operation or not.
-        if event.window is self.window and event.button == 1:
+        if event.window is self.get_window() and event.button == 1:
             handle = self._get_handle_at_pos(event.x, event.y)
 
             if handle:
@@ -686,10 +687,10 @@ class DockPaned(Gtk.Container):
     def do_remove(self, widget):
         self._remove_item(widget)
 
-    def do_forall(self, internals, callback, data):
+    def do_forall(self, internal, callback):
         try:
             for item in self._items:
-                callback(item.child, data)
+                callback(item.child)
         except AttributeError:
             pass
 

@@ -22,7 +22,7 @@
 from __future__ import absolute_import
 from logging import getLogger
 
-from gi.repository import GObject, Gtk, Gdk
+from gi.repository import GObject, Gtk, Gdk, cairo
 
 
 class DockItem(Gtk.Bin):
@@ -150,7 +150,7 @@ class DockItem(Gtk.Bin):
         requisition.width = 0
         requisition.height = 0
 
-        if self.get_child() and self.get_child().flags() & Gtk.VISIBLE:
+        if self.get_child() and self.get_child().is_visible():
             (requisition.width, requisition.height) = self.get_child().size_request()
             requisition.width += self.border_width * 2
             requisition.height += self.border_width * 2
@@ -158,12 +158,13 @@ class DockItem(Gtk.Bin):
     def do_size_allocate(self, allocation):
         self.allocation = allocation
 
-        if self.get_child() and self.get_child().flags() & Gtk.VISIBLE:
-            child_allocation = ()
-            child_allocation.x = allocation.x + self.border_width
-            child_allocation.y = allocation.y + self.border_width
-            child_allocation.width = allocation.width - (2 * self.border_width)
-            child_allocation.height = allocation.height - (2 * self.border_width)
+        if self.get_child() and self.get_child().is_visible():
+            border_width = self.props.border_width
+            child_allocation = cairo.RectangleInt()
+            child_allocation.x = allocation.x + border_width
+            child_allocation.y = allocation.y + border_width
+            child_allocation.width = allocation.width - (2 * border_width)
+            child_allocation.height = allocation.height - (2 * border_width)
             self.get_child().size_allocate(child_allocation)
 
     ############################################################################

@@ -453,11 +453,11 @@ class TestDockPaned(unittest.TestCase):
         window.add(dockpaned)
         window.show_all()
 
-        child1 = dockpaned.get_item_at_pos(dockgroup1.allocation.x + 1,
-                                           dockgroup1.allocation.y + 1)
+        child1 = dockpaned.get_item_at_pos(dockgroup1.get_allocation().x + 1,
+                                           dockgroup1.get_allocation().y + 1)
 
-        child2 = dockpaned.get_item_at_pos(dockgroup2.allocation.x + 1,
-                                           dockgroup2.allocation.y + 1)
+        child2 = dockpaned.get_item_at_pos(dockgroup2.get_allocation().x + 1,
+                                           dockgroup2.get_allocation().y + 1)
 
         self.assertTrue(child1 is dockgroup1)
         self.assertTrue(child2 is dockgroup2)
