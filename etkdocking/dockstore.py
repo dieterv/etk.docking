@@ -21,6 +21,9 @@
 
 from __future__ import absolute_import
 from __future__ import division
+# TODO make parsing XML backwards compatible
+# from builtins import str
+from builtins import map
 from past.utils import old_div
 import sys
 

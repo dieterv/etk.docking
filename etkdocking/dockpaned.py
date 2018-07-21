@@ -21,6 +21,9 @@
 
 from __future__ import absolute_import
 from __future__ import division
+from builtins import range
+from builtins import hex
+from builtins import zip
 from past.utils import old_div
 from logging import getLogger
 

@@ -21,6 +21,7 @@
 
 from __future__ import absolute_import
 from __future__ import division
+from builtins import hex
 from past.utils import old_div
 from logging import getLogger
 from math import pi

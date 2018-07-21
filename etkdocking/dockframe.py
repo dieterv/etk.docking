@@ -20,6 +20,7 @@
 
 
 from __future__ import absolute_import
+from builtins import hex
 from logging import getLogger
 
 import gtk

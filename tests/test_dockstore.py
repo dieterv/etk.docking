@@ -1,4 +1,5 @@
 # vim:sw=4:et:ai
+from builtins import next
 import unittest
 
 import pygtk
@@ -31,6 +32,7 @@ class LoadingTestCase(unittest.TestCase):
         group.add(item)
 
         s = serialize(layout)
+        print(s)
         assert '<layout><dockframe height="1" width="1">'\
         '<dockpaned orientation="horizontal">'\
         '<dockgroup weight="100">'\
