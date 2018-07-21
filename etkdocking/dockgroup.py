@@ -20,6 +20,8 @@
 
 
 from __future__ import absolute_import
+from __future__ import division
+from past.utils import old_div
 from logging import getLogger
 from math import pi
 from operator import attrgetter
@@ -293,7 +295,7 @@ class DockGroup(gtk.Container):
             (bh, bw) = tab.button.get_child_requisition()
 
             ix = cx + self._frame_width + self._spacing
-            iy = (tab.area.height - ih) / 2 + 1
+            iy = old_div((tab.area.height - ih), 2) + 1
             tab.image.size_allocate(gdk.Rectangle(ix, iy, iw, ih))
 
             if len(self._visible_tabs) == 1:
@@ -303,12 +305,12 @@ class DockGroup(gtk.Container):
                 lw = max(lw, 0) # Prevent negative width
 
             lx = cx + self._frame_width + self._spacing + iw + self._spacing
-            ly = (tab.area.height - lh) / 2 + 1
+            ly = old_div((tab.area.height - lh), 2) + 1
             tab.label.size_allocate(gdk.Rectangle(lx, ly, lw, lh))
 
             bx = (cx + self._frame_width + self._spacing + iw +
                   self._spacing + lw + self._spacing)
-            by = (tab.area.height - bh) / 2 + 1
+            by = old_div((tab.area.height - bh), 2) + 1
             tab.button.size_allocate(gdk.Rectangle(bx, by, bw, bh))
 
             cx += tab.area.width
@@ -361,8 +363,8 @@ class DockGroup(gtk.Container):
         if self._visible_tabs:
             # Draw border
             c.set_line_width(self.border_width)
-            c.rectangle(self._frame_width + self.border_width / 2,
-                        self._decoration_area.height + self.border_width / 2,
+            c.rectangle(self._frame_width + old_div(self.border_width, 2),
+                        self._decoration_area.height + old_div(self.border_width, 2),
                         a.width - (2 * self._frame_width) - self.border_width,
                         a.height - self._decoration_area.height - self._frame_width - self.border_width)
             c.set_source_rgb(*tab_light)
@@ -387,11 +389,11 @@ class DockGroup(gtk.Container):
                 if index < visible_index and index != 0:
                     c.move_to(tx + 0.5, ty + th)
                     c.line_to(tx + 0.5, ty + 8.5)
-                    c.arc(tx + 8.5, 8.5, 8, 180 * (pi / 180), 270 * (pi / 180))
+                    c.arc(tx + 8.5, 8.5, 8, 180 * (old_div(pi, 180)), 270 * (old_div(pi, 180)))
                     c.set_source_rgb(*dark)
                     c.stroke()
                 elif index > visible_index:
-                    c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
+                    c.arc(tx + tw - 8.5, 8.5, 8, 270 * (old_div(pi, 180)), 360 * (old_div(pi, 180)))
                     c.line_to(tx + tw - 0.5, ty + th)
                     c.set_source_rgb(*dark)
                     c.stroke()
@@ -403,10 +405,10 @@ class DockGroup(gtk.Container):
                         c.line_to(tx + tw - 8.5, ty + 0.5)
                     else:
                         c.line_to(tx + 0.5, ty + 8.5)
-                        c.arc(tx + 8.5, 8.5, 8, 180 * (pi / 180), 270 * (pi / 180))
+                        c.arc(tx + 8.5, 8.5, 8, 180 * (old_div(pi, 180)), 270 * (old_div(pi, 180)))
                         c.line_to(tx + tw - 8.5, ty + 0.5)
 
-                    c.arc(tx + tw - 8.5, 8.5, 8, 270 * (pi / 180), 360 * (pi / 180))
+                    c.arc(tx + tw - 8.5, 8.5, 8, 270 * (old_div(pi, 180)), 360 * (old_div(pi, 180)))
                     c.line_to(tx + tw - 0.5, ty + th)
                     linear = cairo.LinearGradient(0.5, 0.5, 0.5, th)
                     linear.add_color_stop_rgb(1, *tab_light)

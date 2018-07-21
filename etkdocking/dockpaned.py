@@ -20,6 +20,8 @@
 
 
 from __future__ import absolute_import
+from __future__ import division
+from past.utils import old_div
 from logging import getLogger
 
 import gobject
@@ -208,7 +210,7 @@ class DockPaned(gtk.Container):
                 child_size = child.size_request()[1]
 
             if size > 0 and child_size > 0:
-                item.weight_request = float(child_size) / size
+                item.weight_request = old_div(float(child_size), size)
             else:
                 item.weight_request = FALLBACK_WEIGHT
         else:
@@ -348,8 +350,8 @@ class DockPaned(gtk.Container):
                 else:
                     adjustment = delta_size
 
-                enlarge.weight_request = float(self._size(enlarge_alloc) + adjustment) / size
-                item.weight_request = float(self._size(a) - adjustment) / size
+                enlarge.weight_request = old_div(float(self._size(enlarge_alloc) + adjustment), size)
+                item.weight_request = old_div(float(self._size(a) - adjustment), size)
 
                 delta_size -= adjustment
 
@@ -376,7 +378,7 @@ class DockPaned(gtk.Container):
 
         # Scale non-expandable items, so their size does not change effectively
         if self.allocation:
-            f = self._effective_size(self.allocation) / size
+            f = old_div(self._effective_size(self.allocation), size)
             for i in self._items:
                 #if i.weight and not i.expand and not i.weight_request:
                 if i.weight and not settings[i.child].expand and not i.weight_request:
@@ -389,7 +391,7 @@ class DockPaned(gtk.Container):
         min_size = sum(i.min_size for i in items)
 
         if min_size > size:
-            sf = size / min_size
+            sf = old_div(size, min_size)
             self.log.warn('Size scaling required (factor=%f)' % sf)
         else:
             sf = 1.0
@@ -892,7 +894,7 @@ def fair_scale(weight, wmpairs):
     skip = [False] * len(wmpairs)
     while True:
         try:
-            f = weight / sum(a[0] for a, s in zip(wmpairs, skip) if not s)
+            f = old_div(weight, sum(a[0] for a, s in zip(wmpairs, skip) if not s))
         except ZeroDivisionError:
             f = 0
         for i, (w, m) in enumerate(wmpairs):
