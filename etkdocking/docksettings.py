@@ -26,6 +26,7 @@ name can be used.
 """
 
 
+from builtins import object
 from builtins import str
 import gtk
 

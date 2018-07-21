@@ -1,4 +1,5 @@
 # vim:sw=4:et:ai
+from builtins import object
 from builtins import next
 import unittest
 
