@@ -114,8 +114,7 @@ class DockLayout(gobject.GObject):
         """
         Get a set of widgets based on their name.
         """
-        return filter(lambda w: w.get_name() == name,
-                      itertools.chain.from_iterable(flatten(frame) for frame in self.frames))
+        return [w for w in itertools.chain.from_iterable(flatten(frame) for frame in self.frames) if w.get_name() == name]
 
     def _get_signals(self, widget):
         """
@@ -204,8 +203,7 @@ class DockLayout(gobject.GObject):
             frame.get_toplevel().set_title(
                 ', '.join(
                     map(lambda w: w.title,
-                        filter(lambda w: isinstance(w, DockItem),
-                            flatten(frame)))))
+                        [w for w in flatten(frame) if isinstance(w, DockItem)])))
 
     def do_item_closed(self, group, item):
         """
@@ -421,7 +419,7 @@ def add_new_group(widget, new_group, orientation, position):
 
 def _window_delete_handler(window, event):
     map(lambda i: i.close(),
-        filter(lambda i: isinstance(i, DockItem), flatten(window)))
+        [i for i in flatten(window) if isinstance(i, DockItem)])
     return False
 
 def add_new_group_floating(new_group, layout, size=None, pos=None):
