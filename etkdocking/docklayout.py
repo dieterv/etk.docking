@@ -39,6 +39,7 @@ from .dockgroup import DockGroup
 from .dockitem import DockItem
 from .util import flatten
 from .docksettings import settings
+from functools import reduce
 
 # On OSX/X11 Utility windows are above all windows,
 # even if the app is not the active app.
