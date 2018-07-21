@@ -867,7 +867,7 @@ class DockPaned(gtk.Container):
 ############################################################################
 # Install child properties
 ############################################################################
-for index, (name, pspec) in enumerate(DockPaned.__gchild_properties__.iteritems()):
+for index, (name, pspec) in enumerate(DockPaned.__gchild_properties__.items()):
     pspec = list(pspec)
     pspec.insert(0, name)
     DockPaned.install_child_property(index + 1, tuple(pspec))

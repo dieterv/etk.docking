@@ -80,10 +80,10 @@ class TestDockLayout(unittest.TestCase):
         paned.remove(group)
 
         self.assertEquals(2, len(layout._signal_handlers), layout._signal_handlers)
-        assert frame in layout._signal_handlers.keys(), layout._signal_handlers
-        assert paned in layout._signal_handlers.keys(), layout._signal_handlers
-        assert group not in layout._signal_handlers.keys(), layout._signal_handlers
-        assert item not in layout._signal_handlers.keys(), layout._signal_handlers
+        assert frame in list(layout._signal_handlers.keys()), layout._signal_handlers
+        assert paned in list(layout._signal_handlers.keys()), layout._signal_handlers
+        assert group not in list(layout._signal_handlers.keys()), layout._signal_handlers
+        assert item not in list(layout._signal_handlers.keys()), layout._signal_handlers
         assert frame in layout.frames
 
     def test_get_widgets(self):
