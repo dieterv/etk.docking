@@ -19,6 +19,7 @@
 # along with etk.docking. If not, see <http://www.gnu.org/licenses/>.
 
 
+from __future__ import print_function
 import unittest
 
 import pygtk
@@ -47,7 +48,7 @@ class TestDockLayout(unittest.TestCase):
         layout.add(frame)
 
         assert frame in layout.frames
-        print layout._signal_handlers
+        print(layout._signal_handlers)
         self.assertEquals(4, len(layout._signal_handlers))
         self.assertEquals(9, len(layout._signal_handlers[frame]))
 
@@ -149,7 +150,7 @@ class StubContext(object):
 
 class StubSelectionData(object):
     def set(self, atom, bytes, data):
-        print 'StubSelectionData.set(%s, %s, %s)' % (atom, bytes, data)
+        print('StubSelectionData.set(%s, %s, %s)' % (atom, bytes, data))
 
 
 class TestDockLayoutDnD(unittest.TestCase):
