@@ -46,7 +46,7 @@ def serialize(layout):
             sub = SubElement(element, 'widget', attributes(widget))
 
     tree = Element('layout')
-    map(_ser, layout.frames, [tree] * len(layout.frames))
+    list(map(_ser, layout.frames, [tree] * len(layout.frames)))
 
     return tostring(tree, encoding=sys.getdefaultencoding())
 
@@ -69,12 +69,12 @@ def deserialize(layoutstr, itemfactory):
             widget = factory(parent=parent_widget, **element.attrib)
             assert widget, 'No widget (%s)' % widget
             if len(element):
-                map(_des, element, [widget] * len(element))
+                list(map(_des, element, [widget] * len(element)))
         return widget
 
     tree = fromstring(layoutstr)
     layout = DockLayout()
-    map(_des, tree, [ layout ] * len(tree))
+    list(map(_des, tree, [ layout ] * len(tree)))
 
     return layout
 
@@ -152,7 +152,7 @@ def dock_frame_attributes(widget):
 
     if isinstance(parent, gtk.Window) and parent.get_transient_for():
         d['floating'] = 'true'
-        d['x'], d['y'] = map(str, parent.get_position())
+        d['x'], d['y'] = list(map(str, parent.get_position()))
 
     return d
 

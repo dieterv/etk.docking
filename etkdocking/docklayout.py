@@ -202,8 +202,7 @@ class DockLayout(gobject.GObject):
         if frame in self.get_floating_frames():
             frame.get_toplevel().set_title(
                 ', '.join(
-                    map(lambda w: w.title,
-                        [w for w in flatten(frame) if isinstance(w, DockItem)])))
+                    [w.title for w in [w for w in flatten(frame) if isinstance(w, DockItem)]]))
 
     def do_item_closed(self, group, item):
         """
@@ -418,8 +417,8 @@ def add_new_group(widget, new_group, orientation, position):
     return new_group
 
 def _window_delete_handler(window, event):
-    map(lambda i: i.close(),
-        [i for i in flatten(window) if isinstance(i, DockItem)])
+    list(map(lambda i: i.close(),
+        [i for i in flatten(window) if isinstance(i, DockItem)]))
     return False
 
 def add_new_group_floating(new_group, layout, size=None, pos=None):
@@ -672,8 +671,7 @@ def dock_group_drag_failed(self, context, result):
     self.log.debug('%s, %s' % (context, result))
     if result == 1 and settings[self].can_float: #gtk.DRAG_RESULT_NO_TARGET
         if reduce(lambda a, b: a or b,
-                  map(lambda i: settings[i].float_retain_size,
-                      self.dragcontext.dragged_object)):
+                  [settings[i].float_retain_size for i in self.dragcontext.dragged_object]):
             size = (self.allocation.width, self.allocation.height)
         else:
             size = None

@@ -221,7 +221,7 @@ class TestDockLayoutDnD(unittest.TestCase):
 
         win.add(frame)
         frame.add(paned)
-        map(paned.add, groups)
+        list(map(paned.add, groups))
         groups[0].add(item)
 
         win.set_default_size(200, 200)
@@ -248,7 +248,7 @@ class TestDockLayoutDnD(unittest.TestCase):
 
         win.add(frame)
         frame.add(paned)
-        map(paned.add, groups)
+        list(map(paned.add, groups))
         #groups[0].add(item)
 
         win.set_default_size(200, 200)
