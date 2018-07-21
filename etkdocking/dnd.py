@@ -27,7 +27,6 @@ from logging import getLogger
 import gtk
 import gtk.gdk as gdk
 
-
 DRAG_TARGET_ITEM_LIST = ('x-etk-docking/item-list', gtk.TARGET_SAME_APP, 0)
 
 
@@ -41,13 +40,13 @@ class DockDragContext(object):
     This class is also used to store extra information about a drag operation
     in progress not available in the C structs mentioned above.
     '''
-    __slots__ = ['dragging',        # are we dragging or not (bool)
+    __slots__ = ['dragging',  # are we dragging or not (bool)
                  'dragged_object',  # object being dragged
-                 'source_x',        # x coordinate starting a potential drag
-                 'source_y',        # y coordinate starting a potential drag
-                 'source_button',   # the button the user pressed to start the drag
-                 'offset_x',        # cursor x offset relative to dragged object source_x
-                 'offset_y']        # cursor y offset relative to dragged object source_y
+                 'source_x',  # x coordinate starting a potential drag
+                 'source_y',  # y coordinate starting a potential drag
+                 'source_button',  # the button the user pressed to start the drag
+                 'offset_x',  # cursor x offset relative to dragged object source_x
+                 'offset_y']  # cursor y offset relative to dragged object source_y
 
     def __init__(self):
         self.reset()
@@ -71,8 +70,8 @@ class Placeholder(gtk.DrawingArea):
         c.set_source_rgb(0, 0, 0)
         c.set_line_width(1.0)
         c.rectangle(0.5, 0.5, a.width - 1, a.height - 1)
-        #c.set_source_rgba(0, 0, 0, 0)
-        #c.fill()
+        # c.set_source_rgba(0, 0, 0, 0)
+        # c.fill()
         c.stroke()
 
 
@@ -99,7 +98,7 @@ class PlaceHolderWindow(gtk.Window):
         self.set_decorated(False)
         self.set_skip_taskbar_hint(True)
         self.set_type_hint(gdk.WINDOW_TYPE_HINT_UTILITY)
-        #TODO: self.set_transient_for(???.get_toplevel())
+        # TODO: self.set_transient_for(???.get_toplevel())
 
         # Initialize logging
         self.log = getLogger('%s.%s' % (self.__gtype_name__, hex(id(self))))
@@ -145,8 +144,8 @@ class PlaceHolderWindow(gtk.Window):
         gtk.Window.do_expose_event(self, event)
 
         width, height = self.get_size()
-        self.window.draw_rectangle(self._gc, False, 0, 0, width-1, height-1)
-        self.window.draw_rectangle(self._gc, False, 1, 1, width-3, height-3)
+        self.window.draw_rectangle(self._gc, False, 0, 0, width - 1, height - 1)
+        self.window.draw_rectangle(self._gc, False, 1, 1, width - 3, height - 3)
         return True
 
     ############################################################################

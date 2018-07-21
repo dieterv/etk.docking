@@ -22,6 +22,7 @@
 import unittest
 
 import pygtk
+
 pygtk.require('2.0')
 import gtk
 import gtk.gdk as gdk
@@ -278,7 +279,6 @@ class TestDockPaned(unittest.TestCase):
         self.assertAlmostEquals(0.5, dockpaned._items[0].weight, 4)
         self.assertAlmostEquals(0.5, dockpaned._items[1].weight, 4)
 
-
     ############################################################################
     # Test public api
     ############################################################################
@@ -309,7 +309,7 @@ class TestDockPaned(unittest.TestCase):
         dockpaned.add(DockGroup())
         dockpaned.add(dg)
         dockpaned.add(DockGroup())
-        
+
         assert dg in dockpaned
         assert len(dockpaned) == 3
         assert dg is dockpaned[1]

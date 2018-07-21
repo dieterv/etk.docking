@@ -1,5 +1,5 @@
-
 import pygtk
+
 pygtk.require('2.0')
 
 from freshen import Before, After, AfterStep, Given, When, Then, scc as world
@@ -11,7 +11,7 @@ from etk.docking.docklayout import drag_motion, drag_end, drag_failed
 
 class StubContext(object):
     def __init__(self, source_widget, items):
-        self.targets = [ DRAG_TARGET_ITEM_LIST[0] ]
+        self.targets = [DRAG_TARGET_ITEM_LIST[0]]
         self.source_widget = source_widget
         # Set up dragcontext (nornally done in motion_notify event)
 
@@ -24,14 +24,14 @@ class StubContext(object):
 
     def finish(self, success, delete, timestamp):
         self.finished = (success, delete)
-    
+
     docklayout = property(lambda s: world.layout)
 
 
 @After
 def tear_down(_):
     world.window.destroy()
- 
+
 
 @Given('a window with (\d+) dockgroups?')
 def default_window(n_groups):
@@ -74,13 +74,13 @@ def start_a_main_loop():
     world.window.show_all()
     # simulate gtk.main()
     while gtk.events_pending():
-       gtk.main_iteration()
+        gtk.main_iteration()
 
 
 @Given('define dockgroup (\d+) as "([^"]+)"')
 def define_group_by_name(nth_group, name):
     group = world.groups[int(nth_group) - 1]
-    #print 'Define group', group, 'as', name
+    # print 'Define group', group, 'as', name
     setattr(world, name, group)
 
 
@@ -88,7 +88,7 @@ def define_group_by_name(nth_group, name):
 def define_item_by_name(nth_item, nth_group, name):
     group = world.groups[int(nth_group) - 1]
     item = group.get_children()[int(nth_item) - 1]
-    #print 'Define item', item, 'as', name
+    # print 'Define item', item, 'as', name
     setattr(world, name, (group, item))
 
 
@@ -99,12 +99,12 @@ def drag_item(name):
     group.dragcontext.source_x = 1
     group.dragcontext.source_y = 1
     group.dragcontext.source_button = 1
-    group.dragcontext.dragged_object = [ item ]
-    world.dragged_items = group, [ item ]
+    group.dragcontext.dragged_object = [item]
+    world.dragged_items = group, [item]
     group.do_drag_begin(context=None)
     assert item.get_parent() is None
-    #import time
-    #time.sleep(1000)
+    # import time
+    # time.sleep(1000)
 
 
 @When('I drag all items in group "([^"]+)"')
@@ -113,7 +113,7 @@ def drag_all_items_in_group(name):
     group.dragcontext.source_x = 1
     group.dragcontext.source_y = 1
     group.dragcontext.source_button = 1
-    group.dragcontext.dragged_object = [ item for item in group.items ]
+    group.dragcontext.dragged_object = [item for item in group.items]
     world.dragged_items = group, group.dragcontext.dragged_object
     group.do_drag_begin(context=None)
 
@@ -145,8 +145,8 @@ def drop_item(dest, x, y):
 def drop_item_on_content(name):
     dest_group = getattr(world, name)
 
-    a  = dest_group.allocation
-    
+    a = dest_group.allocation
+
     x, y = a.x + a.width / 2, a.y + a.height / 2
     drop_item(dest_group, x, y)
 
@@ -154,7 +154,7 @@ def drop_item_on_content(name):
 @When('I drop it on tab "([^"]+)" in group "([^"]+)"')
 def drop_item_on_tab(tabname, groupname):
     dest_group = getattr(world, groupname)
-    dg2, item = getattr(world, tabname) 
+    dg2, item = getattr(world, tabname)
 
     assert dg2 is dest_group
 
@@ -198,7 +198,7 @@ def drop_it_outside_of_the_frame():
 
 
 @Then('item "([^"]+)" is part of "([^"]+)"')
-#@Then('item "(drag-me)" is part of "(to-group)"')
+# @Then('item "(drag-me)" is part of "(to-group)"')
 def then_tab_on_group(item_name, group_name):
     _, item = getattr(world, item_name)
     group = getattr(world, group_name)
@@ -225,10 +225,10 @@ def placed_before_tab(name):
     assert len(world.dropped_items) == 1
     items = newgroup.visible_items
     print 'it has been placed in just before', items.index(world.dropped_items[0]),
-    print items.index(item) 
+    print items.index(item)
     assert items
     assert items.index(world.dropped_items[0]) == items.index(item) - 1
-    
+
 
 @Then('a new group should have been created')
 def then_new_group():

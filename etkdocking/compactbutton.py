@@ -179,18 +179,18 @@ class CompactButton(gtk.Widget):
     def do_realize(self):
         gtk.Widget.do_realize(self)
         self._input_window = gdk.Window(self.get_parent_window(),
-                                        x = self.allocation.x,
-                                        y = self.allocation.y,
-                                        width = self.allocation.width,
-                                        height = self.allocation.height,
-                                        window_type = gdk.WINDOW_CHILD,
-                                        wclass = gdk.INPUT_ONLY,
-                                        visual = self.get_visual(),
-                                        colormap = self.get_colormap(),
-                                        event_mask = (gdk.ENTER_NOTIFY_MASK |
-                                                      gdk.LEAVE_NOTIFY_MASK |
-                                                      gdk.BUTTON_PRESS_MASK |
-                                                      gdk.BUTTON_RELEASE_MASK))
+                                        x=self.allocation.x,
+                                        y=self.allocation.y,
+                                        width=self.allocation.width,
+                                        height=self.allocation.height,
+                                        window_type=gdk.WINDOW_CHILD,
+                                        wclass=gdk.INPUT_ONLY,
+                                        visual=self.get_visual(),
+                                        colormap=self.get_colormap(),
+                                        event_mask=(gdk.ENTER_NOTIFY_MASK |
+                                                    gdk.LEAVE_NOTIFY_MASK |
+                                                    gdk.BUTTON_PRESS_MASK |
+                                                    gdk.BUTTON_RELEASE_MASK))
         self._input_window.set_user_data(self)
         self._refresh_icons()
 

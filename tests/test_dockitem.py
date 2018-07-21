@@ -22,6 +22,7 @@
 import unittest
 
 import pygtk
+
 pygtk.require('2.0')
 import gtk
 
@@ -165,7 +166,7 @@ class TestDockItem(unittest.TestCase):
         dockitem.destroy()
 
     def test_prop_image(self):
-        #TODO: is there a way to check we actually received the image we expect?
+        # TODO: is there a way to check we actually received the image we expect?
         dockitem = DockItem()
         dockitem.set_icon_name('someicon')
         self.assertTrue(isinstance(dockitem.get_image(), gtk.Image))

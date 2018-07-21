@@ -38,14 +38,13 @@ from .dockpaned import DockPaned
 from .dockgroup import DockGroup
 from .dockitem import DockItem
 
-
-SERIALIZABLE = ( DockFrame, DockPaned, DockGroup, DockItem )
+SERIALIZABLE = (DockFrame, DockPaned, DockGroup, DockItem)
 
 
 def serialize(layout):
     def _ser(widget, element):
         if isinstance(widget, SERIALIZABLE):
-            sub = SubElement(element, type(widget).__name__.lower() , attributes(widget))
+            sub = SubElement(element, type(widget).__name__.lower(), attributes(widget))
             widget.foreach(_ser, sub)
         else:
             sub = SubElement(element, 'widget', attributes(widget))
@@ -55,7 +54,9 @@ def serialize(layout):
 
     return tostring(tree, encoding=sys.getdefaultencoding())
 
+
 widget_factory = {}
+
 
 def deserialize(layoutstr, itemfactory):
     '''
@@ -63,6 +64,7 @@ def deserialize(layoutstr, itemfactory):
     already have their gtk.Window attached (check frame.get_parent()). Transient settings
     and such should be done by the invoking application.
     '''
+
     def _des(element, parent_widget=None):
         if element.tag == 'widget':
             name = element.attrib['name']
@@ -79,13 +81,15 @@ def deserialize(layoutstr, itemfactory):
 
     tree = fromstring(layoutstr)
     layout = DockLayout()
-    list(map(_des, tree, [ layout ] * len(tree)))
+    list(map(_des, tree, [layout] * len(tree)))
 
     return layout
+
 
 def get_main_frames(layout):
     return (f for f in layout.frames \
             if not isinstance(f.get_parent(), gtk.Window))
+
 
 def finish(layout, main_frame):
     '''
@@ -104,6 +108,7 @@ def finish(layout, main_frame):
             assert isinstance(parent, gtk.Window), parent
             parent.set_transient_for(main_window)
 
+
 def parent_attributes(widget):
     """
     Add properties defined in the parent widget specific for this instance (like weight).
@@ -118,23 +123,27 @@ def parent_attributes(widget):
 
     return d
 
+
 @generic
 def attributes(widget):
     raise NotImplementedError
 
+
 @attributes.when_type(gtk.Widget)
 def widget_attributes(widget):
-    return { 'name': widget.get_name() or 'empty' }
+    return {'name': widget.get_name() or 'empty'}
+
 
 @attributes.when_type(DockItem)
 def dock_item_attributes(widget):
-    d = { 'title': widget.props.title,
-             'tooltip': widget.props.title_tooltip_text }
+    d = {'title': widget.props.title,
+         'tooltip': widget.props.title_tooltip_text}
     if widget.props.icon_name:
         d['icon_name'] = widget.props.icon_name
     if widget.props.stock:
         d['stock_id'] = widget.props.stock
     return d
+
 
 @attributes.when_type(DockGroup)
 def dock_group_attributes(widget):
@@ -144,10 +153,12 @@ def dock_group_attributes(widget):
         d['name'] = name
     return d
 
+
 @attributes.when_type(DockPaned)
 def dock_paned_attributes(widget):
     return dict(orientation=(widget.get_orientation() == gtk.ORIENTATION_HORIZONTAL and 'horizontal' or 'vertical'),
                 **parent_attributes(widget))
+
 
 @attributes.when_type(DockFrame)
 def dock_frame_attributes(widget):
@@ -161,18 +172,22 @@ def dock_frame_attributes(widget):
 
     return d
 
+
 def factory(typename):
     '''
     Simple decorator for populating the widget_factory dictionary.
     '''
+
     def _factory(func):
         widget_factory[typename] = func
         return func
 
     return _factory
 
+
 @factory('dockitem')
-def dock_item_factory(parent, title, tooltip, icon_name=None, stock_id=None, pos=None, vispos=None, current=None, name=None):
+def dock_item_factory(parent, title, tooltip, icon_name=None, stock_id=None, pos=None, vispos=None, current=None,
+                      name=None):
     item = DockItem(title, tooltip, icon_name, stock_id)
     if name:
         item.set_name(name)
@@ -182,6 +197,7 @@ def dock_item_factory(parent, title, tooltip, icon_name=None, stock_id=None, pos
         vispos = int(vispos)
     parent.insert_item(item, pos, vispos)
     return item
+
 
 @factory('dockgroup')
 def dock_group_factory(parent, weight=None, name=None):
@@ -196,6 +212,7 @@ def dock_group_factory(parent, weight=None, name=None):
         parent.add(group)
 
     return group
+
 
 @factory('dockpaned')
 def dock_paned_factory(parent, orientation, weight=None, name=None):
@@ -216,6 +233,7 @@ def dock_paned_factory(parent, orientation, weight=None, name=None):
 
     return paned
 
+
 @factory('dockframe')
 def dock_frame_factory(parent, width, height, floating=None, x=None, y=None):
     assert isinstance(parent, DockLayout), parent
@@ -226,7 +244,7 @@ def dock_frame_factory(parent, width, height, floating=None, x=None, y=None):
 
     if floating == 'true':
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        #self.window.set_type_hint(gdk.WINDOW_TYPE_HINT_UTILITY)
+        # self.window.set_type_hint(gdk.WINDOW_TYPE_HINT_UTILITY)
         window.set_property('skip-taskbar-hint', True)
         window.move(int(x), int(y))
         window.add(frame)

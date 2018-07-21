@@ -42,19 +42,19 @@ class DockItem(gtk.Bin):
                             'The tooltip text for the title.',
                             '',
                             gobject.PARAM_READWRITE),
-                        'icon-name':
+                       'icon-name':
                            (gobject.TYPE_STRING,
                             'Icon name',
                             'The name of the icon from the icon theme.',
                             '',
                             gobject.PARAM_READWRITE),
-                        'stock':
+                       'stock':
                            (gobject.TYPE_STRING,
                             'Stock',
                             'Stock ID for a stock image to display.',
                             '',
                             gobject.PARAM_READWRITE),
-                        'image':
+                       'image':
                            (gobject.TYPE_PYOBJECT,
                             'Image',
                             'The image constructed from the specified stock ID or icon-name. Default value is gtk.STOCK_MISSING_IMAGE.',

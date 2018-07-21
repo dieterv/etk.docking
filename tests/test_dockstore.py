@@ -16,6 +16,7 @@ class ItemFactory(object):
     def __call__(self, label):
         return gtk.Button(label)
 
+
 class LoadingTestCase(unittest.TestCase):
 
     def test_serialize(self):
@@ -34,11 +35,12 @@ class LoadingTestCase(unittest.TestCase):
 
         s = serialize(layout)
         print(s)
-        assert '<layout><dockframe height="1" width="1">'\
-        '<dockpaned orientation="horizontal">'\
-        '<dockgroup weight="100">'\
-        '<dockitem icon_name="icon" title="t" tooltip="xx" />'\
-        '</dockgroup></dockpaned></dockframe></layout>' == s, s
+        assert bytes(b'<layout><dockframe height="1" width="1">'
+                     b'<dockpaned orientation="horizontal">'
+                     b'<dockgroup weight="100">'
+                     b'<dockitem icon_name="icon" title="t" tooltip="xx" />'
+                     b'</dockgroup></dockpaned></dockframe></layout>'
+                     ) == s, s
 
     def test_deserialize(self):
         xml = '''
@@ -75,8 +77,8 @@ class LoadingTestCase(unittest.TestCase):
         while gtk.events_pending():
             gtk.main_iteration()
 
-        #assert frame.allocation.width == 200, frame.allocation.width
-        #assert frame.allocation.height == 120, frame.allocation.height
+        # assert frame.allocation.width == 200, frame.allocation.width
+        # assert frame.allocation.height == 120, frame.allocation.height
 
     def test_deserialize_floating_windows(self):
         xml = """
@@ -109,7 +111,6 @@ class LoadingTestCase(unittest.TestCase):
         win.add(frames[0])
         finish(layout, frames[0])
 
-
         main_frames = list(layout.get_main_frames())
         floating_frames = list(layout.get_floating_frames())
         assert len(main_frames) == 1
@@ -122,6 +123,3 @@ class LoadingTestCase(unittest.TestCase):
         win.show_all()
 
         self.assertEquals(0.45, main_frames[0].get_children()[0]._items[0].weight)
-
-
-

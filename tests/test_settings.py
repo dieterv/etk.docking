@@ -5,6 +5,7 @@ import unittest
 
 from etkdocking.docksettings import DockSettings, DockSettingsDict
 
+
 class TestDockLayout(unittest.TestCase):
 
     def test_settings(self):

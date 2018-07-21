@@ -35,8 +35,10 @@ try:
 except ImportError:
     # The lib directory is most likely not on PYTHONPATH, so add it here.
     import os, sys
+
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'lib')))
     from etk.docking import DockLayout, DockPaned, DockGroup, DockItem
+
     del os, sys
 
 
@@ -102,13 +104,14 @@ class MainWindow(gtk.Window):
 def quit(widget, event, mainloop):
     mainloop.quit()
 
+
 def main():
     # Initialize logging
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s\t%(levelname)s\t%(name)s\t%(funcName)s\t%(message)s')
 
     # Uncomment to enable log filtering
-    #for handler in logging.getLogger('').handlers:
+    # for handler in logging.getLogger('').handlers:
     #    handler.addFilter(logging.Filter('EtkDockGroup'))
 
     # Initialize mainloop

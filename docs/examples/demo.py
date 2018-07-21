@@ -25,6 +25,7 @@ import logging
 import random
 
 import pygtk
+
 pygtk.require('2.0')
 
 import gobject
@@ -37,11 +38,12 @@ try:
 except ImportError:
     # The lib directory is most likely not on PYTHONPATH, so add it here.
     import os, sys
+
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'lib')))
     del os, sys
 finally:
     from etk.docking import DockLayout, DockFrame, DockPaned, \
-                            DockGroup, DockItem, dockstore, settings
+        DockGroup, DockItem, dockstore, settings
 
 
 class MainWindow(gtk.Window):
@@ -78,9 +80,8 @@ class MainWindow(gtk.Window):
         settings['main'].inherit_settings = False
         settings['main'].expand = False
 
-
         # To change default group behaviour:
-        #self.docklayout.settings[None].inherit_settings = False
+        # self.docklayout.settings[None].inherit_settings = False
 
         vbox.pack_start(self.dockframe)
 
@@ -124,11 +125,11 @@ class MainWindow(gtk.Window):
 
         self.show_all()
 
-        #def on_has_toplevel_focus(window, pspec):
+        # def on_has_toplevel_focus(window, pspec):
         #    print 'Has toplevel focus', window, pspec
         #    print 'Focus widget is', window.get_focus()
 
-        #self.connect('notify::has-toplevel-focus', on_has_toplevel_focus)
+        # self.connect('notify::has-toplevel-focus', on_has_toplevel_focus)
 
     def _on_add_di_button_clicked(self, button):
         def add_dockitems(child):
@@ -196,7 +197,7 @@ class MainWindow(gtk.Window):
                     (gtk.STOCK_HOME, 'today', '9876543210'),
                     gtk.Notebook]
 
-        for i in [1]: #range(random.randrange(1, 10, 1)):
+        for i in [1]:  # range(random.randrange(1, 10, 1)):
             example = random.choice(examples)
 
             if example is gtk.Notebook:
@@ -212,8 +213,10 @@ class MainWindow(gtk.Window):
 
             # Create a DockItem and add our TextView
             di = DockItem(title='New %s' % self.file_counter, title_tooltip_text=tooltip_text, stock_id=stock_id)
+
             def on_close(item):
                 print 'close:', item
+
             di.connect('close', on_close)
             di.add(child)
             di.show_all()
@@ -228,13 +231,14 @@ class MainWindow(gtk.Window):
 def quit(widget, event, mainloop):
     mainloop.quit()
 
+
 def main():
     # Initialize logging
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s\t%(levelname)s\t%(name)s\t%(funcName)s\t%(message)s')
 
     # Uncomment to enable log filtering
-    #for handler in logging.getLogger('').handlers:
+    # for handler in logging.getLogger('').handlers:
     #    handler.addFilter(logging.Filter('EtkDockPaned'))
 
     # Initialize mainloop

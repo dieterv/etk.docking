@@ -28,6 +28,7 @@ to stdout.
 from __future__ import absolute_import
 
 import pygtk
+
 pygtk.require('2.0')
 
 import gtk
@@ -55,15 +56,20 @@ def main():
         print '        <td><b>%s</b></td>' % attribute
 
         color = w.style.__getattribute__(attribute)[gtk.STATE_INSENSITIVE]
-        print '        <td bgcolor="#%x%x%x">&nbsp;</td>' % (int(color.red / 256.00), int(color.green / 256.00), int(color.blue / 256.00))
-        color =  w.style.__getattribute__(attribute)[gtk.STATE_NORMAL]
-        print '        <td bgcolor="#%x%x%x">&nbsp;</td>' % (int(color.red / 256.00), int(color.green / 256.00), int(color.blue / 256.00))
-        color =  w.style.__getattribute__(attribute)[gtk.STATE_PRELIGHT]
-        print '        <td bgcolor="#%x%x%x">&nbsp;</td>' % (int(color.red / 256.00), int(color.green / 256.00), int(color.blue / 256.00))
-        color =  w.style.__getattribute__(attribute)[gtk.STATE_ACTIVE]
-        print '        <td bgcolor="#%x%x%x">&nbsp;</td>' % (int(color.red / 256.00), int(color.green / 256.00), int(color.blue / 256.00))
-        color =  w.style.__getattribute__(attribute)[gtk.STATE_SELECTED]
-        print '        <td bgcolor="#%x%x%x">&nbsp;</td>' % (int(color.red / 256.00), int(color.green / 256.00), int(color.blue / 256.00))
+        print '        <td bgcolor="#%x%x%x">&nbsp;</td>' % (
+        int(color.red / 256.00), int(color.green / 256.00), int(color.blue / 256.00))
+        color = w.style.__getattribute__(attribute)[gtk.STATE_NORMAL]
+        print '        <td bgcolor="#%x%x%x">&nbsp;</td>' % (
+        int(color.red / 256.00), int(color.green / 256.00), int(color.blue / 256.00))
+        color = w.style.__getattribute__(attribute)[gtk.STATE_PRELIGHT]
+        print '        <td bgcolor="#%x%x%x">&nbsp;</td>' % (
+        int(color.red / 256.00), int(color.green / 256.00), int(color.blue / 256.00))
+        color = w.style.__getattribute__(attribute)[gtk.STATE_ACTIVE]
+        print '        <td bgcolor="#%x%x%x">&nbsp;</td>' % (
+        int(color.red / 256.00), int(color.green / 256.00), int(color.blue / 256.00))
+        color = w.style.__getattribute__(attribute)[gtk.STATE_SELECTED]
+        print '        <td bgcolor="#%x%x%x">&nbsp;</td>' % (
+        int(color.red / 256.00), int(color.green / 256.00), int(color.blue / 256.00))
 
         print '      </tr>'
 
@@ -71,7 +77,8 @@ def main():
         print '      <tr>'
         print '        <td><b>%s</b></td>' % attribute
         color = w.style.__getattribute__(attribute)
-        print '        <td colspan="5" bgcolor="#%x%x%x">&nbsp;</td>' % (int(color.red / 256.00), int(color.green / 256.00), int(color.blue / 256.00))
+        print '        <td colspan="5" bgcolor="#%x%x%x">&nbsp;</td>' % (
+        int(color.red / 256.00), int(color.green / 256.00), int(color.blue / 256.00))
         print '      </tr>'
 
     print '    </table>'

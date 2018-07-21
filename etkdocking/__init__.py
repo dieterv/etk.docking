@@ -21,11 +21,9 @@
 
 from __future__ import absolute_import
 
-
 __all__ = ['DockLayout', 'DockFrame', 'DockPaned', 'DockGroup', 'DockItem', 'settings']
 __version__ = '0.3'
 __docformat__ = 'restructuredtext'
-
 
 ############################################################################
 # Initialization
@@ -40,18 +38,25 @@ import os, gtk
 
 # Register some custom icons into the default icon theme
 path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'icons', '16x16'))
-gtk.icon_theme_add_builtin_icon('compact-close', 16, gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-close.png')))
-gtk.icon_theme_add_builtin_icon('compact-close-prelight', 16, gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-close-prelight.png')))
-gtk.icon_theme_add_builtin_icon('compact-list', 16, gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-list.png')))
-gtk.icon_theme_add_builtin_icon('compact-minimize', 16, gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-minimize.png')))
-gtk.icon_theme_add_builtin_icon('compact-maximize', 16, gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-maximize.png')))
-gtk.icon_theme_add_builtin_icon('compact-restore', 16, gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-restore.png')))
+gtk.icon_theme_add_builtin_icon('compact-close', 16,
+                                gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-close.png')))
+gtk.icon_theme_add_builtin_icon('compact-close-prelight', 16,
+                                gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-close-prelight.png')))
+gtk.icon_theme_add_builtin_icon('compact-list', 16,
+                                gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-list.png')))
+gtk.icon_theme_add_builtin_icon('compact-minimize', 16,
+                                gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-minimize.png')))
+gtk.icon_theme_add_builtin_icon('compact-maximize', 16,
+                                gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-maximize.png')))
+gtk.icon_theme_add_builtin_icon('compact-restore', 16,
+                                gtk.gdk.pixbuf_new_from_file(os.path.join(path, 'compact-restore.png')))
 
 # Check for elib, not required.
 try:
     from elib.intl import install_module
 except ImportError:
-    def _(message): return message
+    def _(message):
+        return message
 else:
     localedir = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                              '..', '..', 'share', 'locale'))

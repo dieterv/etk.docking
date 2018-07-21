@@ -25,7 +25,6 @@ The configuration can be set for every element in the hierarchy. By default the 
 name can be used.
 """
 
-
 from builtins import object
 from builtins import str
 import gtk
@@ -42,11 +41,11 @@ class DockSettings(object):
     * inherit_settings: new groups constructed from items dragged from a group should
     get the same group name.
     '''
-    __slots__ = [ 'auto_remove',
-                  'can_float',
-                  'float_retain_size',
-                  'expand',
-                  'inherit_settings' ]
+    __slots__ = ['auto_remove',
+                 'can_float',
+                 'float_retain_size',
+                 'expand',
+                 'inherit_settings']
 
     def __init__(self, auto_remove=True, can_float=True,
                  float_retain_size=False, expand=True, inherit_settings=True):
@@ -68,7 +67,7 @@ class DockSettingsDict(object):
     '''
 
     def __init__(self):
-        self._settings = {} # Map group-id -> layout settings
+        self._settings = {}  # Map group-id -> layout settings
 
     def get(self, target):
         return self[target]

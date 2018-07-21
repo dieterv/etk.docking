@@ -34,6 +34,7 @@ def rect_contains(rect, x, y):
     else:
         return False
 
+
 def rect_overlaps(rect, x, y):
     '''
     The rect_overlaps function checks if a point, defined by x and y overlaps
@@ -46,6 +47,7 @@ def rect_overlaps(rect, x, y):
     else:
         return False
 
+
 # TODO: Should change/add on this 'cause it does not work well with IconFactories for example.
 def load_icon(icon_name, size):
     icontheme = gtk.icon_theme_get_default()
@@ -55,6 +57,7 @@ def load_icon(icon_name, size):
 
     return icontheme.load_icon(icon_name, size, gtk.ICON_LOOKUP_USE_BUILTIN)
 
+
 def load_icon_image(icon_name, size):
     icontheme = gtk.icon_theme_get_default()
 
@@ -62,6 +65,7 @@ def load_icon_image(icon_name, size):
         icon_name = 'gtk-missing-image'
 
     return gtk.image_new_from_icon_name(icon_name, size)
+
 
 def flatten(w, child_getter=gtk.Container.get_children):
     """
@@ -74,4 +78,4 @@ def flatten(w, child_getter=gtk.Container.get_children):
             for d in flatten(c, child_getter):
                 yield d
     except TypeError:
-        pass # Not a child of the right type
+        pass  # Not a child of the right type

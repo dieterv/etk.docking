@@ -24,7 +24,6 @@ from os import path
 from setuptools import setup, find_packages
 from codecs import open
 
-
 __version__ = '0.3'
 
 here = path.abspath(path.dirname(__file__))

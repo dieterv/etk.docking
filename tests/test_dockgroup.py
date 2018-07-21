@@ -22,6 +22,7 @@
 import unittest
 
 import pygtk
+
 pygtk.require('2.0')
 import gtk
 from etkdocking import DockItem, DockGroup
@@ -332,13 +333,13 @@ class TestDockGroup(unittest.TestCase):
         events = []
         item_in = []
         item_in_after = []
+
         def event_handler(self, w):
             events.append(w)
             item_in.append(w in self.items)
 
         def event_handler_after(self, w):
             item_in_after.append(w in self.items)
-
 
         dockgroup = DockGroup()
         dockgroup.connect('add', event_handler)
@@ -379,6 +380,7 @@ class TestDockGroup(unittest.TestCase):
         tab = dockgroup._tabs[0]
 
         item_closed = []
+
         def item_closed_handler(item):
             item_closed.append(item)
 
@@ -388,4 +390,3 @@ class TestDockGroup(unittest.TestCase):
         tab.button.emit('clicked')
 
         assert [dockitem] == item_closed
-

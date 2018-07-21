@@ -36,7 +36,6 @@ from .dnd import DockDragContext
 from .util import rect_overlaps
 from .docksettings import settings
 
-
 # The weight we allocate to a newly added item if we can't come up with anything else
 FALLBACK_WEIGHT = 0.2
 
@@ -45,7 +44,7 @@ class _DockPanedHandle(object):
     '''
     Private object storing information about a handle.
     '''
-    __slots__ = ['area']       # area, used for hit testing (gdk.Rectangle)
+    __slots__ = ['area']  # area, used for hit testing (gdk.Rectangle)
 
     def __init__(self):
         self.area = gdk.Rectangle()
@@ -58,10 +57,10 @@ class _DockPanedItem(object):
     '''
     Private object storing information about a child widget.
     '''
-    __slots__ = ['child',      # child widget
-                 'weight',     # relative weight [0..1]
-                 'weight_request', # requested weight, processed in size_allocate()
-                 'min_size'] # minimum relative weight
+    __slots__ = ['child',  # child widget
+                 'weight',  # relative weight [0..1]
+                 'weight_request',  # requested weight, processed in size_allocate()
+                 'min_size']  # minimum relative weight
 
     def __init__(self):
         self.child = None
@@ -104,13 +103,13 @@ class DockPaned(gtk.Container):
               0,
               gobject.PARAM_READWRITE)}
     __gchild_properties__ = \
-         {'weight':
+        {'weight':
              (gobject.TYPE_FLOAT,
               'item weight',
               'item weight',
-              0, # min
-              1, # max
-              .2, # default
+              0,  # min
+              1,  # max
+              .2,  # default
               gobject.PARAM_READWRITE)}
     __gsignals__ = {'item-added':
                         (gobject.SIGNAL_RUN_LAST,
@@ -384,12 +383,12 @@ class DockPaned(gtk.Container):
         if self.allocation:
             f = old_div(self._effective_size(self.allocation), size)
             for i in self._items:
-                #if i.weight and not i.expand and not i.weight_request:
+                # if i.weight and not i.expand and not i.weight_request:
                 if i.weight and not settings[i.child].expand and not i.weight_request:
                     i.weight_request = i.weight * f
 
-        requested_items = [ i for i in items if i.weight_request ]
-        other_items = [ i for i in items if not i.weight_request ]
+        requested_items = [i for i in items if i.weight_request]
+        other_items = [i for i in items if not i.weight_request]
 
         # Ensure the min_sizes do not exceed the overall size
         min_size = sum(i.min_size for i in items)
@@ -412,7 +411,6 @@ class DockPaned(gtk.Container):
                                    [(i.weight_request, sf * i.min_size / size) for i in requested_items])):
             i.weight = w
             i.weight_request = None
-
 
     ############################################################################
 
@@ -458,17 +456,17 @@ class DockPaned(gtk.Container):
         # Internal housekeeping
         self.set_flags(self.flags() | gtk.REALIZED)
         self.window = gdk.Window(self.get_parent_window(),
-                                 x = self.allocation.x,
-                                 y = self.allocation.y,
-                                 width = self.allocation.width,
-                                 height = self.allocation.height,
-                                 window_type = gdk.WINDOW_CHILD,
-                                 wclass = gdk.INPUT_OUTPUT,
-                                 event_mask = (gdk.EXPOSURE_MASK |
-                                               gdk.LEAVE_NOTIFY_MASK |
-                                               gdk.BUTTON_PRESS_MASK |
-                                               gdk.BUTTON_RELEASE_MASK |
-                                               gdk.POINTER_MOTION_MASK))
+                                 x=self.allocation.x,
+                                 y=self.allocation.y,
+                                 width=self.allocation.width,
+                                 height=self.allocation.height,
+                                 window_type=gdk.WINDOW_CHILD,
+                                 wclass=gdk.INPUT_OUTPUT,
+                                 event_mask=(gdk.EXPOSURE_MASK |
+                                             gdk.LEAVE_NOTIFY_MASK |
+                                             gdk.BUTTON_PRESS_MASK |
+                                             gdk.BUTTON_RELEASE_MASK |
+                                             gdk.POINTER_MOTION_MASK))
         self.window.set_user_data(self)
         self.style.attach(self.window)
         self.style.set_background(self.window, gtk.STATE_NORMAL)
@@ -598,7 +596,7 @@ class DockPaned(gtk.Container):
             self.propagate_expose(item.child, event)
 
         for handle in self._handles:
-            #TODO: render themed handle if not using compact layout
+            # TODO: render themed handle if not using compact layout
             pass
 
         return False
@@ -870,6 +868,7 @@ class DockPaned(gtk.Container):
         self._items.insert(position, item)
         self.queue_resize()
 
+
 ############################################################################
 # Install child properties
 ############################################################################
@@ -877,6 +876,7 @@ for index, (name, pspec) in enumerate(DockPaned.__gchild_properties__.items()):
     pspec = list(pspec)
     pspec.insert(0, name)
     DockPaned.install_child_property(index + 1, tuple(pspec))
+
 
 def fair_scale(weight, wmpairs):
     """
@@ -911,6 +911,5 @@ def fair_scale(weight, wmpairs):
                 skip[i] = True
                 break
         else:
-            break # quit while loop
+            break  # quit while loop
     return n
-
