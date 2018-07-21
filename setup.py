@@ -40,7 +40,7 @@ install_requires = [x.strip() for x in all_reqs if 'git+' not in x]
 dependency_links = [x.strip().replace('git+', '') for x in all_reqs if x.startswith('git+')]
 
 setup(
-    name='etk_docking',
+    name='etk.docking',
     version=__version__,
     description='PyGTK Docking Widgets',
     long_description=long_description,
