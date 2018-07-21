@@ -165,7 +165,7 @@ class DockLayout(gobject.GObject):
         for name, callback in self._get_signals(widget):
             try:
                 signals.add(widget.connect(name, callback))
-            except TypeError, e:
+            except TypeError as e:
                 self.log.debug(e)
 
         self._signal_handlers[widget] = signals
@@ -619,7 +619,7 @@ def dock_unhighlight(self):
     try:
         self.disconnect(self._expose_event_id)
         del self._expose_event_id
-    except AttributeError, e:
+    except AttributeError as e:
         self.log.debug(e, exc_info=True)
 
 @drag_motion.when_type(DockGroup)
@@ -697,7 +697,7 @@ def dock_group_drag_failed(self, context, result):
 def dock_paned_expose_highlight(self, event):
     try:
         handle = self._handles[self._drop_handle_index]
-    except (AttributeError, IndexError, TypeError), e:
+    except (AttributeError, IndexError, TypeError) as e:
         self.log.error(e, exc_info=True)
         return
     else:
