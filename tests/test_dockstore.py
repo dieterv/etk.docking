@@ -54,7 +54,7 @@ class LoadingTestCase(unittest.TestCase):
 
         layout = deserialize(xml, ItemFactory())
         assert 1, len(layout.frames)
-        frame = iter(layout.frames).next()
+        frame = next(iter(layout.frames))
         assert frame.child
         paned = frame.child
         assert len(paned)
