@@ -21,9 +21,11 @@
 
 import unittest
 
+import pygtk
+pygtk.require('2.0')
 import gtk
 
-from etk.docking import DockItem
+from etkdocking import DockItem
 
 
 class TestDockItem(unittest.TestCase):

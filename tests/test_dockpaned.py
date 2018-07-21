@@ -21,10 +21,12 @@
 
 import unittest
 
+import pygtk
+pygtk.require('2.0')
 import gtk
 import gtk.gdk as gdk
 
-from etk.docking import DockPaned, DockGroup
+from etkdocking import DockPaned, DockGroup
 
 
 class TestDockPaned(unittest.TestCase):

@@ -28,7 +28,7 @@ from xml.etree.ElementTree import Element, SubElement, tostring, fromstring
 import gtk
 
 from .docklayout import DockLayout
-from .dockframe import DockFrame
+from etkdocking.dockframe import DockFrame
 from .dockpaned import DockPaned
 from .dockgroup import DockGroup
 from .dockitem import DockItem

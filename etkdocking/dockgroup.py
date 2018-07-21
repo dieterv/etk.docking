@@ -30,7 +30,7 @@ import gobject
 import gtk
 import gtk.gdk as gdk
 
-from . import _
+from etkdocking import _
 from .compactbutton import CompactButton
 from .dockitem import DockItem
 from .dnd import DockDragContext, DRAG_TARGET_ITEM_LIST

@@ -1,8 +1,12 @@
 # vim:sw=4:et:ai
 import unittest
+
+import pygtk
+
+pygtk.require('2.0')
 import gtk
-from etk.docking import DockLayout, DockFrame, DockPaned, DockGroup, DockItem
-from etk.docking.dockstore import serialize, deserialize, get_main_frames, finish
+from etkdocking import DockLayout, DockFrame, DockPaned, DockGroup, DockItem
+from etkdocking.dockstore import serialize, deserialize, get_main_frames, finish
 
 
 class ItemFactory(object):

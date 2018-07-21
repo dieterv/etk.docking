@@ -33,12 +33,12 @@ import itertools
 from weakref import WeakKeyDictionary
 
 from .dnd import DRAG_TARGET_ITEM_LIST, Placeholder
-from .dockframe import DockFrame
+from etkdocking.dockframe import DockFrame
 from .dockpaned import DockPaned
 from .dockgroup import DockGroup
 from .dockitem import DockItem
-from .docksettings import settings
 from .util import flatten
+from .docksettings import settings
 
 # On OSX/X11 Utility windows are above all windows,
 # even if the app is not the active app.
@@ -47,7 +47,6 @@ PROVIDE_FLOATING_WINDOW_HINTS = sys.platform != 'darwin'
 MAGIC_BORDER_SIZE = 10
 
 DragData = namedtuple('DragData', 'drop_widget leave received')
-
 
 class DockLayout(gobject.GObject):
     """

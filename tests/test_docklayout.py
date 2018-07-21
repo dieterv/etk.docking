@@ -21,10 +21,12 @@
 
 import unittest
 
+import pygtk
+pygtk.require('2.0')
 import gtk
-from etk.docking import DockLayout, DockFrame, DockPaned, DockGroup, DockItem
-from etk.docking.dockgroup import DockGroup, DRAG_TARGET_ITEM_LIST
-from etk.docking.dnd import DockDragContext
+from etkdocking import DockLayout, DockFrame, DockPaned, DockGroup, DockItem
+from etkdocking.dockgroup import DockGroup, DRAG_TARGET_ITEM_LIST
+from etkdocking.dnd import DockDragContext
 
 class TestDockLayout(unittest.TestCase):
 
@@ -313,7 +315,7 @@ class TestDockLayoutDnD(unittest.TestCase):
         # TODO: check is paned[0]
         assert not paneds[0].get_parent()
 
-from etk.docking import docklayout
+from etkdocking import docklayout
 
 class PlacementTest(unittest.TestCase):
 
