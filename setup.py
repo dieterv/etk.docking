@@ -1,8 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# vim:sw=4:et:ai
-
-# Copyright © 2010 etk.docking Contributors
+# Copyright (C) 2010 etk.docking Contributors
 #
 # This file is part of etk.docking.
 #
@@ -20,82 +17,51 @@
 # along with etk.docking. If not, see <http://www.gnu.org/licenses/>.
 
 
-import os
-import re
-import fnmatch
+from __future__ import print_function
 
-from ez_setup import use_setuptools; use_setuptools()
+from os import path
+
 from setuptools import setup, find_packages
+from codecs import open
 
+__version__ = '0.3'
 
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+here = path.abspath(path.dirname(__file__))
 
-def version():
-    file = os.path.join(os.path.dirname(__file__), 'lib', 'etk', 'docking', '__init__.py')
-    return re.compile(r".*__version__ = '(.*?)'", re.S).match(read(file)).group(1)
+# Get the long description from the README.md file
+with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
-def _get_data_files(dest, src, filter):
-    path = os.path.abspath(os.path.join(os.path.dirname(__file__), src))
-    files = []
+# get the dependencies and installs
+with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
+    all_reqs = f.read().split('\n')
 
-    if os.path.isdir(path):
-        for item in fnmatch.filter(os.listdir(path), filter):
-            if os.path.isfile(os.path.join(path, item)):
-                files.append(('%s/%s' % (src, item)))
-    else:
-        print 'get_data_files: "%s" does not exist, ignoring' % src
+install_requires = [x.strip() for x in all_reqs if 'git+' not in x]
+dependency_links = [x.strip().replace('git+', '') for x in all_reqs if x.startswith('git+')]
 
-    return files
-
-def get_data_files(*args):
-    data_files = []
-
-    for (dest, src, filter) in args:
-        path = os.path.abspath(os.path.join(os.path.dirname(__file__), src))
-
-        if os.path.isdir(path):
-            data_files.append(('%s' % dest, _get_data_files('%s' % dest, '%s' % src, filter)))
-
-            for item in os.listdir(path):
-                if os.path.isdir(os.path.join(path, item)):
-                    data_files.append(('%s/%s' % (dest, item), _get_data_files('%s/%s' % (dest, item), '%s/%s' % (src, item), filter)))
-        else:
-            print 'get_data_files: "%s" does not exist, ignoring' % src
-
-    return data_files
-
-
-setup(namespace_packages = ['etk'],
-      name = 'etk.docking',
-      version = version(),
-      description = 'PyGTK Docking Widgets',
-      long_description = read('README'),
-      author = 'etk.docking Contributors',
-      author_email = 'etk-list@googlegroups.com',
-      url = 'http://github.com/dieterv/etk.docking/',
-      download_url = 'http://github.com/dieterv/etk.docking/downloads/',
-      license = 'GNU Lesser General Public License',
-      classifiers = ['Development Status :: 4 - Beta',
-                    'Environment :: X11 Applications :: GTK',
-                    'Intended Audience :: Developers',
-                    'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
-                    'Natural Language :: English',
-                    'Operating System :: MacOS :: MacOS X',
-                    'Operating System :: Microsoft :: Windows',
-                    'Operating System :: POSIX',
-                    'Programming Language :: Python',
-                    'Topic :: Software Development :: Libraries :: Python Modules'],
-
-      install_requires = ['setuptools',
-                          'simplegeneric >= 0.6'],
-      zip_safe = False,
-      include_package_data = True,
-
-      packages = find_packages('lib'),
-      package_dir = {'': 'lib'},
-      data_files = get_data_files(('doc/examples', 'doc/examples', '*.py'),
-                                  ('doc/reference', 'doc/reference/build/html', '*')),
-
-      tests_require = ['nose'],
-      test_suite = 'nose.collector')
+setup(
+    name='etk.docking',
+    version=__version__,
+    description='PyGTK Docking Widgets',
+    long_description=long_description,
+    author='etk.docking Contributors',
+    author_email='etk-list@googlegroups.com',
+    url='http://github.com/dieterv/etk.docking/',
+    download_url='http://github.com/dieterv/etk.docking/downloads/',
+    license='GNU Lesser General Public License',
+    classifiers=['Development Status :: 4 - Beta',
+                 'Environment :: X11 Applications :: GTK',
+                 'Intended Audience :: Developers',
+                 'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
+                 'Natural Language :: English',
+                 'Operating System :: MacOS :: MacOS X',
+                 'Operating System :: Microsoft :: Windows',
+                 'Operating System :: POSIX',
+                 'Programming Language :: Python',
+                 'Topic :: Software Development :: Libraries :: Python Modules'],
+    include_package_data=True,
+    packages=find_packages(exclude=['docs', 'tests*']),
+    tests_require=['nose'],
+    install_requires=install_requires,
+    dependency_links=dependency_links,
+    test_suite='nose.collector')
