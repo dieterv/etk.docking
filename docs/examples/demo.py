@@ -34,15 +34,15 @@ import gtk.gdk as gdk
 import pango
 
 try:
-    import etk.docking
+    import etkdocking
 except ImportError:
     # The lib directory is most likely not on PYTHONPATH, so add it here.
     import os, sys
 
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'lib')))
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
     del os, sys
 finally:
-    from etk.docking import DockLayout, DockFrame, DockPaned, \
+    from etkdocking import DockLayout, DockFrame, DockPaned, \
         DockGroup, DockItem, dockstore, settings
 
 
